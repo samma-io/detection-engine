@@ -1,0 +1,37 @@
+- name: StopLogging fires
+  expected: true
+  event:
+    source: aws
+    eventSource: cloudtrail.amazonaws.com
+    eventName: StopLogging
+    awsRegion: us-east-1
+    sourceIPAddress: 203.0.113.44
+    recipientAccountId: "123456789012"
+    userIdentity:
+      type: AssumedRole
+      arn: arn:aws:sts::123456789012:assumed-role/deploy/ci-runner
+    requestParameters:
+      name: example-org-trail
+
+- name: DeleteTrail fires
+  expected: true
+  event:
+    source: aws
+    eventSource: cloudtrail.amazonaws.com
+    eventName: DeleteTrail
+    userIdentity: {type: IAMUser}
+
+- name: an unrelated CloudTrail read does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: cloudtrail.amazonaws.com
+    eventName: DescribeTrails
+    readOnly: true
+
+- name: the same event name on another service does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: logs.amazonaws.com
+    eventName: StopLogging

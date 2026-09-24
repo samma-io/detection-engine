@@ -1,0 +1,37 @@
+title: AWS Network ACL Changed
+id: 3c7a9e15-8b42-4d06-a97e-5f1c2d3e4a5b
+status: experimental
+description: >
+  A network ACL or one of its entries was created, deleted or replaced. NACLs are the subnet-level allow/deny boundary, so a change here can expose a subnet that security groups were assumed to protect.
+  Security Hub control CloudWatch.11.
+  Deliberately low. Every alert-destination route currently includes the same
+  Slack channel regardless of level, so severity does not yet change who is
+  disturbed -- it only records intent. These are a record of who changed the
+  network and when, not something to page on, and they are classified that way
+  now so that they land correctly once routing distinguishes levels.
+references:
+  - https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-11
+author: samma-io
+level: low
+tags:
+  - attack.defense_evasion
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: ec2.amazonaws.com
+    eventName:
+      - CreateNetworkAcl
+      - CreateNetworkAclEntry
+      - DeleteNetworkAcl
+      - DeleteNetworkAclEntry
+      - ReplaceNetworkAclEntry
+      - ReplaceNetworkAclAssociation
+  filter_failed:
+    errorCode|startswith: AccessDenied
+  condition: selection and not filter_failed
+falsepositives:
+  - Terraform managing network infrastructure. Expected to be the bulk
+    of this rule's volume; it earns its place as a record of who changed
+    the network and when, not as a page.

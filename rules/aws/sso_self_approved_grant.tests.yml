@@ -1,0 +1,55 @@
+# Shape from the SSO Elevator audit-entry records and the Vector transform that adds
+# feed and approval_kind. Identifiers are synthetic.
+- name: a self-approved account grant fires
+  expected: true
+  event:
+    source: aws
+    feed: sso
+    approval_kind: self
+    audit_entry_type: account
+    operation_type: grant
+    requester_email: example.person@example.com
+    approver_email: example.person@example.com
+    role_name: AdministratorAccess
+    account_id: '123456789012'
+    permission_duration: '1800'
+
+- name: a self-approved group grant fires
+  expected: true
+  event:
+    source: aws
+    feed: sso
+    approval_kind: self
+    audit_entry_type: group
+    operation_type: grant
+    group_name: example-group
+
+- name: a peer-approved grant does not fire
+  expected: false
+  event:
+    source: aws
+    feed: sso
+    approval_kind: peer
+    audit_entry_type: account
+    operation_type: grant
+    requester_email: one.person@example.com
+    approver_email: two.person@example.com
+
+- name: a self-approved revoke does not fire, it removes access
+  expected: false
+  event:
+    source: aws
+    feed: sso
+    approval_kind: self
+    operation_type: revoke
+
+# The same lane carries CloudTrail. It must not reach this rule.
+- name: a CloudTrail record on the same lane does not fire
+  expected: false
+  event:
+    source: aws
+    feed: cloudtrail
+    eventSource: sts.amazonaws.com
+    eventName: AssumeRole
+    userIdentity:
+      type: AssumedRole

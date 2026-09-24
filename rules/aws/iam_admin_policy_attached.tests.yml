@@ -1,0 +1,57 @@
+- name: attaching AdministratorAccess to a role fires
+  expected: true
+  event:
+    source: aws
+    eventSource: iam.amazonaws.com
+    eventName: AttachRolePolicy
+    recipientAccountId: '123456789012'
+    requestParameters:
+      roleName: some-role
+      policyArn: arn:aws:iam::aws:policy/AdministratorAccess
+
+- name: attaching PowerUserAccess to a user fires
+  expected: true
+  event:
+    source: aws
+    eventSource: iam.amazonaws.com
+    eventName: AttachUserPolicy
+    requestParameters:
+      userName: some-user
+      policyArn: arn:aws:iam::aws:policy/PowerUserAccess
+
+- name: writing an inline role policy fires regardless of its content
+  expected: true
+  event:
+    source: aws
+    eventSource: iam.amazonaws.com
+    eventName: PutRolePolicy
+    requestParameters:
+      roleName: some-role
+      policyName: inline-extra
+
+- name: attaching a narrow read-only policy does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: iam.amazonaws.com
+    eventName: AttachRolePolicy
+    requestParameters:
+      roleName: some-role
+      policyArn: arn:aws:iam::aws:policy/ReadOnlyAccess
+
+- name: a denied attach does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: iam.amazonaws.com
+    eventName: AttachRolePolicy
+    errorCode: AccessDenied
+    requestParameters:
+      policyArn: arn:aws:iam::aws:policy/AdministratorAccess
+
+- name: an unrelated iam read does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: iam.amazonaws.com
+    eventName: GetRole

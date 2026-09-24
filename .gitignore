@@ -1,0 +1,38 @@
+# terraform (none lives here; aws-siem owns it, but a stray init must never be committed)
+.terraform/
+.terraform.*/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan*
+*.tfvars
+!*.tfvars.example
+.terraform.lock.hcl
+crash.log
+override.tf
+*_override.tf
+
+# secrets and local env
+.env
+.env.*
+hack/local/.env
+
+# go
+bin/
+out/
+dist/
+.gocache/
+.gomodcache/
+*.test
+*.out
+/engine
+/sigmaimport
+
+# release artifacts (built by hack/package-rules.sh and CI)
+rules-*.tar.gz
+rules-*.tar.gz.sha256
+
+# staging area for hack/sigmaimport; upstream corpora are never vendored
+.import-src/
+
+.DS_Store

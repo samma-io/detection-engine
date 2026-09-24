@@ -1,0 +1,54 @@
+# Field shape taken from real team.accessLogs records in the filtered bucket.
+# Identifiers are synthetic; the ISP values are the ones that genuinely occur
+# on this lane.
+- name: a sign-in from a hosting provider fires
+  expected: true
+  event:
+    source: slack
+    feed: accesslogs
+    username: example-user
+    user_id: U0EXAMPLE1
+    ip: 203.0.113.10
+    isp: Datacamp
+    country: NL
+    region: North Holland
+    user_agent: SlackWeb Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)
+    count: 3
+
+- name: a sign-in from OVHcloud fires
+  expected: true
+  event:
+    source: slack
+    feed: accesslogs
+    username: example-user
+    ip: 203.0.113.11
+    isp: OVHcloud
+    country: FR
+
+- name: the corporate VPN does not fire
+  expected: false
+  event:
+    source: slack
+    feed: accesslogs
+    username: example-user
+    ip: 203.0.113.12
+    isp: Cloudflare Warp
+    country: ES
+
+- name: an ordinary consumer ISP does not fire
+  expected: false
+  event:
+    source: slack
+    feed: accesslogs
+    username: example-user
+    ip: 203.0.113.13
+    isp: Verizon Fios
+    country: US
+
+- name: an integrationlogs record does not fire
+  expected: false
+  event:
+    source: slack
+    feed: integrationlogs
+    app_id: A0EXAMPLE
+    change_type: added

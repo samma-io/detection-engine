@@ -1,0 +1,29 @@
+# Imported by hack/sigmaimport -- do not hand-edit without recording why.
+#   upstream:  SigmaHQ aws_delete_identity.yml
+#   ref:       2e8fd89f82d9104c1b30321a307254ddeea17de2
+#   fixture:   TrailAlerts aws_delete_identity_tests.json
+#   ref:       1073c947ef2a154f98a27ae6d27dec3d543a6fc2
+#   licence:   SigmaHQ DRL-1.1; fixture Apache-2.0
+title: SES Identity Has Been Deleted
+id: 20f754db-d025-4a8f-9d74-e0037e999a9a
+status: test
+description: Detects an instance of an SES identity being deleted via the "DeleteIdentity" event. This may be an indicator of an adversary removing the account that carried out suspicious or malicious activities
+references:
+    - https://unit42.paloaltonetworks.com/compromised-cloud-compute-credentials/
+author: Janantha Marasinghe
+date: 2022-12-13
+modified: 2022-12-28
+tags:
+    - attack.stealth
+    - attack.t1070
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: 'ses.amazonaws.com'
+        eventName: 'DeleteIdentity'
+    condition: selection
+falsepositives:
+    - Unknown
+level: medium

@@ -1,0 +1,48 @@
+title: DNS Query With An Overlong Label
+id: 3f7b21c8-9d4e-4a63-b115-2c6e8f90a4d7
+status: experimental
+description: >
+  A single DNS label of 40 or more characters from the alphabet base32 and
+  base64 use. Names are not normally built that way: a label is a hostname
+  fragment, and the long ones that do occur are machine-generated.
+
+  This is the per-record shadow of DNS tunnelling. The real signal is volume --
+  one host emitting thousands of such queries to one parent domain -- and this
+  engine is stateless and single-event, so that rule cannot be written here.
+  What this catches is the shape of one carrier record, which is enough to point
+  an investigation at a source address worth counting in Athena.
+author: samma-io
+level: medium
+tags:
+  - attack.exfiltration
+  - attack.t1048.003
+logsource:
+  product: aws
+  service: route53_resolver
+detection:
+  selection:
+    # The first label only. Anchored at the start so a long name made of many
+    # ordinary labels does not match -- it is the single oversized label that
+    # carries data, not the overall length.
+    query_name|re: '^[A-Za-z0-9+/=_-]{40,}\.'
+  # AWS puts the resource name in the first label --
+  # <bucket>.s3.amazonaws.com, VPC endpoint and RDS hostnames -- and this
+  # estate's resource names are long because they carry the account id and
+  # region. That is not machine-generated data in a hostname, it is a
+  # hostname.
+  #
+  # Measured before adding this: 14522 of 34922 sampled resolver records
+  # matched, 41.6% of all DNS traffic, on the order of 180000 alerts a day.
+  # Every one was an amazonaws.com endpoint, and excluding them leaves
+  # exactly zero. Not a tuning judgement -- the entire false-positive set.
+  aws_endpoints:
+    query_name|contains: '.amazonaws.com'
+  condition: selection and not aws_endpoints
+falsepositives:
+  - >
+    Content delivery and anti-virus vendors encode cache keys and file hashes
+    into hostnames, so a steady low rate against one vendor domain is normal.
+    Check the parent domain before treating a hit as exfiltration.
+  - >
+    Some SaaS products use long per-tenant subdomains. These are stable over
+    time, where tunnelling labels are unique per query.

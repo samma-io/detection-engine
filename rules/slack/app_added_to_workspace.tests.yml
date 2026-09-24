@@ -1,0 +1,29 @@
+- name: an app added to the workspace fires
+  expected: true
+  event:
+    source: slack
+    feed: integrationlogs
+    change_type: added
+    app_id: A0C2UFP95LY
+    app_type: Example App
+    user_name: example.person
+    event_time: '2026-09-15T14:38:14Z'
+
+- name: an app removed does not fire
+  expected: false
+  event:
+    source: slack
+    feed: integrationlogs
+    change_type: removed
+    app_id: A0C2UFP95LY
+    app_type: Example App
+
+- name: an access log row does not fire
+  expected: false
+  event:
+    source: slack
+    feed: accesslogs
+    user_id: W001EXAMPLE
+    username: example.person
+    ip: 192.0.2.10
+    country: SE

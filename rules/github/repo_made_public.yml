@@ -1,0 +1,26 @@
+title: GitHub Repository Made Public
+id: 9b4e7a13-6c25-4d80-91f3-2a3b4c5d6e70
+status: stable
+description: >
+  A private repository was made public, or created public. In an org whose
+  repositories are private by default this is either a mistake that needs
+  reverting within minutes or a deliberate exfiltration.
+references:
+  - https://docs.github.com/en/organizations/keeping-your-organization-secure
+author: samma-io
+level: critical
+tags:
+  - attack.exfiltration
+logsource:
+  product: github
+  service: audit
+detection:
+  selection:
+    action:
+      - repo.access
+      - repo.create
+  visibility:
+    visibility: public
+  condition: selection and visibility
+falsepositives:
+  - An intentionally open-sourced repository.

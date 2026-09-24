@@ -1,0 +1,32 @@
+- name: scheduling a key for deletion fires
+  expected: true
+  event:
+    source: aws
+    eventSource: kms.amazonaws.com
+    eventName: ScheduleKeyDeletion
+    recipientAccountId: '123456789012'
+    requestParameters:
+      keyId: arn:aws:kms:us-east-1:123456789012:key/00000000-0000-0000-0000-000000000000
+      pendingWindowInDays: 7
+
+- name: disabling a key fires
+  expected: true
+  event:
+    source: aws
+    eventSource: kms.amazonaws.com
+    eventName: DisableKey
+
+- name: a denied attempt does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: kms.amazonaws.com
+    eventName: ScheduleKeyDeletion
+    errorCode: AccessDeniedException
+
+- name: ordinary key use does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: kms.amazonaws.com
+    eventName: Decrypt

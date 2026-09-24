@@ -1,0 +1,26 @@
+- name: a grant with no approver fires
+  expected: true
+  event:
+    source: aws
+    feed: sso
+    approval_kind: none
+    audit_entry_type: account
+    operation_type: grant
+    requester_email: example.person@example.com
+    role_name: AdministratorAccess
+
+- name: a peer-approved grant does not fire
+  expected: false
+  event:
+    source: aws
+    feed: sso
+    approval_kind: peer
+    operation_type: grant
+
+- name: a revoke with no approver does not fire
+  expected: false
+  event:
+    source: aws
+    feed: sso
+    approval_kind: none
+    operation_type: revoke

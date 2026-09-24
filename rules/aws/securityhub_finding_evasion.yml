@@ -1,0 +1,33 @@
+# Imported by hack/sigmaimport -- do not hand-edit without recording why.
+#   upstream:  SigmaHQ aws_securityhub_finding_evasion.yml
+#   ref:       2e8fd89f82d9104c1b30321a307254ddeea17de2
+#   fixture:   TrailAlerts aws_securityhub_finding_evasion_tests.json
+#   ref:       1073c947ef2a154f98a27ae6d27dec3d543a6fc2
+#   licence:   SigmaHQ DRL-1.1; fixture Apache-2.0
+title: AWS SecurityHub Findings Evasion
+id: a607e1fe-74bf-4440-a3ec-b059b9103157
+status: stable
+description: Detects the modification of the findings on SecurityHub.
+references:
+    - https://docs.aws.amazon.com/cli/latest/reference/securityhub/
+author: Sittikorn S
+date: 2021-06-28
+tags:
+    - attack.defense-impairment
+    - attack.t1685
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: securityhub.amazonaws.com
+        eventName:
+            - 'BatchUpdateFindings'
+            - 'DeleteInsight'
+            - 'UpdateFindings'
+            - 'UpdateInsight'
+    condition: selection
+falsepositives:
+    - System or Network administrator behaviors
+    - DEV, UAT, SAT environment. You should apply this rule with PROD environment only.
+level: high

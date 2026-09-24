@@ -1,0 +1,13 @@
+# sigma-go Config for the 1Password lane.
+#
+# Three feeds share this prefix, told apart by Vector's `feed`: itemusages,
+# signinattempts and auditevents. They overlap on `action` and `uuid`, so pin
+# `feed` in any rule using a field that is not unique to one feed.
+title: filtered onepassword
+logsources:
+  onepassword_events:
+    product: onepassword
+    service: events
+    index: filtered-onepassword
+defaultindex: filtered-onepassword
+fieldmappings: {}

@@ -1,0 +1,46 @@
+title: AWS S3 Object Decrypted By A Person
+id: 3a7e1f68-5c29-4b04-8d73-9e0a1b2c3d45
+status: experimental
+description: >
+  A human identity used KMS to decrypt an object in S3. In most estates every
+  S3 decrypt is performed by a service role -- measured over a full day in one
+  deployment, not one carried a person's identity. Where buckets hold
+  regulated or customer data, a person decrypting object contents is either a
+  deliberate data access that should have gone through a system, or someone
+  reading what they should not.
+  The principal is matched on the ARN rather than on a username field, because
+  access is federated: an SSO session arrives as
+  arn:aws:sts::<account>:assumed-role/AWSReservedSSO_<Role>_<hash>/<email>,
+  so the address is in the ARN and there is no separate email field to key on.
+  Scoped to the S3 encryption context. KMS decrypts for DynamoDB, Kinesis, SSM
+  and Lambda are ordinary application traffic and run into the thousands daily.
+references:
+  - https://docs.aws.amazon.com/kms/latest/developerguide/services-s3.html
+author: samma-io
+level: high
+tags:
+  - attack.collection
+  - attack.t1530
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: kms.amazonaws.com
+    eventName:
+      - Decrypt
+      - GenerateDataKey
+  # The key is literally "aws:s3:arn", so the flattened alias carries colons.
+  # Verified that it resolves before relying on it.
+  s3_context:
+    "requestParameters.encryptionContext.aws:s3:arn|startswith": 'arn:aws:s3:::'
+  # REPLACE example.com with the email domain your SSO identities carry.
+  person:
+    userIdentity.arn|contains: '@example.com'
+  filter_failed:
+    errorCode|startswith: AccessDenied
+  condition: selection and s3_context and person and not filter_failed
+falsepositives:
+  - An engineer legitimately investigating object contents during an incident.
+    That is worth a record even when it is expected, and it should be rare
+    enough to ask about each time.

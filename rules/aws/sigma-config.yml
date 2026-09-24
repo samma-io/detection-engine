@@ -1,0 +1,47 @@
+# sigma-go Config for the AWS lane.
+#
+# The engine builds a dot-flattened match view of every event, so nested
+# CloudTrail paths such as userIdentity.type resolve without a fieldmapping.
+#
+# Arrays are the exception, and it is not the one you would guess.
+# evaluator.GetFieldValuesFromEvent only expands an array-valued field into
+# separate comparisons (toGenericSlice) when a fieldmapping exists for it.
+# Without one the whole array is compared as a single stringified blob, so:
+#
+#   field: value            matches a ONE-element array, and silently never
+#                           matches a two-element one
+#   field|contains: value   matches either -- but only because it is doing a
+#                           substring search over "[a b c]", which can also
+#                           match across element boundaries
+#
+# Exact matching on an array field therefore needs an entry below, mapping the
+# field to itself. That looks like a no-op and is not: it is what moves
+# sigma-go onto the expanding code path. Verified both ways before relying on
+# it.
+#
+# The silent half of that is the dangerous half, and no test catches it unless
+# a sidecar case carries a realistic multi-element event -- which is exactly
+# how it was found.
+title: filtered aws
+logsources:
+  cloudtrail:
+    product: aws
+    service: cloudtrail
+    index: filtered-aws
+  # route53_resolver and alb_connection used to be declared here, sharing
+  # filtered-aws. The lane split moved both into their own prefixes, queues and
+  # indexes, so they now live in rules/dns and rules/alb with their own
+  # sigma-config. The rule bodies did not change in the move -- only the
+  # directory and the index name.
+  # SSO Elevator audit records, folded into this lane by Vector. Rules pin
+  # audit_entry_type or feed to tell them apart from CloudTrail.
+  sso_elevator:
+    product: aws
+    service: sso
+    index: filtered-aws
+defaultindex: filtered-aws
+fieldmappings:
+  # Self-mappings, for exact matching on array-valued fields. See above.
+  requestParameters.ipPermissions.items.ipRanges.items.cidrIp: requestParameters.ipPermissions.items.ipRanges.items.cidrIp
+  requestParameters.ipPermissions.items.ipv6Ranges.items.cidrIpv6: requestParameters.ipPermissions.items.ipv6Ranges.items.cidrIpv6
+  requestParameters.lifecycleConfiguration.rules.expiration.days: requestParameters.lifecycleConfiguration.rules.expiration.days

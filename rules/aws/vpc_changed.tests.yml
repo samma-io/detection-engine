@@ -1,0 +1,22 @@
+- name: CreateVpc fires
+  expected: true
+  event:
+    source: aws
+    eventSource: ec2.amazonaws.com
+    eventName: CreateVpc
+    recipientAccountId: '123456789012'
+
+- name: a denied attempt does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: ec2.amazonaws.com
+    eventName: CreateVpc
+    errorCode: AccessDeniedException
+
+- name: an unrelated ec2 read does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: ec2.amazonaws.com
+    eventName: DescribeInstances

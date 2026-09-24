@@ -1,0 +1,31 @@
+# Imported by hack/sigmaimport -- do not hand-edit without recording why.
+#   upstream:  SigmaHQ aws_efs_fileshare_modified_or_deleted.yml
+#   ref:       2e8fd89f82d9104c1b30321a307254ddeea17de2
+#   fixture:   TrailAlerts aws_efs_fileshare_modified_or_deleted_tests.json
+#   ref:       1073c947ef2a154f98a27ae6d27dec3d543a6fc2
+#   licence:   SigmaHQ DRL-1.1; fixture Apache-2.0
+title: AWS EFS Fileshare Modified or Deleted
+id: 25cb1ba1-8a19-4a23-a198-d252664c8cef
+status: test
+description: |
+  Detects when a EFS Fileshare is modified or deleted.
+  You can't delete a file system that is in use.
+  If the file system has any mount targets, the adversary must first delete them, so deletion of a mount will occur before deletion of a fileshare.
+references:
+    - https://docs.aws.amazon.com/efs/latest/ug/API_DeleteFileSystem.html
+author: Austin Songer @austinsonger
+date: 2021-08-15
+modified: 2022-10-09
+tags:
+    - attack.impact
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: elasticfilesystem.amazonaws.com
+        eventName: DeleteFileSystem
+    condition: selection
+falsepositives:
+    - Unknown
+level: medium

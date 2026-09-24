@@ -1,0 +1,19 @@
+# Localstack for the standalone end-to-end run. The project name fixes the
+# network name (detection-engine-local_default) that hack/local/run.sh joins.
+name: detection-engine-local
+services:
+  localstack:
+    image: localstack/localstack:3.8
+    ports:
+      # Override with LOCALSTACK_PORT when 4566 is taken on this machine;
+      # hack/local/env.sh reads the same variable.
+      - "${LOCALSTACK_PORT:-4566}:4566"
+    environment:
+      SERVICES: s3,sqs
+      PERSISTENCE: 0
+      DEBUG: 0
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:4566/_localstack/health"]
+      interval: 3s
+      timeout: 3s
+      retries: 20

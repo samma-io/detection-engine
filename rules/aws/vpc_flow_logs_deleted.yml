@@ -1,0 +1,29 @@
+title: AWS VPC Flow Logs Deleted
+id: b1d47f26-9c58-4e30-a7b9-2c4d5e6f7a80
+status: experimental
+description: >
+  A VPC flow log configuration was deleted. Flow logs are this estate's only
+  record of network movement inside a VPC, and they feed the detection plane
+  through Filebeat, so deleting one removes the evidence for everything that
+  happens on that network afterwards rather than any single action.
+  Adapted from TrailAlerts (Apache-2.0).
+references:
+  - https://github.com/adanalvarez/TrailAlerts
+author: samma-io
+level: high
+tags:
+  - attack.defense_evasion
+  - attack.t1562.008
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: ec2.amazonaws.com
+    eventName: DeleteFlowLogs
+  filter_failed:
+    errorCode|startswith: AccessDenied
+  condition: selection and not filter_failed
+falsepositives:
+  - Decommissioning a VPC. The flow log deletion should be accompanied by the
+    VPC deletion itself, which vpc_changed records.

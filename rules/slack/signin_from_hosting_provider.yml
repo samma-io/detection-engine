@@ -1,0 +1,44 @@
+title: Slack Sign-In From A Hosting Or Anonymising Network
+id: 2f8c4b17-6d93-4e51-a072-5b8c9d0e1f23
+status: experimental
+description: >
+  A Slack sign-in came from an address belonging to a hosting provider or
+  commercial VPN rather than a consumer or corporate network. Staff sign in from
+  ISPs; an address in a data centre means either a proxy chosen to obscure
+  origin, or a session being driven from infrastructure rather than a laptop.
+  This workspace is on Business+, which has no audit log at all -- team.accessLogs
+  is the only sign-in visibility that exists here, so it is worth using well.
+  Cloudflare Warp is excluded deliberately: it is the corporate VPN and is the
+  single largest source of sign-ins on this lane. Alerting on it would bury the
+  rule within a day.
+references:
+  - https://api.slack.com/methods/team.accessLogs
+author: samma-io
+level: medium
+tags:
+  - attack.initial_access
+  - attack.t1078.004
+logsource:
+  product: slack
+  service: admin
+detection:
+  selection:
+    source: slack
+    feed: accesslogs
+  hosting_isp:
+    isp:
+      - Datacamp
+      - OVHcloud
+      - Servers Tech Fzco
+      - Amazon.com
+      - Cloudflare
+  # The corporate VPN. Matched exactly so it cannot also suppress the bare
+  # "Cloudflare" entry above, which is the public proxy rather than Warp.
+  corporate_vpn:
+    isp: Cloudflare Warp
+  condition: selection and hosting_isp and not corporate_vpn
+falsepositives:
+  - An engineer working through a personal VPN. Worth asking about rather than
+    assuming; the answer is usually quick.
+  - A Slack app or integration calling from cloud infrastructure. Those appear
+    with an ApiApp user agent and are worth distinguishing before tuning.

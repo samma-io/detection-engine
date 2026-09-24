@@ -1,0 +1,27 @@
+title: SSO Elevator Grant With No Approver Recorded
+id: 4f9c6a23-8e51-4d07-9b34-2a5b6c7d8e90
+status: experimental
+description: >
+  An access grant went out with no approver recorded at all. Whatever produced
+  it, the approval step did not happen, which is a weaker position than a
+  self-approval: there is not even a name to ask about.
+  Companion to sso_self_approved_grant. Both depend on approval_kind, computed
+  in Vector because Sigma cannot compare two fields.
+references:
+  - https://github.com/fivexl/terraform-aws-sso-elevator
+author: samma-io
+level: high
+tags:
+  - attack.privilege_escalation
+logsource:
+  product: aws
+  service: sso
+detection:
+  selection:
+    feed: sso
+    approval_kind: none
+    operation_type: grant
+  condition: selection
+falsepositives:
+  - An elevator configuration that auto-approves a low-risk permission set.
+    Worth confirming that is intended, and which sets it covers.

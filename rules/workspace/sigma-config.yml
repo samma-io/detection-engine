@@ -1,0 +1,42 @@
+# sigma-go Config for the Google Workspace lane.
+#
+# One feed per applicationName, carried in Vector's `feed` (admin, login,
+# drive, token, access_evaluation, meet, mobile, tasks, ...).
+#
+# THE EVENT IS AT THE ROOT. Match on `name` and `type`, never `events.name`.
+# The Admin SDK returns an events[] array, but the ingester's
+# internal/source/google/flatten.go emits one record per event with Name, Type
+# and Parameters hoisted to the root, so no events[] ever reaches the engine.
+# A rule keyed on events.name loads, reports healthy and silently never fires --
+# which is exactly what two rules here did until it was caught against live
+# data. Live: events.name matches 0 records, name matches 2,058,136.
+#
+# Write fixtures from a filtered/ record, not from the Reports API response.
+title: filtered workspace
+logsources:
+  workspace_reports:
+    product: workspace
+    service: reports
+    index: filtered-workspace
+defaultindex: filtered-workspace
+# Upstream Workspace rules are written against the Cloud Logging export shape,
+# not the Reports API shape the ingester actually emits. Measured against 4000
+# real records from this lane:
+#
+#   rule field                           present   our field
+#   eventName                               no     name                 100%
+#   eventService                            no     id.applicationName   100%
+#   protoPayload.metadata.event.eventName   no     name                 100%
+#   protoPayload.serviceName                no     id.applicationName   100%
+#
+# Without these, all 10 upstream gworkspace rules load and never match.
+#
+# protoPayload.Servicename is an upstream typo, mapped so the rule carrying it
+# works rather than silently not. Fixing it upstream is better; mapping it costs
+# one line and does not wait on a merge.
+fieldmappings:
+  eventName: name
+  eventService: id.applicationName
+  protoPayload.metadata.event.eventName: name
+  protoPayload.serviceName: id.applicationName
+  protoPayload.Servicename: id.applicationName

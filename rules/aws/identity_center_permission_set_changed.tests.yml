@@ -1,0 +1,57 @@
+- name: an inline policy written to a permission set fires
+  expected: true
+  event:
+    source: aws
+    eventSource: sso.amazonaws.com
+    eventName: PutInlinePolicyToPermissionSet
+    recipientAccountId: '111111111111'
+    userIdentity:
+      type: AssumedRole
+      sessionContext:
+        sessionIssuer:
+          userName: someone-elevated
+
+- name: attaching a managed policy fires
+  expected: true
+  event:
+    source: aws
+    eventSource: sso.amazonaws.com
+    eventName: AttachManagedPolicyToPermissionSet
+    recipientAccountId: '111111111111'
+
+- name: deleting a permission set fires
+  expected: true
+  event:
+    source: aws
+    eventSource: sso.amazonaws.com
+    eventName: DeletePermissionSet
+    recipientAccountId: '111111111111'
+
+# The SSO Elevator's own traffic. It grants access by assigning an existing
+# permission set, so it must not trip a rule about definitions -- this is the
+# case that justifies scoping the rule this way instead of maintaining an
+# allowlist of automation roles.
+- name: an ordinary elevator account assignment does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: sso.amazonaws.com
+    eventName: CreateAccountAssignment
+    recipientAccountId: '111111111111'
+
+- name: a denied attempt does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: sso.amazonaws.com
+    eventName: PutInlinePolicyToPermissionSet
+    errorCode: AccessDeniedException
+    recipientAccountId: '111111111111'
+
+- name: an unrelated CloudTrail event does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: s3.amazonaws.com
+    eventName: PutBucketPolicy
+    recipientAccountId: '123456789012'

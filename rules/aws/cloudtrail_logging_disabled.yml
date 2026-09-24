@@ -1,0 +1,28 @@
+title: CloudTrail Logging Disabled
+id: 7f8b1c42-9d3e-4a51-b6c7-1e2f3a4b5c6d
+status: stable
+description: >
+  A CloudTrail trail was stopped, deleted, or reconfigured. This is the first
+  thing an attacker with console access does, because it blinds every other
+  rule in this ruleset.
+references:
+  - https://attack.mitre.org/techniques/T1562/008/
+author: samma-io
+level: high
+tags:
+  - attack.defense_evasion
+  - attack.t1562.008
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: cloudtrail.amazonaws.com
+    eventName:
+      - StopLogging
+      - DeleteTrail
+      - UpdateTrail
+      - PutEventSelectors
+  condition: selection
+falsepositives:
+  - Terraform or CloudFormation reconfiguring a trail during a planned change.

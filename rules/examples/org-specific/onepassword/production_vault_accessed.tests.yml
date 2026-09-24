@@ -1,0 +1,51 @@
+# Vault uuids are placeholders. Replace REPLACE_WITH_PRODUCTION_VAULT_UUID with
+# the same value you put in the rule; the other two only need to differ.
+- name: revealing a production credential fires
+  expected: true
+  event:
+    source: onepassword
+    feed: itemusages
+    action: reveal
+    vault_uuid: REPLACE_WITH_PRODUCTION_VAULT_UUID
+    item_uuid: bbbbbbbbbbbbbbbbbbbbbbbbbb
+    actor_email: redacted@example.com
+    client:
+      app_name: 1Password for Mac
+
+- name: secure-copy fires, it puts the secret on the clipboard
+  expected: true
+  event:
+    source: onepassword
+    feed: itemusages
+    action: secure-copy
+    vault_uuid: REPLACE_WITH_PRODUCTION_VAULT_UUID
+    actor_email: redacted@example.com
+
+- name: opening an item to edit it does not fire, the value is not exposed
+  expected: false
+  event:
+    source: onepassword
+    feed: itemusages
+    action: enter-item-edit-mode
+    vault_uuid: REPLACE_WITH_PRODUCTION_VAULT_UUID
+    actor_email: redacted@example.com
+
+# A vault that carries automation polling keys many times a day must stay out
+# of this rule.
+- name: another vault does not fire
+  expected: false
+  event:
+    source: onepassword
+    feed: itemusages
+    action: share
+    vault_uuid: REPLACE_WITH_OTHER_VAULT_UUID
+    actor_email: redacted@example.com
+
+- name: the AWS root vault is covered by its own critical rule, not this one
+  expected: false
+  event:
+    source: onepassword
+    feed: itemusages
+    action: reveal
+    vault_uuid: REPLACE_WITH_AWS_ROOT_VAULT_UUID
+    actor_email: redacted@example.com

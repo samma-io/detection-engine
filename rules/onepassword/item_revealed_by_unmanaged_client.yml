@@ -1,0 +1,28 @@
+title: 1Password Item Revealed From An Unmanaged Client
+id: 3f1c9a20-5d7b-4e11-8c33-9a1b2c3d4e5f
+status: experimental
+description: >
+  A vault item was revealed or exported through a client that is not a managed
+  1Password application. Reveal is the action that actually exposes a secret,
+  and an unmanaged client is how one leaves the fleet.
+references:
+  - https://developer.1password.com/docs/events-api/
+author: samma-io
+level: high
+tags:
+  - attack.credential_access
+logsource:
+  product: onepassword
+  service: events
+detection:
+  selection:
+    source: onepassword
+    feed: itemusages
+    action:
+      - reveal
+      - export
+  managed_client:
+    client.app_name|startswith: '1Password'
+  condition: selection and not managed_client
+falsepositives:
+  - A newly released 1Password client whose app_name changed.

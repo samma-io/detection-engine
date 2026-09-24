@@ -1,0 +1,52 @@
+# Account ids here must agree with the rule: the two management accounts are
+# the ones listed in the rule's selection, and the member account is any other
+# id. Replace all three when you fill in the rule.
+- name: root console login in the first management account fires
+  expected: true
+  event:
+    source: aws
+    eventSource: signin.amazonaws.com
+    eventName: ConsoleLogin
+    userIdentity:
+      type: Root
+    recipientAccountId: '123456789012'
+    sourceIPAddress: 203.0.113.10
+
+- name: root in the second management account fires
+  expected: true
+  event:
+    source: aws
+    eventSource: organizations.amazonaws.com
+    eventName: AttachPolicy
+    userIdentity:
+      type: Root
+    recipientAccountId: '111111111111'
+
+- name: root in an ordinary member account does not fire here
+  expected: false
+  event:
+    source: aws
+    eventSource: signin.amazonaws.com
+    eventName: ConsoleLogin
+    userIdentity:
+      type: Root
+    recipientAccountId: '333333333333'
+
+- name: an assumed role in the management account does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: organizations.amazonaws.com
+    eventName: AttachPolicy
+    userIdentity:
+      type: AssumedRole
+    recipientAccountId: '123456789012'
+
+- name: root service-linked housekeeping does not fire
+  expected: false
+  event:
+    source: aws
+    eventType: AwsServiceEvent
+    userIdentity:
+      type: Root
+    recipientAccountId: '123456789012'

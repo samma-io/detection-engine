@@ -1,0 +1,28 @@
+title: GCP IAM Policy Granted To allUsers
+id: 6f0c3d28-7b94-4e15-a3c6-8d9e0f1a2b3c
+status: experimental
+description: >
+  An IAM policy was set with a binding to allUsers or allAuthenticatedUsers,
+  which makes the resource reachable by anyone on the internet, or by anyone
+  with any Google account. This is the single most common cause of a public
+  bucket.
+references:
+  - https://cloud.google.com/iam/docs/overview
+author: samma-io
+level: critical
+tags:
+  - attack.exfiltration
+logsource:
+  product: gcp
+  service: audit
+detection:
+  selection:
+    source: gcp
+    protoPayload.methodName|contains: SetIamPolicy
+  public_member:
+    protoPayload.request.policy.bindings.members|contains:
+      - allUsers
+      - allAuthenticatedUsers
+  condition: selection and public_member
+falsepositives:
+  - A resource intended to be public, which should be rare enough to confirm.

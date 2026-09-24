@@ -1,0 +1,33 @@
+title: SSO Elevator Grant Approved By Its Own Requester
+id: 8d4b2e57-1f96-4a83-b5c0-6e7f8a9b0c12
+status: experimental
+description: >
+  A just-in-time AWS access grant through the SSO Elevator was approved by the
+  person who requested it. The Slack approval step is the only control between
+  an engineer and a production AWS role, so an approval that closes its own loop
+  does not weaken that control, it removes it.
+  approval_kind is computed in Vector (the aws parser transform) because Sigma
+  cannot compare two fields of one record -- sigma-go does not implement
+  |fieldref -- so this detection exists there or not at all.
+  Requires a Vector build that emits approval_kind. Without it the field is absent and
+  this rule cannot fire.
+references:
+  - https://github.com/fivexl/terraform-aws-sso-elevator
+author: samma-io
+level: critical
+tags:
+  - attack.privilege_escalation
+  - attack.t1078.004
+logsource:
+  product: aws
+  service: sso
+detection:
+  selection:
+    feed: sso
+    approval_kind: self
+  grant:
+    operation_type: grant
+  condition: selection and grant
+falsepositives:
+  - A documented break-glass grant made while the elevator is configured to
+    permit self-approval. Still worth reading every time.

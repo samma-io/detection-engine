@@ -1,0 +1,27 @@
+- name: deleting a vault fires
+  expected: true
+  event:
+    source: onepassword
+    feed: auditevents
+    action: delete
+    object_type: vault
+    object_uuid: j4rmnbcvjkjhgfdsaqwerty1234
+    actor_email: example.person@example.com
+
+- name: creating a vault does not fire
+  expected: false
+  event:
+    source: onepassword
+    feed: auditevents
+    action: create
+    object_type: vault
+    actor_email: example.person@example.com
+
+- name: deleting an item is not a vault or group
+  expected: false
+  event:
+    source: onepassword
+    feed: auditevents
+    action: delete
+    object_type: item
+    actor_email: example.person@example.com

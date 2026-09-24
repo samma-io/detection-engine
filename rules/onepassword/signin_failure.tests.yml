@@ -1,0 +1,24 @@
+- name: a failed credential attempt fires
+  expected: true
+  event:
+    source: onepassword
+    feed: signinattempts
+    category: credentials_failed
+    country: SE
+    actor_email: example.person@example.com
+
+- name: a failed mfa attempt fires
+  expected: true
+  event:
+    source: onepassword
+    feed: signinattempts
+    category: mfa_failed
+    actor_email: example.person@example.com
+
+- name: a successful sign-in does not fire
+  expected: false
+  event:
+    source: onepassword
+    feed: signinattempts
+    category: success
+    actor_email: example.person@example.com

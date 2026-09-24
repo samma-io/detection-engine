@@ -1,0 +1,23 @@
+# sigma-go Config for the Slack lane.
+#
+# Two feeds share this prefix, told apart by Vector's `feed`: accesslogs
+# (team.accessLogs) and integrationlogs (team.integrationLogs). They share no
+# fields at all, so pin `feed` in any rule whose fields are not unique to one.
+#
+# Note what is absent: actor_email is null on this lane. Slack admin logs carry
+# a username, never an address, and the identities table has no slack column to
+# resolve one against. Rules here identify people by user_name or username.
+#
+# ALSO ABSENT: scope. Slack's API documentation lists it on team.integrationLogs
+# and it appears in their examples, but 0 of the live records carry one. A rule
+# filtering on scope would load, report healthy and never fire. The fields that
+# are actually always present on integrationlogs are app_id, app_type,
+# change_type, date and user_name.
+title: filtered slack
+logsources:
+  slack_admin:
+    product: slack
+    service: admin
+    index: filtered-slack
+defaultindex: filtered-slack
+fieldmappings: {}

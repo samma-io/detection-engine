@@ -1,0 +1,45 @@
+title: AWS Root Used In An Org Management Account
+id: c5a81f34-7d92-4e08-b6c1-3f8a29d47b50
+status: experimental
+description: >
+  The root user acted in an AWS Organizations management account. Root there
+  can rewrite service control policies, move accounts between organizational
+  units and reach every account in the org, so this is the most privileged
+  action available anywhere in the estate. It is also the usual documented
+  break-glass path when SSO is unavailable, which means a real alert here is
+  either that break-glass being used or somebody standing in front of it.
+  Expect two alerts for one event: root_account_activity covers root in every
+  account at high, and this rule adds the management-account case at critical.
+  That is deliberate -- narrowing the general rule would trade root coverage in
+  every member account for a severity bump in the management accounts -- and
+  the ids differ, so they are two distinct alerts rather than a duplicate.
+references:
+  - https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html
+author: samma-io
+level: critical
+tags:
+  - attack.privilege_escalation
+  - attack.t1078.004
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    userIdentity.type: Root
+    # Quoted: an unquoted 12-digit literal is an int in YAML and would never
+    # match the string CloudTrail emits.
+    #
+    # REPLACE these with your own management account id(s). One entry per
+    # organization; delete the second line if you have a single org.
+    recipientAccountId:
+      - '123456789012'  # REPLACE_WITH_MANAGEMENT_ACCOUNT_ID
+      - '111111111111'  # REPLACE_WITH_SECOND_MANAGEMENT_ACCOUNT_ID
+  # Root's own service-linked housekeeping is not interesting and would
+  # otherwise fire on every account, as in root_account_activity.
+  filter_service_events:
+    eventType: AwsServiceEvent
+  condition: selection and not filter_service_events
+falsepositives:
+  - A documented break-glass session while SSO is down. Still worth reading
+    every time, and it should be reconcilable against a change record.
+  - Billing or account-setup tasks that genuinely require root.

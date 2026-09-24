@@ -1,0 +1,75 @@
+# The nesting here is the point: it is the real CloudTrail shape, and it only
+# matches because decode.MatchView flattens arrays of objects element-wise.
+- name: authorizing 0.0.0.0/0 ingress fires
+  expected: true
+  event:
+    source: aws
+    eventSource: ec2.amazonaws.com
+    eventName: AuthorizeSecurityGroupIngress
+    recipientAccountId: '123456789012'
+    requestParameters:
+      groupId: sg-0123456789abcdef0
+      ipPermissions:
+        items:
+          - ipProtocol: tcp
+            fromPort: 22
+            toPort: 22
+            ipRanges:
+              items:
+                - cidrIp: 0.0.0.0/0
+
+- name: an IPv6 wide-open ingress fires
+  expected: true
+  event:
+    source: aws
+    eventSource: ec2.amazonaws.com
+    eventName: AuthorizeSecurityGroupIngress
+    requestParameters:
+      ipPermissions:
+        items:
+          - ipProtocol: tcp
+            ipv6Ranges:
+              items:
+                - cidrIpv6: '::/0'
+
+- name: a mixed rule where only one element is world-open still fires
+  expected: true
+  event:
+    source: aws
+    eventSource: ec2.amazonaws.com
+    eventName: AuthorizeSecurityGroupIngress
+    requestParameters:
+      ipPermissions:
+        items:
+          - ipProtocol: tcp
+            ipRanges:
+              items:
+                - cidrIp: 10.0.0.0/8
+                - cidrIp: 0.0.0.0/0
+
+- name: an internal-only ingress does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: ec2.amazonaws.com
+    eventName: AuthorizeSecurityGroupIngress
+    requestParameters:
+      ipPermissions:
+        items:
+          - ipProtocol: tcp
+            ipRanges:
+              items:
+                - cidrIp: 10.0.0.0/8
+
+- name: revoking a world-open rule does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: ec2.amazonaws.com
+    eventName: RevokeSecurityGroupIngress
+    requestParameters:
+      ipPermissions:
+        items:
+          - ipRanges:
+              items:
+                - cidrIp: 0.0.0.0/0

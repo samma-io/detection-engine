@@ -1,0 +1,31 @@
+title: S3 Public Access Block Removed
+id: 5a1d3c74-8e2b-4f19-a6d5-7b8c9d0e1f22
+status: experimental
+description: >
+  A bucket's public access block was deleted, or its policy status changed.
+  Every bucket in the log archive is created with a full public access block,
+  so removing one is either a mistake or an exfiltration setup.
+author: samma-io
+level: high
+tags:
+  - attack.exfiltration
+logsource:
+  product: aws
+  service: cloudtrail
+# Narrowed to the public-access block itself. PutBucketAcl and PutBucketPolicy
+# used to be here too, which meant this rule and s3_bucket_policy_changed both
+# fired on one event -- two alerts, two ids, one thing that happened. The
+# policy and ACL half now lives in that rule; this one owns the block.
+detection:
+  selection:
+    eventSource: s3.amazonaws.com
+    eventName:
+      - DeleteBucketPublicAccessBlock
+      - PutPublicAccessBlock
+  # A failed attempt is a different, lower-severity signal; this rule is about
+  # changes that took effect.
+  filter_failed:
+    errorCode|startswith: 'AccessDenied'
+  condition: selection and not filter_failed
+falsepositives:
+  - A deliberate change to a bucket fronting a public website.

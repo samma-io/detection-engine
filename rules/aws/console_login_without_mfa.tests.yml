@@ -1,0 +1,53 @@
+- name: an IAM user signing in without MFA fires
+  expected: true
+  event:
+    source: aws
+    eventSource: signin.amazonaws.com
+    eventName: ConsoleLogin
+    userIdentity:
+      type: IAMUser
+      userName: some-user
+    responseElements:
+      ConsoleLogin: Success
+    additionalEventData:
+      MFAUsed: 'No'
+    recipientAccountId: '123456789012'
+
+- name: a normal SSO role sign-in does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: signin.amazonaws.com
+    eventName: ConsoleLogin
+    userIdentity:
+      type: AssumedRole
+    responseElements:
+      ConsoleLogin: Success
+    additionalEventData:
+      MFAUsed: 'No'
+
+- name: an IAM user signing in WITH MFA does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: signin.amazonaws.com
+    eventName: ConsoleLogin
+    userIdentity:
+      type: IAMUser
+    responseElements:
+      ConsoleLogin: Success
+    additionalEventData:
+      MFAUsed: 'Yes'
+
+- name: a failed sign-in does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: signin.amazonaws.com
+    eventName: ConsoleLogin
+    userIdentity:
+      type: IAMUser
+    responseElements:
+      ConsoleLogin: Failure
+    additionalEventData:
+      MFAUsed: 'No'

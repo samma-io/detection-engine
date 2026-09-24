@@ -1,0 +1,41 @@
+title: AWS Security Group Ingress Opened To The Internet
+id: 8b5e7d03-9a26-4c41-b8f5-1e2d3a4b5c67
+status: experimental
+description: >
+  An ingress rule was authorized from 0.0.0.0/0 or ::/0, opening a port to the
+  whole internet.
+  Security Hub control CloudWatch.10 (CIS 3.10 / 4.10) asks for an alarm on
+  every security group change. That is deliberately narrowed here to the case
+  that is actually dangerous: in an estate where security groups are managed by
+  Terraform, alerting on all six change events would fire on routine
+  infrastructure deploys and be muted within a fortnight, which is worse
+  coverage than a rule people still read. The broader control is recorded as
+  partially covered rather than quietly claimed.
+references:
+  - https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-10
+author: samma-io
+level: high
+tags:
+  - attack.initial_access
+  - attack.t1190
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: ec2.amazonaws.com
+    eventName: AuthorizeSecurityGroupIngress
+  # CloudTrail nests these as ipPermissions.items[].ipRanges.items[].cidrIp.
+  # internal/decode flattens arrays of objects element-wise, so one dotted
+  # alias answers for every element -- which is what makes this expressible at
+  # all. The sidecar carries the real nested shape to prove it.
+  world:
+    requestParameters.ipPermissions.items.ipRanges.items.cidrIp: 0.0.0.0/0
+  world_v6:
+    requestParameters.ipPermissions.items.ipv6Ranges.items.cidrIpv6: '::/0'
+  filter_failed:
+    errorCode|startswith: AccessDenied
+  condition: selection and (world or world_v6) and not filter_failed
+falsepositives:
+  - A deliberately public listener, typically in front of a load balancer.
+    These should be few and known.

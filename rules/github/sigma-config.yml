@@ -1,0 +1,15 @@
+# sigma-go Config for the GitHub lane.
+#
+# Note: the filtered github/ prefix currently carries GitHub audit-log entries
+# AND security-tool findings (nikto, tsunami, shcheck and similar scanners), because
+# both arrive on one raw queue upstream -- see the comment on tag_filtered_github
+# in samma-io/vector. Rules here should pin `action` or another
+# GitHub-specific field so they cannot match a scanner finding by coincidence.
+title: filtered github
+logsources:
+  github_audit:
+    product: github
+    service: audit
+    index: filtered-github
+defaultindex: filtered-github
+fieldmappings: {}

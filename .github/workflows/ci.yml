@@ -1,0 +1,67 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: go + rulecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: gofmt
+        run: test -z "$(gofmt -l .)" || { echo "gofmt needed on:"; gofmt -l .; exit 1; }
+      - name: vet
+        run: go vet ./...
+      - name: test (race)
+        run: go test -race ./...
+      - name: rulecheck
+        run: go test -run 'TestRules_' -v ./internal/rulecheck/
+      - name: rule catalogue is up to date
+        run: go run ./hack/rulesdoc -root . -check
+      - name: rules tarball builds
+        run: ./hack/package-rules.sh ci dist
+
+  scrub:
+    name: scrub-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./hack/scrub-check.sh .
+
+  gitleaks:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Organisation repos need a licence key; leave unset for personal ones.
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  trivy:
+    name: trivy (image)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: build image
+        run: docker build --build-arg VERSION=ci --build-arg COMMIT=${GITHUB_SHA::7} -t detection-engine:ci .
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: detection-engine:ci
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL

@@ -1,0 +1,17 @@
+- name: unenforcing strong authentication fires
+  expected: true
+  event:
+    source: workspace
+    feed: admin
+    actor_email: example.person@example.com
+    type: SECURITY_SETTINGS
+    name: UNENFORCE_STRONG_AUTHENTICATION
+
+- name: enforcing it does not fire
+  expected: false
+  event:
+    source: workspace
+    feed: admin
+    actor_email: example.person@example.com
+    type: SECURITY_SETTINGS
+    name: ENFORCE_STRONG_AUTHENTICATION

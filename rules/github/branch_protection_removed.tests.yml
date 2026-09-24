@@ -1,0 +1,25 @@
+- name: destroying a protected branch rule fires
+  expected: true
+  event:
+    source: github
+    action: protected_branch.destroy
+    actor: some-admin
+    org: example-org
+    repo: example-org/infra
+    created_at: 1780578968354
+
+- name: allowing force pushes fires
+  expected: true
+  event:
+    source: github
+    action: protected_branch.update_allow_force_pushes_enforcement_level
+    org: example-org
+    repo: example-org/api
+
+- name: creating protection does not fire
+  expected: false
+  event:
+    source: github
+    action: protected_branch.create
+    org: example-org
+    repo: example-org/api

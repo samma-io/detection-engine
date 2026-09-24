@@ -1,0 +1,22 @@
+# Rules allowed to carry a literal `*` or `?` in a detection value.
+#
+# sigma-go matches values literally -- there is no glob support -- so a
+# wildcard in a value is almost always a rule that will never fire, or (under a
+# `not`) one that will fire on everything. TestRules_NoGlobsInDetectionValues
+# rejects them by default.
+#
+# The exception is a value whose asterisk is genuinely part of the string the
+# source emits. The canonical case is an IAM policy document, where
+# "arn:aws:s3:::bucket/*" is the literal text of the resource clause.
+#
+# An entry here is a claim that you checked a real event. Put the evidence in
+# the reason.
+#
+# - rule_id: 00000000-0000-0000-0000-000000000000
+#   field: requestParameters.bucketPolicy
+#   reason: >
+#     The asterisk is part of the IAM resource ARN in the policy document, not a
+#     wildcard. Confirmed against a PutBucketPolicy record in
+#     filtered/aws/date=YYYY-MM-DD/.
+[]
+

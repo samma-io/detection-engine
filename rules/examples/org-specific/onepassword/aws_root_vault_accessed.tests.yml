@@ -1,0 +1,52 @@
+# Vault uuids are placeholders. Replace REPLACE_WITH_AWS_ROOT_VAULT_UUID with
+# the same value you put in the rule; the other two only need to be different
+# from it. Actor identifiers are synthetic.
+- name: revealing an item in the AWS root vault fires
+  expected: true
+  event:
+    source: onepassword
+    feed: itemusages
+    action: reveal
+    vault_uuid: REPLACE_WITH_AWS_ROOT_VAULT_UUID
+    item_uuid: aaaaaaaaaaaaaaaaaaaaaaaaaa
+    actor_email: redacted@example.com
+    client:
+      app_name: 1Password for Mac
+
+- name: any action in that vault fires, including a quiet one
+  expected: true
+  event:
+    source: onepassword
+    feed: itemusages
+    action: enter-item-edit-mode
+    vault_uuid: REPLACE_WITH_AWS_ROOT_VAULT_UUID
+    actor_email: redacted@example.com
+
+# The Production vault sees ordinary daily work. If this rule ever matches it,
+# the vault scoping has broken.
+- name: Production vault access does not fire
+  expected: false
+  event:
+    source: onepassword
+    feed: itemusages
+    action: reveal
+    vault_uuid: REPLACE_WITH_PRODUCTION_VAULT_UUID
+    actor_email: redacted@example.com
+
+- name: another vault does not fire
+  expected: false
+  event:
+    source: onepassword
+    feed: itemusages
+    action: share
+    vault_uuid: REPLACE_WITH_OTHER_VAULT_UUID
+    actor_email: redacted@example.com
+
+- name: a sign-in record does not fire
+  expected: false
+  event:
+    source: onepassword
+    feed: signinattempts
+    category: success
+    type: credentials_ok
+    actor_email: redacted@example.com

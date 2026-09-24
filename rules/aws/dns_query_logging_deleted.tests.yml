@@ -1,0 +1,31 @@
+- name: deleting a query log config fires
+  expected: true
+  event:
+    source: aws
+    eventSource: route53resolver.amazonaws.com
+    eventName: DeleteResolverQueryLogConfig
+    recipientAccountId: '123456789012'
+    requestParameters:
+      resolverQueryLogConfigId: rqlc-0123456789abcdef0
+
+- name: disassociating one from a VPC fires
+  expected: true
+  event:
+    source: aws
+    eventSource: route53resolver.amazonaws.com
+    eventName: DisassociateResolverQueryLogConfig
+
+- name: a denied attempt does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: route53resolver.amazonaws.com
+    eventName: DeleteResolverQueryLogConfig
+    errorCode: AccessDeniedException
+
+- name: creating one does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: route53resolver.amazonaws.com
+    eventName: CreateResolverQueryLogConfig

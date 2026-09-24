@@ -1,0 +1,32 @@
+title: AWS KMS Key Disabled Or Scheduled For Deletion
+id: 1a6c8e42-3b57-4d90-ae21-5c7f9b0d2e34
+status: experimental
+description: >
+  A customer managed KMS key was disabled or scheduled for deletion. Everything
+  encrypted under that key becomes unreadable when the deletion completes,
+  including data the owner of the key did not know about, so this is both a
+  destructive action and a way to deny access to evidence. The pending window
+  is the only chance to cancel.
+  Security Hub control CloudWatch.7 (CIS AWS Foundations 3.7 / 4.7).
+references:
+  - https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-7
+author: samma-io
+level: high
+tags:
+  - attack.impact
+  - attack.t1485
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: kms.amazonaws.com
+    eventName:
+      - DisableKey
+      - ScheduleKeyDeletion
+  filter_failed:
+    errorCode|startswith: AccessDenied
+  condition: selection and not filter_failed
+falsepositives:
+  - Decommissioning a key as part of a planned teardown. Should be reconcilable
+    against a change record, and the deletion window makes that check possible.

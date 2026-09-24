@@ -1,0 +1,99 @@
+- name: a 44-character base32 label fires
+  expected: true
+  event:
+    source: dns
+    query_name: MFRGGZDFMZTWQ2LKNNWG23TPOBYXE43UOZQGQ3DJ.tunnel.example.com.
+    query_type: TXT
+    rcode: NOERROR
+    srcaddr: 10.4.12.88
+    vpc_id: vpc-0000example000000
+    transport: UDP
+
+- name: a base64url label with padding and dashes fires
+  expected: true
+  event:
+    source: dns
+    query_name: aGVsbG8td29ybGQtdGhpcy1pcy1hLWxvbmctcGF5bG9hZA==.x.example.net.
+    query_type: NULL
+    rcode: NXDOMAIN
+    srcaddr: 10.4.12.88
+
+- name: an ordinary AWS service endpoint does not fire
+  expected: false
+  event:
+    source: dns
+    query_name: sqs.us-east-1.amazonaws.com.
+    query_type: A
+    rcode: NOERROR
+    srcaddr: 10.4.12.88
+
+- name: a long name made of many short labels does not fire
+  expected: false
+  event:
+    source: dns
+    # 60 characters overall, but no single label reaches 40 -- the rule is
+    # anchored on the first label for exactly this case.
+    query_name: green.blue.red.yellow.orange.purple.internal.corp.example.com.
+    query_type: A
+    rcode: NOERROR
+    srcaddr: 10.4.12.88
+
+- name: a 39-character first label does not fire
+  expected: false
+  event:
+    source: dns
+    # One short of the threshold, to pin the boundary.
+    query_name: MFRGGZDFMZTWQ2LKNNWG23TPOBYXE43UOZQGQ3D.example.com.
+    query_type: TXT
+    rcode: NOERROR
+    srcaddr: 10.4.12.88
+
+- name: a long label that is not in the encoding alphabet does not fire
+  expected: false
+  event:
+    source: dns
+    # Dots aside, this label is long but contains characters base32/base64
+    # never emit, so it is not a carrier.
+    query_name: "this~is~a~very~long~label~with~tildes~in~it~everywhere.example.com."
+    query_type: A
+    rcode: NOERROR
+    srcaddr: 10.4.12.88
+
+# No cross-lane case here any more. Since the lane split a CloudTrail record
+# cannot reach filtered-dns at all -- different prefix, different queue,
+# different service -- so a test asserting it does not fire would be asserting
+# something the topology already guarantees.
+- name: a resolver row with no query_name does not fire
+  expected: false
+  event:
+    source: dns
+    query_type: A
+    rcode: NOERROR
+    srcaddr: 10.4.12.88
+
+# The regression that took this rule out of service on 2026-09-22. Every one of
+# the 14522 false positives in a 34922-record sample looked like these.
+- name: an S3 bucket endpoint does not fire
+  expected: false
+  event:
+    source: dns
+    feed: dns
+    query_name: detection-rules-123456789012-us-east-1.s3.amazonaws.com
+    query_type: A
+    srcaddr: 10.1.55.67
+
+- name: a VPC endpoint hostname does not fire
+  expected: false
+  event:
+    source: dns
+    feed: dns
+    query_name: vpce-0abc1234567890def-a1b2c3d4.ec2.us-east-1.vpce.amazonaws.com
+    query_type: A
+
+- name: an RDS endpoint does not fire
+  expected: false
+  event:
+    source: dns
+    feed: dns
+    query_name: some-long-database-cluster-name-here.cluster-abcdefghij.us-east-1.rds.amazonaws.com
+    query_type: A

@@ -1,0 +1,74 @@
+# Upstream rules considered and deliberately NOT imported.
+#
+# Without this file a re-import silently re-litigates every curation decision
+# ever made: the ids are absent from the tree precisely because someone removed
+# them, and absence is exactly what the importer treats as "new". Verified --
+# a second run of the importer offered 14 rules back, including six duplicates
+# and four that cannot fire.
+#
+# Removing an entry here is how you reconsider one.
+
+# --- semantic duplicates of a rule we already have ------------------------
+# Not caught by id comparison: an upstream duplicate has a different id by
+# construction. TestRules_DoNotSemanticallyDuplicateEachOther is the guard.
+- id: 4db60cc0-36fb-42b7-9b58-a5b53019fb74
+  rule: aws_cloudtrail_disable_logging.yml
+  reason: duplicate of rules/aws/cloudtrail_logging_disabled.yml
+- id: e1f7febb-7b94-4234-b5c6-00fb8500f5dd
+  rule: aws_cloudtrail_new_acl_entries.yml
+  reason: subset of rules/aws/network_acl_changed.yml (CloudWatch.11)
+- id: c803b2ce-c4a2-4836-beae-b112010390b1
+  rule: aws_cloudtrail_new_route_added.yml
+  reason: subset of rules/aws/route_table_changed.yml (CloudWatch.13)
+- id: 07330162-dba1-4746-8121-a9647d49d297
+  rule: aws_config_disable_recording.yml
+  reason: subset of rules/aws/config_recorder_stopped_or_deleted.yml (CloudWatch.9)
+- id: 8ad1600d-e9dc-4251-b0ee-a65268f29add
+  rule: aws_root_account_usage.yml
+  reason: duplicate of rules/aws/root_account_activity.yml
+- id: 6fb77778-040f-4015-9440-572aa9b6b580
+  rule: aws_cloudtrail_security_group_change_ingress_egress.yml
+  reason: >
+    fires on all six security-group change events. rules/aws/security_group_opened_to_the_internet.yml
+    deliberately narrows CloudWatch.10 to ingress from 0.0.0.0/0, because the
+    broad form fires on routine Terraform deploys. Importing this would
+    reintroduce exactly the noise that narrowing avoided.
+
+# --- cannot fire, or contradicts its own fixture ---------------------------
+- id: ccd6a6c8-bb4e-4a91-9d2a-07e632819374
+  rule: aws_delete_saml_provider.yml
+  reason: >
+    requires a top-level `status: success` field. CloudTrail emits no such
+    field -- confirmed against the upstream fixture's own key list -- so the
+    rule cannot fire anywhere, not just here.
+- id: f305fd62-beca-47da-ad95-7690a0620084
+  rule: aws_enum_buckets.yml
+  reason: >
+    excludes userIdentity.type AssumedRole, but its own should_match fixture is
+    an AssumedRole event, so rule and fixture contradict each other. Moot here
+    regardless: access is federated, so essentially everything is AssumedRole.
+- id: 38e7f511-3f74-41d4-836e-f57dfa18eead
+  rule: aws_cloudtrail_ssm_malicious_usage.yml
+  reason: >
+    depends on the `errorCode: null` idiom for "field absent", which does not
+    match under this engine. Worth revisiting if that is ever fixed; three more
+    upstream rules use the same idiom.
+- id: f8103686-e3e8-46f3-be72-65f7fcb4aa53
+  rule: aws_console_getsignintoken.yml
+  reason: >
+    matched its own should_not_match fixture -- over-broad as written under
+    this engine's evaluation.
+
+# --- rejected by a gate, recorded so the reason survives -------------------
+- id: 0a5177f4-6ca9-44c2-aacf-d3f3d8b6e4d2
+  rule: aws_iam_backdoor_users_keys.yml
+  reason: uses |fieldref, which sigma-go v0.6.6 does not implement at all
+- id: 055fb148-60f8-462d-ad16-26926ce050f1
+  rule: aws_update_login_profile.yml
+  reason: uses |fieldref, which sigma-go v0.6.6 does not implement at all
+- id: 97fbabf8-8e1b-47a2-b7d5-a418d2b95e3d
+  rule: aws_new_lambda_layer_attached.yml
+  reason: wildcard in a value; this engine matches values literally, so it would never fire
+- id: 8a63cdd4-6207-414a-85bc-7e032bd3c1a2
+  rule: aws_rds_change_master_password.yml
+  reason: wildcard in a value; this engine matches values literally, so it would never fire

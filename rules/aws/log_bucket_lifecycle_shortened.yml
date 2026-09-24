@@ -1,0 +1,36 @@
+title: AWS Short Expiry Lifecycle Rule Applied To A Bucket
+id: 0d5b8e93-4c17-42a6-b8f1-9e0a1b2c3d4f
+status: experimental
+description: >
+  A lifecycle configuration was applied that expires objects within a week.
+  Lifecycle expiry deletes logs on a schedule with no further API calls, so it
+  destroys evidence quietly and in a way that looks like configuration rather
+  than deletion. Applied to a log or archive bucket it is an anti-forensics
+  step; this estate keeps six years of raw archive precisely so that is not
+  possible by accident.
+  Adapted from TrailAlerts (Apache-2.0), which matched an expiry of exactly one
+  day against a nested object literal. Rewritten as a numeric comparison so any
+  short window is caught, and because matching a nested object literal is
+  fragile here -- see the array note in sigma-config.yml.
+references:
+  - https://github.com/adanalvarez/TrailAlerts
+author: samma-io
+level: high
+tags:
+  - attack.defense_evasion
+  - attack.t1485
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: s3.amazonaws.com
+    eventName: PutBucketLifecycleConfiguration
+  short_expiry:
+    requestParameters.lifecycleConfiguration.rules.expiration.days|lte: 7
+  filter_failed:
+    errorCode|startswith: AccessDenied
+  condition: selection and short_expiry and not filter_failed
+falsepositives:
+  - A genuinely short-lived scratch bucket. Worth confirming the bucket name is
+    not one of the archive or detection buckets.

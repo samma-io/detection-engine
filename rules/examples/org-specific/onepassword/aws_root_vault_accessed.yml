@@ -1,0 +1,37 @@
+title: 1Password AWS Root Vault Accessed
+id: 5b2e9d81-7a34-4c60-9e15-3f4a5b6c7d88
+status: experimental
+description: >
+  An item in the AWS root vault was revealed, copied, exported or shared. That
+  vault holds the root credentials for the AWS organisation -- the account that
+  can rewrite service control policies, reach every member account, and is the
+  usual break-glass path when SSO is unavailable.
+  Scoped by vault rather than by item, so a credential added tomorrow is covered
+  without anyone remembering to update a list.
+  In a well-run estate this vault is touched rarely -- measured over a full day
+  in one deployment, not once. It should stay that way, which is what makes a
+  critical alert on any access reasonable rather than noisy.
+references:
+  - https://developer.1password.com/docs/events-api/
+author: samma-io
+level: critical
+tags:
+  - attack.credential_access
+  - attack.privilege_escalation
+  - attack.t1555
+logsource:
+  product: onepassword
+  service: events
+detection:
+  selection:
+    source: onepassword
+    feed: itemusages
+    # REPLACE with the uuid of your AWS root vault. Vault uuids are stable and
+    # there are few of them, so this does not drift the way a list of item
+    # uuids does. Find it in the 1Password admin console or the Events API.
+    vault_uuid: REPLACE_WITH_AWS_ROOT_VAULT_UUID
+  condition: selection
+falsepositives:
+  - A genuine break-glass event. It should still be read, and it should be
+    reconcilable against an incident record.
+  - Periodic credential rotation. Rare, planned, and worth confirming.

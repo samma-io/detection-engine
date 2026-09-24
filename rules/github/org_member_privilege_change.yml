@@ -1,0 +1,27 @@
+title: GitHub Org Owner or Admin Granted
+id: 6e0a9c37-2f81-4b54-97d6-8a9b0c1d2e34
+status: stable
+description: >
+  A member was promoted to organization owner, or an outside collaborator was
+  added with admin rights. Either grants control over every repository the org
+  holds.
+author: samma-io
+level: high
+tags:
+  - attack.persistence
+  - attack.privilege_escalation
+logsource:
+  product: github
+  service: audit
+detection:
+  promotion:
+    action: org.update_member
+    permission: admin
+  invite_owner:
+    action:
+      - org.add_member
+      - org.invite_member
+    permission: admin
+  condition: promotion or invite_owner
+falsepositives:
+  - Planned onboarding of a new platform administrator.

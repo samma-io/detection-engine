@@ -1,0 +1,29 @@
+# Imported by hack/sigmaimport -- do not hand-edit without recording why.
+#   upstream:  SigmaHQ aws_efs_fileshare_mount_modified_or_deleted.yml
+#   ref:       2e8fd89f82d9104c1b30321a307254ddeea17de2
+#   fixture:   TrailAlerts aws_efs_fileshare_mount_modified_or_deleted_tests.json
+#   ref:       1073c947ef2a154f98a27ae6d27dec3d543a6fc2
+#   licence:   SigmaHQ DRL-1.1; fixture Apache-2.0
+title: AWS EFS Fileshare Mount Modified or Deleted
+id: 6a7ba45c-63d8-473e-9736-2eaabff79964
+status: test
+description: Detects when a EFS Fileshare Mount is modified or deleted. An adversary breaking any file system using the mount target that is being deleted, which might disrupt instances or applications using those mounts.
+references:
+    - https://docs.aws.amazon.com/efs/latest/ug/API_DeleteMountTarget.html
+author: Austin Songer @austinsonger
+date: 2021-08-15
+modified: 2022-10-09
+tags:
+    - attack.impact
+    - attack.t1485
+logsource:
+    product: aws
+    service: cloudtrail
+detection:
+    selection:
+        eventSource: elasticfilesystem.amazonaws.com
+        eventName: DeleteMountTarget
+    condition: selection
+falsepositives:
+    - Unknown
+level: medium

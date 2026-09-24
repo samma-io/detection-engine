@@ -1,0 +1,38 @@
+- name: a binding to allUsers fires
+  expected: true
+  event:
+    source: gcp
+    feed: activity
+    actor_email: example.person@example.com
+    protoPayload:
+      methodName: google.iam.v1.IAMPolicy.SetIamPolicy
+      authenticationInfo:
+        principalEmail: example.person@example.com
+      request:
+        policy:
+          bindings:
+            - role: roles/storage.objectViewer
+              members:
+                - allUsers
+
+- name: a binding to a named user does not fire
+  expected: false
+  event:
+    source: gcp
+    feed: activity
+    protoPayload:
+      methodName: google.iam.v1.IAMPolicy.SetIamPolicy
+      request:
+        policy:
+          bindings:
+            - role: roles/storage.objectViewer
+              members:
+                - user:example.person@example.com
+
+- name: reading a policy does not fire
+  expected: false
+  event:
+    source: gcp
+    feed: activity
+    protoPayload:
+      methodName: google.iam.v1.IAMPolicy.GetIamPolicy

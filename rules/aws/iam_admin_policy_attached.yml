@@ -1,0 +1,50 @@
+title: AWS IAM Administrator Policy Attached Or Inline Policy Written
+id: 2d8f4a61-5e93-4c07-b12a-6f7e8d9c0a1b
+status: experimental
+description: >
+  An administrator-grade managed policy was attached to a user, role or group,
+  or an inline policy was written directly onto one. Both are durable privilege
+  grants that survive the session, unlike an SSO Elevator grant which expires.
+  Security Hub control CloudWatch.4 (CIS 3.4 / 4.4) asks for an alarm on all
+  sixteen IAM policy change events. That is narrowed here to the
+  administrator-granting subset and to inline policies, because in a
+  Terraform-managed estate the full set fires on routine deploys. The rest of
+  the control is recorded as partially covered rather than quietly claimed.
+  Inline policies are included at the same level as admin attachment despite
+  granting less on average: they are how privilege is added without touching a
+  reviewed, named policy document.
+references:
+  - https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-4
+author: samma-io
+level: high
+tags:
+  - attack.privilege_escalation
+  - attack.persistence
+  - attack.t1098.003
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  attach:
+    eventSource: iam.amazonaws.com
+    eventName:
+      - AttachUserPolicy
+      - AttachRolePolicy
+      - AttachGroupPolicy
+  admin_policy:
+    requestParameters.policyArn|contains:
+      - AdministratorAccess
+      - PowerUserAccess
+      - IAMFullAccess
+  inline:
+    eventSource: iam.amazonaws.com
+    eventName:
+      - PutUserPolicy
+      - PutRolePolicy
+      - PutGroupPolicy
+  filter_failed:
+    errorCode|startswith: AccessDenied
+  condition: ((attach and admin_policy) or inline) and not filter_failed
+falsepositives:
+  - Terraform provisioning a new administrative role. Attributable via
+    userIdentity.sessionContext.sessionIssuer.

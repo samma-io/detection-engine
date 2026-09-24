@@ -1,0 +1,69 @@
+- name: resolving dns.google fires
+  expected: true
+  event:
+    source: dns
+    query_name: dns.google.
+    query_type: A
+    rcode: NOERROR
+    srcaddr: 10.4.12.88
+    vpc_id: vpc-0000example000000
+
+- name: resolving a Cloudflare DoH endpoint fires
+  expected: true
+  event:
+    source: dns
+    query_name: mozilla.cloudflare-dns.com.
+    query_type: AAAA
+    rcode: NOERROR
+    srcaddr: 10.4.31.7
+
+- name: resolving one.one.one.one fires
+  expected: true
+  event:
+    source: dns
+    query_name: one.one.one.one.
+    query_type: A
+    rcode: NOERROR
+    srcaddr: 10.4.31.7
+
+- name: an ordinary AWS endpoint does not fire
+  expected: false
+  event:
+    source: dns
+    query_name: sts.us-east-1.amazonaws.com.
+    query_type: A
+    rcode: NOERROR
+    srcaddr: 10.4.12.88
+
+- name: a name merely containing dns does not fire
+  expected: false
+  event:
+    source: dns
+    # The rule lists exact names precisely so this cannot match.
+    query_name: internal-dns.corp.example.com.
+    query_type: A
+    rcode: NOERROR
+    srcaddr: 10.4.12.88
+
+- name: a name without the trailing dot does not fire
+  expected: false
+  event:
+    source: dns
+    # Resolver query logs always carry the FQDN with its trailing dot. A row
+    # without one did not come from this source, and matching it would mean
+    # matching something whose shape we have not verified.
+    query_name: dns.google
+    query_type: A
+    rcode: NOERROR
+    srcaddr: 10.4.12.88
+
+# See the note in dns_long_label_query.tests.yml: cross-lane contamination is
+# no longer expressible, so this case is an in-lane negative instead.
+- name: a resolver row for an internal name does not fire
+  expected: false
+  event:
+    source: dns
+    query_name: quickwit.internal.corp.example.com.
+    query_type: A
+    rcode: NOERROR
+    srcaddr: 10.4.12.88

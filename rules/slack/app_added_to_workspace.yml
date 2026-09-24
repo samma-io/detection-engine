@@ -1,0 +1,33 @@
+title: Slack App Added To The Workspace
+id: 5c8e1f34-2b70-4a95-8d16-3e4f5a6b7c8d
+status: experimental
+description: >
+  A third-party app was added to the workspace. App install is the shortest
+  path to bulk Slack data access and it needs no password, so every install is
+  worth a look even though most are routine.
+
+  Deliberately not scoped to dangerous permissions. team.integrationLogs does
+  not return a scope field in practice -- 0 of the live records carry one,
+  though Slack's API documentation lists it -- so a rule that filtered on scope
+  would load, report healthy and never fire. Triage on app_type and user_name
+  instead, which are always present.
+references:
+  - https://api.slack.com/scopes
+  - https://api.slack.com/methods/team.integrationLogs
+author: samma-io
+level: medium
+tags:
+  - attack.persistence
+  - attack.collection
+logsource:
+  product: slack
+  service: admin
+detection:
+  selection:
+    source: slack
+    feed: integrationlogs
+    change_type: added
+  condition: selection
+falsepositives:
+  - Any approved integration being installed, which is most of them. This is a
+    visibility rule; the judgement is in the triage, not the match.

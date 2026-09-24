@@ -1,0 +1,37 @@
+title: AWS Network Gateway Changed
+id: 6a2e8c37-1d94-4b58-8e03-7c9a0b1d2e3f
+status: experimental
+description: >
+  An internet or customer gateway was created, deleted, attached or detached. Attaching an internet gateway is the step that gives a previously private subnet a route off the network.
+  Security Hub control CloudWatch.12.
+  Deliberately low. Every alert-destination route currently includes the same
+  Slack channel regardless of level, so severity does not yet change who is
+  disturbed -- it only records intent. These are a record of who changed the
+  network and when, not something to page on, and they are classified that way
+  now so that they land correctly once routing distinguishes levels.
+references:
+  - https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-12
+author: samma-io
+level: low
+tags:
+  - attack.defense_evasion
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: ec2.amazonaws.com
+    eventName:
+      - CreateCustomerGateway
+      - DeleteCustomerGateway
+      - AttachInternetGateway
+      - CreateInternetGateway
+      - DeleteInternetGateway
+      - DetachInternetGateway
+  filter_failed:
+    errorCode|startswith: AccessDenied
+  condition: selection and not filter_failed
+falsepositives:
+  - Terraform managing network infrastructure. Expected to be the bulk
+    of this rule's volume; it earns its place as a record of who changed
+    the network and when, not as a page.

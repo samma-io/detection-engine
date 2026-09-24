@@ -1,0 +1,18 @@
+detection-engine
+Copyright 2026 samma.io contributors
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+The published container image (ghcr.io/samma-io/detection-engine) bundles
+third-party software that keeps its own licence:
+
+  busybox (shipped in the alpine base image)   GPL-2.0-only
+  bradleyjkemp/sigma-go                        MIT
+  aws/aws-sdk-go-v2                            Apache-2.0
+  prometheus/client_golang                     Apache-2.0
+
+Detection rules imported from SigmaHQ (see docs/RULE-SOURCES.md) are licensed
+under the Detection Rule License (DRL) 1.1 and retain their original author
+and reference attribution in each rule file. Rules imported from TrailAlerts
+are Apache-2.0 and are attributed the same way. Rules authored in this
+repository carry `author: samma-io` and are Apache-2.0.

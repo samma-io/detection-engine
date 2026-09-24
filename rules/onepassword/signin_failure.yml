@@ -1,0 +1,27 @@
+title: 1Password Sign-In Failure
+id: 7a2d4b61-8e39-4c02-b5d7-1f2e3a4b5c6d
+status: experimental
+description: >
+  A failed sign-in on the 1Password Events API. Credential failures against the
+  password manager itself are the precursor to everything else in the vault.
+  Deliberately medium: a single mistyped password is not an incident, and this
+  earns its keep by volume and by correlation rather than alone.
+references:
+  - https://developer.1password.com/docs/events-api/
+author: samma-io
+level: medium
+tags:
+  - attack.credential_access
+logsource:
+  product: onepassword
+  service: events
+detection:
+  selection:
+    source: onepassword
+    feed: signinattempts
+    category:
+      - credentials_failed
+      - mfa_failed
+  condition: selection
+falsepositives:
+  - A user mistyping a password, which is why this is not high.

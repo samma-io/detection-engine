@@ -1,0 +1,15 @@
+# sigma-go Config for the alb lane.
+#
+# ALB CONNECTION logs -- one record per TLS connection, carrying the handshake
+# and the client certificate. Not access logs: no URL, no status code, no
+# request. A rule that wants those is looking at the wrong lane.
+#
+# Split out of the aws lane when Vector gave it its own prefix; previously on filtered-aws.
+title: filtered alb
+logsources:
+  alb_connection:
+    product: aws
+    service: alb_connection
+    index: filtered-alb
+defaultindex: filtered-alb
+fieldmappings: {}

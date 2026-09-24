@@ -1,0 +1,33 @@
+- name: writing a bucket policy fires
+  expected: true
+  event:
+    source: aws
+    eventSource: s3.amazonaws.com
+    eventName: PutBucketPolicy
+    recipientAccountId: '123456789012'
+    requestParameters:
+      bucketName: some-bucket
+
+- name: deleting a bucket policy fires
+  expected: true
+  event:
+    source: aws
+    eventSource: s3.amazonaws.com
+    eventName: DeleteBucketPolicy
+    requestParameters:
+      bucketName: some-bucket
+
+- name: a denied attempt does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: s3.amazonaws.com
+    eventName: PutBucketPolicy
+    errorCode: AccessDenied
+
+- name: an ordinary object read does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: s3.amazonaws.com
+    eventName: GetObject

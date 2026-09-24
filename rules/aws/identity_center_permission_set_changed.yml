@@ -1,0 +1,52 @@
+title: AWS Identity Center Permission Set Definition Changed
+id: e70b4d19-8c53-4a26-9f84-1d5e6a7b8c92
+status: experimental
+description: >
+  The definition of an IAM Identity Center permission set was created, altered
+  or deleted -- an inline policy written, a managed policy attached, a
+  permissions boundary changed. This edits what the permission set grants, so
+  it silently changes the access of everyone who can already assume it,
+  including through the SSO Elevator, without any new grant being requested or
+  approved.
+  Deliberately scoped to permission set *definitions* rather than account
+  assignments. The SSO Elevator works by creating and deleting assignments and
+  never touches a definition, so this rule needs no allowlist of automation
+  roles to stay quiet -- and an allowlist that drifts is how a rule like this
+  stops working without anyone noticing.
+references:
+  - https://docs.aws.amazon.com/singlesignon/latest/userguide/permissionsetsconcept.html
+  - https://github.com/fivexl/terraform-aws-sso-elevator
+author: samma-io
+level: high
+tags:
+  - attack.persistence
+  - attack.privilege_escalation
+  - attack.t1098.003
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: sso.amazonaws.com
+    eventName:
+      - CreatePermissionSet
+      - UpdatePermissionSet
+      - DeletePermissionSet
+      - PutInlinePolicyToPermissionSet
+      - DeleteInlinePolicyFromPermissionSet
+      - AttachManagedPolicyToPermissionSet
+      - DetachManagedPolicyFromPermissionSet
+      - AttachCustomerManagedPolicyReferenceToPermissionSet
+      - DetachCustomerManagedPolicyReferenceFromPermissionSet
+      - PutPermissionsBoundaryToPermissionSet
+      - DeletePermissionsBoundaryFromPermissionSet
+  # A failed call is an attempt, not a change. Kept separate so the successful
+  # case reads plainly.
+  filter_failed:
+    errorCode|startswith: AccessDenied
+  condition: selection and not filter_failed
+falsepositives:
+  - Terraform managing permission sets as code. These should be rare, tied to a
+    reviewed change, and attributable to the CI role in
+    userIdentity.sessionContext.sessionIssuer -- if they turn out to be
+    frequent, narrow this on that field rather than lowering the level.

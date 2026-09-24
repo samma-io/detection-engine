@@ -1,0 +1,25 @@
+- name: promoting a member to admin fires
+  expected: true
+  event:
+    source: github
+    action: org.update_member
+    permission: admin
+    actor: some-owner
+    org: example-org
+    created_at: 1780578968354
+
+- name: inviting a new admin fires
+  expected: true
+  event:
+    source: github
+    action: org.invite_member
+    permission: admin
+    org: example-org
+
+- name: demoting a member to read does not fire
+  expected: false
+  event:
+    source: github
+    action: org.update_member
+    permission: read
+    org: example-org

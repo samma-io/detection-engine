@@ -1,0 +1,45 @@
+- name: assigning an admin role fires
+  expected: true
+  event:
+    source: workspace
+    feed: admin
+    actor_email: example.person@example.com
+    event_time: '2026-09-15T09:30:00Z'
+    type: DELEGATED_ADMIN_SETTINGS
+    name: ASSIGN_ROLE
+
+- name: granting an admin privilege fires
+  expected: true
+  event:
+    source: workspace
+    feed: admin
+    actor_email: example.person@example.com
+    type: DELEGATED_ADMIN_SETTINGS
+    name: GRANT_ADMIN_PRIVILEGE
+
+- name: revoking a role does not fire
+  expected: false
+  event:
+    source: workspace
+    feed: admin
+    actor_email: example.person@example.com
+    type: DELEGATED_ADMIN_SETTINGS
+    name: UNASSIGN_ROLE
+
+- name: a real quarantine release does not fire
+  expected: false
+  event:
+    source: workspace
+    feed: admin
+    actor_email: example.person@example.com
+    type: EMAIL_SETTINGS
+    name: RELEASE_FROM_QUARANTINE
+
+- name: a drive edit does not fire
+  expected: false
+  event:
+    source: workspace
+    feed: drive
+    actor_email: example.person@example.com
+    type: access
+    name: edit

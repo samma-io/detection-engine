@@ -1,0 +1,76 @@
+- name: a TLSv1 connection fires
+  expected: true
+  event:
+    source: alb
+    log_type: alb_connection
+    timestamp: '2026-09-20T02:10:01.008462Z'
+    elb: app/quickwit/8bb154570764e3d3
+    listener_port: '443'
+    client_ip: 10.4.9.221
+    client_port: '51844'
+    tls_protocol: TLSv1
+    tls_cipher: ECDHE-RSA-AES128-SHA
+
+- name: a TLSv1.1 connection fires
+  expected: true
+  event:
+    source: alb
+    log_type: alb_connection
+    timestamp: '2026-09-20T02:11:14.229301Z'
+    elb: app/quickwit/8bb154570764e3d3
+    listener_port: '443'
+    client_ip: 10.4.9.221
+    tls_protocol: TLSv1.1
+    tls_cipher: ECDHE-RSA-AES128-SHA
+
+- name: an SSLv3 connection fires
+  expected: true
+  event:
+    source: alb
+    log_type: alb_connection
+    timestamp: '2026-09-20T02:12:00.000000Z'
+    elb: app/internal-services/0a1b2c3d4e5f6071
+    tls_protocol: SSLv3
+
+- name: TLSv1.2 does not fire
+  expected: false
+  event:
+    source: alb
+    log_type: alb_connection
+    timestamp: '2026-09-20T02:13:41.771002Z'
+    elb: app/quickwit/8bb154570764e3d3
+    listener_port: '443'
+    client_ip: 10.4.9.221
+    tls_protocol: TLSv1.2
+    tls_cipher: ECDHE-RSA-AES128-GCM-SHA256
+
+- name: TLSv1.3 does not fire
+  expected: false
+  event:
+    source: alb
+    log_type: alb_connection
+    timestamp: '2026-09-20T02:14:02.100440Z'
+    elb: app/quickwit/8bb154570764e3d3
+    tls_protocol: TLSv1.3
+
+- name: a connection with no TLS at all does not fire
+  expected: false
+  event:
+    source: alb
+    log_type: alb_connection
+    timestamp: '2026-09-20T02:15:10.550120Z'
+    # The :80 listener on the quickwit ALB terminates no TLS, so these rows
+    # carry no tls_protocol. An absent field must not be treated as a weak one.
+    elb: app/quickwit/8bb154570764e3d3
+    listener_port: '80'
+    client_ip: 10.4.9.221
+
+- name: a row without the alb_connection log_type does not fire
+  expected: false
+  event:
+    source: alb
+    # The rule pins log_type even though this lane now carries only ALB rows.
+    # That is not redundant: it is what stops a malformed or partially parsed
+    # record with a stray tls_protocol from firing a high-severity alert.
+    log_type: unknown
+    tls_protocol: TLSv1

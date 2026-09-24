@@ -1,0 +1,38 @@
+title: AWS Console Sign-In Without MFA
+id: 4f92a1c7-6d38-4b05-9e74-2a3b5c6d7e81
+status: experimental
+description: >
+  A successful console sign-in where multi-factor authentication was not used.
+  Access to this estate is federated through Google Workspace and the SSO
+  Elevator, so an interactive console login with a password and no second
+  factor is not how anyone is supposed to get in. It is the shape of a
+  credential that has been reused or stolen.
+  Security Hub control CloudWatch.3 (CIS AWS Foundations 3.2 / 4.2). SAML and
+  role-federated sign-ins are excluded: they carry MFA at the identity provider
+  and record MFAUsed as "No" regardless, so including them would make this rule
+  fire on every normal login.
+references:
+  - https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-3
+author: samma-io
+level: high
+tags:
+  - attack.initial_access
+  - attack.t1078.004
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: signin.amazonaws.com
+    eventName: ConsoleLogin
+    responseElements.ConsoleLogin: Success
+  no_mfa:
+    additionalEventData.MFAUsed: 'No'
+  filter_federated:
+    userIdentity.type:
+      - AssumedRole
+      - FederatedUser
+  condition: selection and no_mfa and not filter_federated
+falsepositives:
+  - A break-glass root sign-in, which should be rare and is separately covered
+    at critical by root_activity_in_management_account.

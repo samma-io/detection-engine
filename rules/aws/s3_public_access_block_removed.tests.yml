@@ -1,0 +1,24 @@
+- name: removing the public access block fires
+  expected: true
+  event:
+    source: aws
+    eventSource: s3.amazonaws.com
+    eventName: DeleteBucketPublicAccessBlock
+    requestParameters: {bucketName: filtered-123456789012-us-east-1}
+    userIdentity: {type: AssumedRole}
+
+- name: a denied attempt does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: s3.amazonaws.com
+    eventName: PutBucketPolicy
+    errorCode: AccessDenied
+    requestParameters: {bucketName: filtered-123456789012-us-east-1}
+
+- name: an ordinary object read does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: s3.amazonaws.com
+    eventName: GetObject

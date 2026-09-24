@@ -1,0 +1,26 @@
+- name: deleting a flow log fires
+  expected: true
+  event:
+    source: aws
+    eventSource: ec2.amazonaws.com
+    eventName: DeleteFlowLogs
+    recipientAccountId: '123456789012'
+    requestParameters:
+      DeleteFlowLogsRequest:
+        FlowLogId:
+          content: fl-0123456789abcdef0
+
+- name: a denied attempt does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: ec2.amazonaws.com
+    eventName: DeleteFlowLogs
+    errorCode: AccessDeniedException
+
+- name: creating a flow log does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: ec2.amazonaws.com
+    eventName: CreateFlowLogs

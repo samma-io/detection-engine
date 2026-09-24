@@ -1,0 +1,41 @@
+title: 1Password Production Vault Credential Read
+id: 6c3f0a92-8b45-4d71-a026-4e5f6a7b8c99
+status: experimental
+description: >
+  A credential was revealed, copied or exported from the Production vault.
+  Deliberately level low, and the reason matters more than the level: measured
+  over a full day in one deployment this was a few dozen events, all ordinary
+  engineering work. It is a record of who read production secrets and when,
+  not something to wake anyone for.
+  Paging on it would need a baseline this engine cannot hold -- unusual actor,
+  unusual hour, unusual client are all cross-event questions, and v1 is
+  stateless single-event matching.
+  Sharing and edit-mode are excluded: they do not expose the secret value.
+  aws_root_vault_accessed covers the break-glass vault separately, at critical.
+references:
+  - https://developer.1password.com/docs/events-api/
+author: samma-io
+level: low
+tags:
+  - attack.credential_access
+  - attack.t1555
+logsource:
+  product: onepassword
+  service: events
+detection:
+  selection:
+    source: onepassword
+    feed: itemusages
+    # REPLACE with the uuid of your Production vault.
+    vault_uuid: REPLACE_WITH_PRODUCTION_VAULT_UUID
+  exposes_the_secret:
+    action:
+      - reveal
+      - export
+      - secure-copy
+  condition: selection and exposes_the_secret
+falsepositives:
+  - Ordinary engineering work, which is most of it. This rule earns its place
+    as a trail to read after an incident, not as an alert to act on. A sharp
+    change in the daily count is the interesting signal, and noticing it needs
+    a dashboard rather than this rule.

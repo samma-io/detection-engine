@@ -1,0 +1,31 @@
+- name: stopping the configuration recorder fires
+  expected: true
+  event:
+    source: aws
+    eventSource: config.amazonaws.com
+    eventName: StopConfigurationRecorder
+    recipientAccountId: '123456789012'
+    requestParameters:
+      configurationRecorderName: example-awsconfig-recorder
+
+- name: deleting the delivery channel fires
+  expected: true
+  event:
+    source: aws
+    eventSource: config.amazonaws.com
+    eventName: DeleteDeliveryChannel
+
+- name: a denied attempt does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: config.amazonaws.com
+    eventName: StopConfigurationRecorder
+    errorCode: AccessDeniedException
+
+- name: reading the recorder status does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: config.amazonaws.com
+    eventName: DescribeConfigurationRecorderStatus

@@ -1,0 +1,50 @@
+title: Host Resolving A Public DNS Or DoH Resolver
+id: 8c05e6a2-71bd-4f38-9e47-5a3d2b8c1f60
+status: experimental
+description: >
+  Something inside the VPC asked internal DNS for the address of a public
+  resolver -- Google, Cloudflare, Quad9 or OpenDNS, including their
+  DNS-over-HTTPS endpoints.
+
+  Workloads have no reason to look these up. Resolution is handed to them by
+  DHCP, and a process going out of its way to find a different resolver is
+  usually about to stop using the one that is logged. That is the point: this
+  query is visible, and everything the host resolves afterwards may not be.
+
+  It is a precursor rather than a compromise, which is why it is medium and not
+  high. A hit is worth pairing with the flow logs for the same source address.
+author: samma-io
+level: medium
+tags:
+  - attack.command_and_control
+  - attack.t1572
+  - attack.defense_evasion
+logsource:
+  product: aws
+  service: route53_resolver
+detection:
+  selection:
+    # Trailing dot: Route53 Resolver query logs record the fully qualified name.
+    # Listed as exact values rather than a wildcard on "dns" so ordinary names
+    # that merely contain the word cannot match.
+    query_name:
+      - dns.google.
+      - dns.google.com.
+      - cloudflare-dns.com.
+      - one.one.one.one.
+      - dns.quad9.net.
+      - dns9.quad9.net.
+      - doh.opendns.com.
+      - dns.nextdns.io.
+      - mozilla.cloudflare-dns.com.
+      - security.cloudflare-dns.com.
+      - family.cloudflare-dns.com.
+  condition: selection
+falsepositives:
+  - >
+    A container image whose base layer ships a resolver health check. Confirm by
+    whether the same source address queries on a fixed interval.
+  - >
+    Security tooling that deliberately tests external resolution. If that is
+    running here, add its source address as a filter rather than dropping the
+    rule.

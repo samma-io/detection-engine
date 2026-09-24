@@ -1,0 +1,32 @@
+- name: a reveal from an unmanaged client fires
+  expected: true
+  event:
+    source: onepassword
+    feed: itemusages
+    action: reveal
+    vault_uuid: j4rmnbcvjkjhgfdsaqwerty1234
+    item_uuid: n7ktqpzxcvbnmasdfghjkl56789
+    actor_email: example.person@example.com
+    client:
+      app_name: curl/8.4.0
+      ip_address: 198.51.100.24
+
+- name: a reveal from the managed browser extension does not fire
+  expected: false
+  event:
+    source: onepassword
+    feed: itemusages
+    action: reveal
+    actor_email: example.person@example.com
+    client:
+      app_name: 1Password Browser Extension
+
+- name: a sign-in from an unmanaged client does not fire on this rule
+  expected: false
+  event:
+    source: onepassword
+    feed: signinattempts
+    category: success
+    actor_email: example.person@example.com
+    client:
+      app_name: curl/8.4.0

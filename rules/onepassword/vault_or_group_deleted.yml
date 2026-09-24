@@ -1,0 +1,27 @@
+title: 1Password Vault Or Group Deleted
+id: 9e4b7c02-1a68-4f53-bc90-6d7e8f9a0b1c
+status: experimental
+description: >
+  A vault or a group was deleted. Vault deletion destroys shared credentials for
+  everyone who had access, and group deletion silently removes that access -- so
+  both read as destruction of a control, whether or not they were intended.
+references:
+  - https://developer.1password.com/docs/events-api/
+author: samma-io
+level: high
+tags:
+  - attack.impact
+logsource:
+  product: onepassword
+  service: events
+detection:
+  selection:
+    source: onepassword
+    feed: auditevents
+    action: delete
+    object_type:
+      - vault
+      - group
+  condition: selection
+falsepositives:
+  - Planned cleanup of a decommissioned vault.

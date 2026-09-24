@@ -1,0 +1,38 @@
+title: AWS Route Table Changed
+id: 9f4b1a68-7e25-4c93-b04d-8a1b2c3d4e5f
+status: experimental
+description: >
+  A route or route table was created, replaced, deleted or disassociated. A single added route can send traffic to an attacker-controlled appliance while every security group and NACL stays exactly as reviewed.
+  Security Hub control CloudWatch.13.
+  Deliberately low. Every alert-destination route currently includes the same
+  Slack channel regardless of level, so severity does not yet change who is
+  disturbed -- it only records intent. These are a record of who changed the
+  network and when, not something to page on, and they are classified that way
+  now so that they land correctly once routing distinguishes levels.
+references:
+  - https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-13
+author: samma-io
+level: low
+tags:
+  - attack.defense_evasion
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: ec2.amazonaws.com
+    eventName:
+      - CreateRoute
+      - CreateRouteTable
+      - ReplaceRoute
+      - ReplaceRouteTableAssociation
+      - DeleteRouteTable
+      - DeleteRoute
+      - DisassociateRouteTable
+  filter_failed:
+    errorCode|startswith: AccessDenied
+  condition: selection and not filter_failed
+falsepositives:
+  - Terraform managing network infrastructure. Expected to be the bulk
+    of this rule's volume; it earns its place as a record of who changed
+    the network and when, not as a page.

@@ -1,0 +1,46 @@
+# sigma-go Config for the GCP lane.
+#
+# Cloud Logging entries forwarded from Pub/Sub. Vector's `feed` is the decoded
+# log id -- activity, data_access, system_event, policy -- taken from logName.
+# Audit detail lives under protoPayload, which internal/decode flattens into
+# dot-joined aliases, so protoPayload.methodName matches directly.
+title: filtered gcp
+logsources:
+  gcp_audit:
+    product: gcp
+    service: audit
+    index: filtered-gcp
+defaultindex: filtered-gcp
+# Upstream GCP rules are written against the Sigma taxonomy, not against what
+# Vector puts in the bucket. Measured against 4000 real records from this lane:
+#
+#   rule field                      present   our field
+#   gcp.audit.method_name              no     protoPayload.methodName      100%
+#   data.protoPayload.serviceName      no     protoPayload.serviceName     100%
+#   data.protoPayload.logName          no     logName                      100%
+#   data.protoPayload.resource.type    no     resource.type                100%
+#   data.protoPayload.authorizationInfo.permission
+#                                      no     protoPayload.authorizationInfo.permission  85%
+#
+# Without these, 10 of the 16 upstream rules load, list on /rules, and never
+# match -- the silent failure this repo is built around.
+#
+# A mapping is a RENAME, not an alias: once a field is mapped, only the mapped
+# name is read. That is safe here because the taxonomy names never occur in a
+# real record, which is exactly why the rules needed mapping.
+#
+# The authorizationInfo entries carry a second benefit. That field is an ARRAY,
+# and sigma-go only expands an array into separate comparisons when a mapping
+# exists for it -- so mapping it is also what makes matching a
+# single element work at all.
+fieldmappings:
+  gcp.audit.method_name: protoPayload.methodName
+  data.protoPayload.methodName: protoPayload.methodName
+  data.protoPayload.serviceName: protoPayload.serviceName
+  data.protoPayload.logName: logName
+  data.protoPayload.resource.type: resource.type
+  data.protoPayload.authorizationInfo.permission: protoPayload.authorizationInfo.permission
+  data.protoPayload.authorizationInfo.granted: protoPayload.authorizationInfo.granted
+  # Self-mappings, so exact matching works on these array-valued fields.
+  protoPayload.authorizationInfo.permission: protoPayload.authorizationInfo.permission
+  protoPayload.authorizationInfo.granted: protoPayload.authorizationInfo.granted

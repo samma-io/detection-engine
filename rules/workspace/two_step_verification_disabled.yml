@@ -1,0 +1,28 @@
+title: Google Workspace Two-Step Verification Disabled
+id: 4b7e2a95-3c18-4d76-9e02-7a8b9c0d1e2f
+status: experimental
+description: >
+  Enforcement of two-step verification was turned off, for the org or for a
+  user. This is the control that makes a stolen Workspace password survivable,
+  and turning it off is a standard step before account takeover.
+references:
+  - https://developers.google.com/admin-sdk/reports/v1/appendix/activity/admin
+author: samma-io
+level: critical
+tags:
+  - attack.defense_evasion
+  - attack.persistence
+logsource:
+  product: workspace
+  service: reports
+detection:
+  selection:
+    source: workspace
+    feed: admin
+    name:
+      - UNENFORCE_STRONG_AUTHENTICATION
+      - ALLOW_STRONG_AUTHENTICATION
+      - TURN_OFF_2_STEP_VERIFICATION
+  condition: selection
+falsepositives:
+  - A documented break-glass change during an MFA migration.

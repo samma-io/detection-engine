@@ -1,0 +1,31 @@
+title: AWS Account Left The Organization
+id: 3e8a5d71-6b29-4f04-9c15-7d2e3f4a5b61
+status: experimental
+description: >
+  An account left the AWS Organization. Leaving takes the account out of scope
+  of every service control policy, every org-wide GuardDuty detector and the
+  org CloudTrail that feeds this detection plane, all at once. It is both a
+  governance event and the single cleanest way to remove an account from
+  monitoring.
+  Adapted from TrailAlerts (Apache-2.0).
+references:
+  - https://github.com/adanalvarez/TrailAlerts
+author: samma-io
+level: high
+tags:
+  - attack.defense_evasion
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: organizations.amazonaws.com
+    eventName:
+      - LeaveOrganization
+      - RemoveAccountFromOrganization
+  filter_failed:
+    errorCode|startswith: AccessDenied
+  condition: selection and not filter_failed
+falsepositives:
+  - A planned account decommission or tenant split. Rare enough that each one
+    should be reconcilable against a change record.

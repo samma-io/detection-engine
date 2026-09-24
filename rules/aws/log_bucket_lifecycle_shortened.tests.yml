@@ -1,0 +1,64 @@
+# Shape taken from a real PutBucketLifecycleConfiguration record. rules[] is an
+# array, so this exercises the array-expansion fieldmapping in sigma-config.yml.
+- name: a one-day expiry on a CloudTrail log bucket fires
+  expected: true
+  event:
+    source: aws
+    eventSource: s3.amazonaws.com
+    eventName: PutBucketLifecycleConfiguration
+    recipientAccountId: '123456789012'
+    requestParameters:
+      bucketName: aws-cloudtrail-logs-123456789012-a1b2c3d4
+      lifecycleConfiguration:
+        rules:
+          - status: Enabled
+            id: ExpireCloudTrailLogs
+            prefix: AWSLogs/
+            expiration:
+              days: 1
+
+- name: a short expiry among several rules still fires
+  expected: true
+  event:
+    source: aws
+    eventSource: s3.amazonaws.com
+    eventName: PutBucketLifecycleConfiguration
+    requestParameters:
+      bucketName: some-bucket
+      lifecycleConfiguration:
+        rules:
+          - status: Enabled
+            id: keep-long
+            expiration:
+              days: 2555
+          - status: Enabled
+            id: quietly-short
+            expiration:
+              days: 3
+
+- name: an ordinary long retention does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: s3.amazonaws.com
+    eventName: PutBucketLifecycleConfiguration
+    requestParameters:
+      bucketName: some-bucket
+      lifecycleConfiguration:
+        rules:
+          - status: Enabled
+            expiration:
+              days: 2555
+
+- name: a denied attempt does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: s3.amazonaws.com
+    eventName: PutBucketLifecycleConfiguration
+    errorCode: AccessDenied
+    requestParameters:
+      lifecycleConfiguration:
+        rules:
+          - expiration:
+              days: 1

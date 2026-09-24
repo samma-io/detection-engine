@@ -1,0 +1,26 @@
+title: GitHub Branch Protection Weakened
+id: 3d7f2b58-1a94-4e63-8c05-6d7e8f9a0b13
+status: stable
+description: >
+  A protected branch rule was destroyed or its overrides changed. Removing
+  protection on a default branch is the step that makes an unreviewed commit
+  possible, so it usually precedes rather than accompanies the interesting
+  activity.
+author: samma-io
+level: high
+tags:
+  - attack.defense_evasion
+logsource:
+  product: github
+  service: audit
+detection:
+  selection:
+    action:
+      - protected_branch.destroy
+      - protected_branch.policy_override
+      - protected_branch.update_allow_force_pushes_enforcement_level
+      - protected_branch.update_allow_deletions_enforcement_level
+      - repository_ruleset.destroy
+  condition: selection
+falsepositives:
+  - Repository archival or a deliberate ruleset migration.

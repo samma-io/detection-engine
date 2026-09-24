@@ -1,0 +1,70 @@
+# Shapes taken from real CloudTrail KMS records. The ARN form is the real SSO
+# one; the local part, domain and account id are synthetic. Replace
+# example.com with the same domain you put in the rule.
+- name: a person decrypting an S3 object fires
+  expected: true
+  event:
+    source: aws
+    eventSource: kms.amazonaws.com
+    eventName: Decrypt
+    recipientAccountId: '123456789012'
+    userIdentity:
+      type: AssumedRole
+      arn: arn:aws:sts::123456789012:assumed-role/AWSReservedSSO_AdministratorAccess_b781dc48245dcaa6/redacted@example.com
+    requestParameters:
+      encryptionContext:
+        "aws:s3:arn": arn:aws:s3:::some-bucket/some/key.json.gz
+
+- name: GenerateDataKey by a person also fires
+  expected: true
+  event:
+    source: aws
+    eventSource: kms.amazonaws.com
+    eventName: GenerateDataKey
+    userIdentity:
+      type: AssumedRole
+      arn: arn:aws:sts::123456789012:assumed-role/AWSReservedSSO_ReadOnly_4a17addd0bea7b7e/redacted@example.com
+    requestParameters:
+      encryptionContext:
+        "aws:s3:arn": arn:aws:s3:::some-bucket/another/key
+
+# This is the baseline: every S3 decrypt today is a service role.
+- name: a service role decrypting an S3 object does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: kms.amazonaws.com
+    eventName: Decrypt
+    userIdentity:
+      type: AssumedRole
+      arn: arn:aws:sts::123456789012:assumed-role/audit-firehose-123456789012-us-east-1/i-0abc
+    requestParameters:
+      encryptionContext:
+        "aws:s3:arn": arn:aws:s3:::some-bucket/key
+
+# Thousands of these a day. If they ever match, the lane drowns.
+- name: a person decrypting a DynamoDB context does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: kms.amazonaws.com
+    eventName: Decrypt
+    userIdentity:
+      type: AssumedRole
+      arn: arn:aws:sts::123456789012:assumed-role/AWSReservedSSO_ReadOnly_4a17addd0bea7b7e/redacted@example.com
+    requestParameters:
+      encryptionContext:
+        "aws:dynamodb:tableName": some-table
+
+- name: a denied attempt does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: kms.amazonaws.com
+    eventName: Decrypt
+    errorCode: AccessDeniedException
+    userIdentity:
+      arn: arn:aws:sts::123456789012:assumed-role/AWSReservedSSO_ReadOnly_x/redacted@example.com
+    requestParameters:
+      encryptionContext:
+        "aws:s3:arn": arn:aws:s3:::some-bucket/key

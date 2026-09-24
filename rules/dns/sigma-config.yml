@@ -1,0 +1,18 @@
+# sigma-go Config for the dns lane.
+#
+# Route53 Resolver query logs, split out of the aws lane into their own prefix. They
+# used to arrive on filtered-aws and are matched here on filtered-dns.
+#
+# Flat records -- a sampled day carried fifteen keys and no nesting -- so there
+# is nothing for the dot-flattened match view to do and no array field needing
+# the self-mapping trick the aws config documents at length. Keep it that way:
+# add a fieldmapping here only when a rule's field name genuinely differs from
+# what Vector emits.
+title: filtered dns
+logsources:
+  route53_resolver:
+    product: aws
+    service: route53_resolver
+    index: filtered-dns
+defaultindex: filtered-dns
+fieldmappings: {}

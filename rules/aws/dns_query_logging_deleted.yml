@@ -1,0 +1,30 @@
+title: AWS Route 53 Resolver Query Logging Deleted
+id: 7c2f9b40-3d85-4a17-b6e2-8f0a1b2c3d4e
+status: experimental
+description: >
+  A Route 53 Resolver query log configuration was deleted or disassociated.
+  This estate ships resolver query logs into the archive, so they are a live
+  detection source rather than a dormant setting, and DNS is where
+  command-and-control and exfiltration are most visible after the fact.
+  Adapted from TrailAlerts (Apache-2.0).
+references:
+  - https://github.com/adanalvarez/TrailAlerts
+author: samma-io
+level: high
+tags:
+  - attack.defense_evasion
+  - attack.t1562.008
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: route53resolver.amazonaws.com
+    eventName:
+      - DeleteResolverQueryLogConfig
+      - DisassociateResolverQueryLogConfig
+  filter_failed:
+    errorCode|startswith: AccessDenied
+  condition: selection and not filter_failed
+falsepositives:
+  - Decommissioning a VPC that had query logging attached.

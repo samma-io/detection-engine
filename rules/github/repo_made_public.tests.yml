@@ -1,0 +1,36 @@
+- name: a private repo made public fires
+  expected: true
+  event:
+    source: github
+    action: repo.access
+    visibility: public
+    actor: some-admin
+    actor_ip: 52.160.166.67
+    org: example-org
+    repo: example-org/api
+    created_at: 1780578968354
+    operation_type: modify
+
+- name: a repo made private does not fire
+  expected: false
+  event:
+    source: github
+    action: repo.access
+    visibility: private
+    org: example-org
+    repo: example-org/api
+
+- name: an unrelated audit action does not fire
+  expected: false
+  event:
+    source: github
+    action: repo.download_zip
+    org: example-org
+    repo: example-org/api
+
+- name: a scanner finding on the same prefix does not fire
+  expected: false
+  event:
+    source: github
+    scanner: tsunami
+    visibility: public

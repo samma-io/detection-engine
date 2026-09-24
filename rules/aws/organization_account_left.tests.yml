@@ -1,0 +1,32 @@
+- name: an account leaving the organization fires
+  expected: true
+  event:
+    source: aws
+    eventSource: organizations.amazonaws.com
+    eventName: LeaveOrganization
+    recipientAccountId: '123456789012'
+    userIdentity:
+      type: AssumedRole
+
+- name: an account being removed by the management account fires
+  expected: true
+  event:
+    source: aws
+    eventSource: organizations.amazonaws.com
+    eventName: RemoveAccountFromOrganization
+    recipientAccountId: '111111111111'
+
+- name: a denied attempt does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: organizations.amazonaws.com
+    eventName: LeaveOrganization
+    errorCode: AccessDeniedException
+
+- name: describing the organization does not fire
+  expected: false
+  event:
+    source: aws
+    eventSource: organizations.amazonaws.com
+    eventName: DescribeOrganization

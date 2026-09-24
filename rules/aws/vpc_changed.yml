@@ -1,0 +1,38 @@
+title: AWS VPC Changed
+id: 5e9c3b74-2a86-4f10-9d27-6b8c9d0e1f2a
+status: experimental
+description: >
+  A VPC or VPC peering connection was created, deleted or modified. Accepting a peering connection joins this network to another account's, which is a trust relationship that no firewall rule inside the VPC expresses.
+  Security Hub control CloudWatch.14.
+  Deliberately low. Every alert-destination route currently includes the same
+  Slack channel regardless of level, so severity does not yet change who is
+  disturbed -- it only records intent. These are a record of who changed the
+  network and when, not something to page on, and they are classified that way
+  now so that they land correctly once routing distinguishes levels.
+references:
+  - https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-14
+author: samma-io
+level: low
+tags:
+  - attack.defense_evasion
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventSource: ec2.amazonaws.com
+    eventName:
+      - CreateVpc
+      - DeleteVpc
+      - ModifyVpcAttribute
+      - AcceptVpcPeeringConnection
+      - CreateVpcPeeringConnection
+      - DeleteVpcPeeringConnection
+      - RejectVpcPeeringConnection
+  filter_failed:
+    errorCode|startswith: AccessDenied
+  condition: selection and not filter_failed
+falsepositives:
+  - Terraform managing network infrastructure. Expected to be the bulk
+    of this rule's volume; it earns its place as a record of who changed
+    the network and when, not as a page.

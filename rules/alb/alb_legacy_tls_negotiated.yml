@@ -1,0 +1,39 @@
+title: Load Balancer Negotiated Legacy TLS
+id: c41a9e57-3082-4db6-8f2a-6e7d05b93c18
+status: experimental
+description: >
+  A client completed a TLS handshake with a load balancer using TLSv1, TLSv1.1,
+  SSLv3 or SSLv2. Not an attempt -- a negotiated connection, which means the
+  listener's security policy still permits it.
+
+  Measured across a full day of the ALB connection lane, the current count is
+  zero: every connection negotiates TLSv1.2 or TLSv1.3. That makes this a
+  sentinel rather than a monitor. It costs nothing while the estate stays
+  correct, and it fires on the day a listener policy is loosened or a new load
+  balancer is created from an old template.
+
+  Written as an explicit list of bad versions rather than "not TLSv1.2 or 1.3",
+  so a connection that carries no tls_protocol at all -- a plain HTTP listener,
+  or a handshake that never completed -- cannot trip it.
+author: samma-io
+level: high
+tags:
+  - attack.credential_access
+  - attack.t1040
+logsource:
+  product: aws
+  service: alb_connection
+detection:
+  selection:
+    log_type: alb_connection
+    tls_protocol:
+      - TLSv1
+      - TLSv1.1
+      - SSLv3
+      - SSLv2
+  condition: selection
+falsepositives:
+  - >
+    A deliberate exception for a legacy partner integration. If one exists it
+    should be a listener with its own policy and its own documented owner, and
+    that elb name belongs in a filter here rather than in this note.
