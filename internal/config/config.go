@@ -35,6 +35,10 @@ type Config struct {
 	QueueURL      string
 	AlertQueueURL string
 
+	// Exactly one of RulesDir and RulesBucket is set. RulesDir is the tree
+	// baked into the image (the default); RulesBucket is the override for an
+	// installation that ships its own rules.
+	RulesDir    string
 	RulesBucket string
 	RulesPrefix string
 
@@ -54,9 +58,18 @@ type Config struct {
 	LogLevel    string
 }
 
-// RulePrefix is where this task's rules live in the rules bucket.
+// RulePrefix is where this task's rules live: an S3 key prefix in the rules
+// bucket, or a relative path under RulesDir. The shape is the same in both.
 func (c Config) RulePrefix() string {
 	return c.RulesPrefix + c.Source.Name + "/"
+}
+
+// RulesSource names where the rules come from, for the startup log.
+func (c Config) RulesSource() string {
+	if c.RulesDir != "" {
+		return "dir"
+	}
+	return "bucket"
 }
 
 // FromEnv reads and validates configuration.
@@ -80,6 +93,7 @@ func FromEnv(getenv func(string) string) (Config, error) {
 	c := Config{
 		QueueURL:       get("ENGINE_QUEUE_URL", ""),
 		AlertQueueURL:  get("ENGINE_ALERT_QUEUE_URL", ""),
+		RulesDir:       get("ENGINE_RULES_DIR", ""),
 		RulesBucket:    get("ENGINE_RULES_BUCKET", ""),
 		RulesPrefix:    get("ENGINE_RULES_PREFIX", ""),
 		AWSRegion:      get("AWS_REGION", ""),
@@ -109,12 +123,23 @@ func FromEnv(getenv func(string) string) (Config, error) {
 	for name, value := range map[string]string{
 		"ENGINE_QUEUE_URL":       c.QueueURL,
 		"ENGINE_ALERT_QUEUE_URL": c.AlertQueueURL,
-		"ENGINE_RULES_BUCKET":    c.RulesBucket,
 		"AWS_REGION":             c.AWSRegion,
 	} {
 		if value == "" {
 			problems = append(problems, name+" is required and not set")
 		}
+	}
+
+	// The rules come from exactly one place. Both set is rejected rather than
+	// given a precedence: a task definition that sets the bucket on top of
+	// the image's ENGINE_RULES_DIR default almost certainly meant the bucket,
+	// but "almost certainly" is not how a detection engine should pick its
+	// ruleset. The Terraform unsets the one it does not use.
+	switch {
+	case c.RulesDir == "" && c.RulesBucket == "":
+		problems = append(problems, "one of ENGINE_RULES_DIR or ENGINE_RULES_BUCKET is required and neither is set")
+	case c.RulesDir != "" && c.RulesBucket != "":
+		problems = append(problems, "ENGINE_RULES_DIR and ENGINE_RULES_BUCKET are both set; set exactly one")
 	}
 
 	c.Workers, err = getint(getenv, "ENGINE_WORKERS", DefaultWorkers)

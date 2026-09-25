@@ -60,10 +60,24 @@ func run() error {
 	slog.SetDefault(log)
 	log = log.With("log_source", cfg.Source.Name)
 
+	// The rules come from the tree baked into the image unless the task is
+	// pointed at a bucket. Both go through the same Store interface, so the
+	// loader and everything after it do not know which.
+	var (
+		rulesStore rules.Store
+		rulesAt    string
+	)
+	if cfg.RulesDir != "" {
+		rulesStore = rules.FSStore{Root: cfg.RulesDir}
+		rulesAt = cfg.RulesDir + "/" + cfg.RulePrefix()
+	} else {
+		rulesAt = "s3://" + cfg.RulesBucket + "/" + cfg.RulePrefix()
+	}
+
 	log.Info("starting",
 		"version", version, "commit", commit,
 		"queue", cfg.QueueURL, "alert_queue", cfg.AlertQueueURL,
-		"rules", "s3://"+cfg.RulesBucket+"/"+cfg.RulePrefix(),
+		"rules_source", cfg.RulesSource(), "rules", rulesAt,
 		"workers", cfg.Workers)
 
 	// SIGTERM is what ECS sends before SIGKILL. Fargate's stopTimeout caps
@@ -101,6 +115,9 @@ func run() error {
 	})
 
 	objects := &awsadapt.Objects{Client: s3Client}
+	if rulesStore == nil {
+		rulesStore = objects
+	}
 
 	// The admin server comes up before the rules load, so /readyz can report
 	// "not ready" while loading and ECS sees a task that started but is not
@@ -118,7 +135,7 @@ func run() error {
 		}
 	}()
 
-	loaded, err := rules.Load(ctx, objects, cfg.RulesBucket, cfg.RulePrefix(), cfg.Source.ConfigFile, log)
+	loaded, err := rules.Load(ctx, rulesStore, cfg.RulesBucket, cfg.RulePrefix(), cfg.Source.ConfigFile, log)
 	if err != nil {
 		// Fail closed. An engine with no rules drains its queue, matches
 		// nothing, deletes every message and makes queue depth go DOWN --

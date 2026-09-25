@@ -12,7 +12,8 @@ import (
 	sigma "github.com/bradleyjkemp/sigma-go"
 )
 
-// Store is the slice of S3 the loader needs.
+// Store is the slice of S3 the loader needs. FSStore satisfies it over a
+// directory, in which case bucket is ignored and prefix is a relative path.
 type Store interface {
 	List(ctx context.Context, bucket, prefix string) ([]string, error)
 	Get(ctx context.Context, bucket, key string) (io.ReadCloser, error)
@@ -32,17 +33,18 @@ type LoadResult struct {
 
 // Load fetches and compiles the ruleset for one source.
 //
-// Rules are read from S3 at startup rather than baked into the image so that a
-// rule fix ships by restarting a task instead of rebuilding and redeploying.
-// The cost is that the rules bucket is a hard dependency for task start: an
-// outage or an IAM regression means the task never becomes ready. That is the
-// correct trade for a detection engine -- see Compile's ErrNoRules -- but it
-// means the alarm must be on task-start failure and readiness, not on queue
-// depth, which also rises during an ordinary traffic spike.
+// The store is either the tree baked into the image (FSStore) or an S3 bucket
+// an installation points at to ship its own rules. With the bucket, a rule fix
+// ships by restarting a task instead of rebuilding and redeploying, at the
+// cost of a hard dependency for task start: an outage or an IAM regression
+// means the task never becomes ready. That is the correct trade for a
+// detection engine -- see Compile's ErrNoRules -- but it means the alarm must
+// be on task-start failure and readiness, not on queue depth, which also
+// rises during an ordinary traffic spike.
 func Load(ctx context.Context, store Store, bucket, prefix, configFile string, log *slog.Logger) (LoadResult, error) {
 	keys, err := store.List(ctx, bucket, prefix)
 	if err != nil {
-		return LoadResult{}, fmt.Errorf("listing s3://%s/%s: %w", bucket, prefix, err)
+		return LoadResult{}, fmt.Errorf("listing %s: %w", location(bucket, prefix), err)
 	}
 
 	// Sorted so the digest, the startup log and any error are reproducible
@@ -85,10 +87,18 @@ func Load(ctx context.Context, store Store, bucket, prefix, configFile string, l
 
 	set, err := Compile(files, configs)
 	if err != nil {
-		return LoadResult{}, fmt.Errorf("compiling rules from s3://%s/%s: %w", bucket, prefix, err)
+		return LoadResult{}, fmt.Errorf("compiling rules from %s: %w", location(bucket, prefix), err)
 	}
 	result.Set = set
 	return result, nil
+}
+
+// location renders where the rules were looked for, for error messages.
+func location(bucket, prefix string) string {
+	if bucket == "" {
+		return prefix
+	}
+	return "s3://" + bucket + "/" + prefix
 }
 
 func fetch(ctx context.Context, store Store, bucket, key string) ([]byte, error) {

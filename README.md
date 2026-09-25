@@ -29,7 +29,8 @@ release pipeline) is under construction.
    lane name.
 2. An S3 notification per lane prefix feeds a per-lane SQS queue.
 3. **This service**, one ECS task set per lane, reads that queue, loads
-   `rules/<lane>/` from the rules bucket at start, and evaluates.
+   `<lane>/` from the rules tree baked into the image (or from the rules
+   bucket, when the installation ships its own rules) at start, and evaluates.
 4. Alerts (`detection.alert.v1`) land on one shared queue, consumed by
    [`samma-io/alert-destination`](https://github.com/samma-io/alert-destination).
 
@@ -44,7 +45,7 @@ environment. All infrastructure lives in aws-siem (`terraform/modules/detection-
 | | Value |
 |---|---|
 | filtered bucket key prefix | `<lane>/` (the S3 notification filters on exactly this) |
-| rules bucket prefix | `<ENGINE_RULES_PREFIX><lane>/` |
+| rules prefix (dir or bucket) | `<ENGINE_RULES_PREFIX><lane>/` |
 | `source` field on every record | `<lane>` |
 
 The engine asserts the prefix on every incoming key and refuses an object from
@@ -88,17 +89,35 @@ id** -- which is what makes every at-least-once path in the pipeline safe.
 `LOCALSTACK_PORT=4599` (exported before every step) moves localstack off 4566
 when that port is taken.
 
-The same image runs anywhere with the variables below:
+The same image runs anywhere with the variables below. The image carries the
+`rules/` tree at `/rules` (without `examples/` and the `.tests.yml` sidecars)
+and defaults to `ENGINE_RULES_DIR=/rules`, so no rules bucket is needed:
 
 ```bash
 docker run --rm -p 9090:9090 \
   -e ENGINE_LOG_SOURCE=aws \
   -e ENGINE_QUEUE_URL=https://sqs.eu-west-1.amazonaws.com/123456789012/filtered-aws \
   -e ENGINE_ALERT_QUEUE_URL=https://sqs.eu-west-1.amazonaws.com/123456789012/detections-alerts \
-  -e ENGINE_RULES_BUCKET=my-siem-rules \
   -e AWS_REGION=eu-west-1 \
   ghcr.io/samma-io/detection-engine:latest
 ```
+
+To run an installation's own rules instead, point the task at a bucket and
+unset the directory -- the engine refuses to start with both, rather than
+guess which ruleset was meant:
+
+```bash
+docker run --rm -p 9090:9090 \
+  -e ENGINE_LOG_SOURCE=aws \
+  -e ENGINE_QUEUE_URL=... -e ENGINE_ALERT_QUEUE_URL=... -e AWS_REGION=eu-west-1 \
+  -e ENGINE_RULES_DIR= \
+  -e ENGINE_RULES_BUCKET=my-siem-rules \
+  ghcr.io/samma-io/detection-engine:latest
+```
+
+The localstack flow above seeds the bucket and runs with `ENGINE_RULES_BUCKET`,
+so it exercises the override path; `ls /rules/aws` inside the image shows what
+the default path loads.
 
 ## Configuration
 
@@ -112,9 +131,10 @@ Every problem is reported in one error at start.
 | `ENGINE_LOG_SOURCE` | yes | -- | lane: `alb`\|`aws`\|`dns`\|`gcp`\|`github`\|`onepassword`\|`slack`\|`workspace` |
 | `ENGINE_QUEUE_URL` | yes | -- | the lane's `filtered-<lane>` queue |
 | `ENGINE_ALERT_QUEUE_URL` | yes | -- | the shared `detections-alerts` queue |
-| `ENGINE_RULES_BUCKET` | yes | -- | rules bucket |
+| `ENGINE_RULES_DIR` | one of | `/rules` (image) | load rules from this directory; the image bakes `rules/` in here |
+| `ENGINE_RULES_BUCKET` | one of | -- | load rules from this S3 bucket instead; set `ENGINE_RULES_DIR=` (empty) alongside it |
 | `AWS_REGION` | yes | -- | SDK region |
-| `ENGINE_RULES_PREFIX` | no | `""` | prepended to `<lane>/`; a trailing `/` is added if missing |
+| `ENGINE_RULES_PREFIX` | no | `""` | prepended to `<lane>/` under the dir or bucket; a trailing `/` is added if missing |
 | `ENGINE_WORKERS` | no | `4` | concurrent workers, each with one in-flight message |
 | `ENGINE_MAX_OBJECT_BYTES` | no | `268435456` | refuse objects above this (256 MiB) |
 | `ENGINE_MAX_OBJECT_DURATION` | no | `45m` | per-object deadline |
@@ -127,7 +147,9 @@ Every problem is reported in one error at start.
 | `ENGINE_S3_ENDPOINT_URL` | no | `""` | localstack only; enables path-style S3 |
 | `ENGINE_SQS_ENDPOINT_URL` | no | `""` | localstack only |
 
-Standard AWS SDK credential resolution applies (task role, env, profile).
+Exactly one of `ENGINE_RULES_DIR` and `ENGINE_RULES_BUCKET` must be set; both
+or neither is a startup error. Standard AWS SDK credential resolution applies
+(task role, env, profile).
 
 ## Endpoints
 
@@ -276,7 +298,7 @@ internal/source/        lane registry (a map, not a switch) and the key-prefix c
 internal/engine/        the core loop, the visibility heartbeat, dispositions
 internal/decode/        S3 notification envelope; gzip sniff + streaming NDJSON;
                         number normalisation and the flattened match view
-internal/rules/         S3 loader, Sigma compilation, admission checks, matching
+internal/rules/         rule loader (dir or S3), Sigma compilation, admission checks, matching
 internal/publisher/     SQS alert batching: byte caps, partial-failure handling
 internal/alert/         the alert envelope and its deterministic id
 internal/awsadapt/      the only package that imports the AWS SDK
@@ -291,7 +313,8 @@ hack/sigmaimport/       SigmaHQ importer
 hack/package-rules.sh   builds rules-<version>.tar.gz
 hack/local/             localstack end-to-end
 hack/scrub-check.sh     CI gate: no private identifiers in the tree
-Dockerfile              golang:1.25-alpine builder -> alpine:3.21, non-root, pinned by digest
+Dockerfile              golang:1.25-alpine builder -> alpine:3.21, non-root, pinned by digest;
+                        bakes rules/ into /rules (ENGINE_RULES_DIR default)
 ```
 
 ## Development

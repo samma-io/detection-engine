@@ -49,11 +49,64 @@ func TestFromEnv_MissingRequiredVarsAreReportedTogether(t *testing.T) {
 		t.Fatal("expected an error when every required var is unset")
 	}
 	for _, want := range []string{
-		"ENGINE_QUEUE_URL", "ENGINE_ALERT_QUEUE_URL", "ENGINE_RULES_BUCKET", "AWS_REGION",
+		"ENGINE_QUEUE_URL", "ENGINE_ALERT_QUEUE_URL", "ENGINE_RULES_DIR or ENGINE_RULES_BUCKET", "AWS_REGION",
 	} {
 		if !strings.Contains(err.Error(), want) {
 			t.Errorf("error should name %s, got:\n%v", want, err)
 		}
+	}
+}
+
+func TestFromEnv_RulesDirAloneIsValid(t *testing.T) {
+	kv := valid()
+	delete(kv, "ENGINE_RULES_BUCKET")
+	kv["ENGINE_RULES_DIR"] = "/rules"
+	c, err := config.FromEnv(env(kv))
+	if err != nil {
+		t.Fatalf("FromEnv: %v", err)
+	}
+	if c.RulesDir != "/rules" || c.RulesBucket != "" {
+		t.Errorf("RulesDir=%q RulesBucket=%q, want /rules and empty", c.RulesDir, c.RulesBucket)
+	}
+	if got := c.RulesSource(); got != "dir" {
+		t.Errorf("RulesSource() = %q, want dir", got)
+	}
+}
+
+func TestFromEnv_RulesBucketAloneIsValid(t *testing.T) {
+	c, err := config.FromEnv(env(valid()))
+	if err != nil {
+		t.Fatalf("FromEnv: %v", err)
+	}
+	if got := c.RulesSource(); got != "bucket" {
+		t.Errorf("RulesSource() = %q, want bucket", got)
+	}
+}
+
+func TestFromEnv_RulesDirAndBucketTogetherIsAnError(t *testing.T) {
+	// No precedence rule: the image sets ENGINE_RULES_DIR by default, and a
+	// task definition that adds a bucket without unsetting it must not have
+	// the engine guess which ruleset was meant.
+	kv := valid()
+	kv["ENGINE_RULES_DIR"] = "/rules"
+	_, err := config.FromEnv(env(kv))
+	if err == nil {
+		t.Fatal("both rules sources set must not start")
+	}
+	if !strings.Contains(err.Error(), "ENGINE_RULES_DIR and ENGINE_RULES_BUCKET are both set") {
+		t.Errorf("error should say both are set, got: %v", err)
+	}
+}
+
+func TestFromEnv_NeitherRulesSourceIsAnError(t *testing.T) {
+	kv := valid()
+	delete(kv, "ENGINE_RULES_BUCKET")
+	_, err := config.FromEnv(env(kv))
+	if err == nil {
+		t.Fatal("no rules source must not start")
+	}
+	if !strings.Contains(err.Error(), "one of ENGINE_RULES_DIR or ENGINE_RULES_BUCKET") {
+		t.Errorf("error should name both variables, got: %v", err)
 	}
 }
 
