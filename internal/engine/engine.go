@@ -243,7 +243,7 @@ func (p *Processor) object(ctx context.Context, msg Message, obj decode.ObjectRe
 		log.Error("get object", "err", err)
 		return Transient
 	}
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 
 	sink := p.NewSink() // fresh per object, so a previous object's batch cannot leak in
 	var (
