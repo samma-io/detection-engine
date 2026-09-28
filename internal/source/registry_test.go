@@ -15,7 +15,7 @@ import (
 // engine that starts, drains its queue and matches nothing. Terraform cannot
 // check the Go side, so the contract is asserted from here. When you add a
 // lane there, add it here and to the registry in the same change.
-var detectionSources = []string{"aws", "gcp", "github", "workspace", "slack", "onepassword", "dns", "alb"}
+var detectionSources = []string{"aws", "gcp", "github", "workspace", "slack", "onepassword", "dns", "alb", "cloudflare"}
 
 func TestRegistry_HasAnEntryForEveryDetectionSource(t *testing.T) {
 	for _, name := range detectionSources {

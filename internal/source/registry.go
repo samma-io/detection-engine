@@ -68,6 +68,12 @@ var registry = map[string]Source{
 	// URL or a status code.
 	"dns": {Name: "dns", ConfigFile: "sigma-config.yml"},
 	"alb": {Name: "alb", ConfigFile: "sigma-config.yml"},
+
+	// cloudflare is written by the ingester's cloudflare lane and carries
+	// seven feeds on one prefix -- access, audit, devices, firewall and the
+	// three gateway_* aggregates -- told apart by .feed (the ingester's
+	// _partition), the same way onepassword is.
+	"cloudflare": {Name: "cloudflare", ConfigFile: "sigma-config.yml"},
 }
 
 // Lookup resolves a source name, naming every valid one when it fails.

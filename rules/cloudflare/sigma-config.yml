@@ -1,0 +1,15 @@
+# sigma-go Config for the Cloudflare lane.
+#
+# Seven feeds share this prefix, told apart by Vector's `feed` (the ingester's
+# _partition): access, audit, devices, firewall, gateway_dns, gateway_http and
+# gateway_network. They share no schema -- audit's `action` is an object
+# ({type, result}), access and firewall carry a bare-string `action`, and the
+# gateway_* feeds are hourly counts -- so pin `feed` in every rule.
+title: filtered cloudflare
+logsources:
+  cloudflare_logs:
+    product: cloudflare
+    service: logs
+    index: filtered-cloudflare
+defaultindex: filtered-cloudflare
+fieldmappings: {}

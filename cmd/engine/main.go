@@ -1,8 +1,8 @@
 // Command engine is the Sigma detection engine.
 //
 // One image serves every log source. ENGINE_LOG_SOURCE selects which queue to
-// drain and which rules prefix to load, so the four ECS services differ only
-// in their environment.
+// drain and which rules prefix to load, so the per-lane ECS services (one per
+// entry in internal/source) differ only in their environment.
 package main
 
 import (

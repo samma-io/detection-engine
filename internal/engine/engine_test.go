@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -595,3 +596,86 @@ func TestDisposition_StringIsStableForMetricLabels(t *testing.T) {
 }
 
 var _ = strings.TrimSpace
+
+// ---------------------------------------------------------------- alarm log contract
+
+// jsonLog captures what the process logger would write: logging.New is a JSON
+// handler, and the aws-siem metric filters match on its level and msg keys.
+func jsonLog() (*slog.Logger, *bytes.Buffer) {
+	var buf bytes.Buffer
+	return slog.New(slog.NewJSONHandler(&buf, nil)), &buf
+}
+
+// onlyLineWith returns the single JSON log line whose msg is want.
+func onlyLineWith(t *testing.T, buf *bytes.Buffer, want string) map[string]any {
+	t.Helper()
+	var found []map[string]any
+	for _, line := range strings.Split(strings.TrimSpace(buf.String()), "\n") {
+		var rec map[string]any
+		if err := json.Unmarshal([]byte(line), &rec); err != nil {
+			t.Fatalf("log line is not JSON: %q: %v", line, err)
+		}
+		if rec["msg"] == want {
+			found = append(found, rec)
+		}
+	}
+	if len(found) != 1 {
+		t.Fatalf("want exactly one log line with msg %q, got %d in:\n%s", want, len(found), buf)
+	}
+	return found[0]
+}
+
+func TestAlarmMessages_AreTheStringsTheMetricFiltersMatch(t *testing.T) {
+	// Duplicated from aws-siem's alarms module on purpose: changing either
+	// side alone disables an alarm without failing anything.
+	if MsgRuleEvaluationFailed != "rule evaluation failed" {
+		t.Errorf("MsgRuleEvaluationFailed = %q", MsgRuleEvaluationFailed)
+	}
+	if MsgPanicRecovered != "panic recovered" {
+		t.Errorf("MsgPanicRecovered = %q", MsgPanicRecovered)
+	}
+}
+
+func TestLogRuleError_IsAnErrorLineWithTheStableMsg(t *testing.T) {
+	log, buf := jsonLog()
+	logRuleError(log, rules.RuleError{
+		RuleID: "11111111-1111-1111-1111-111111111111", File: "r0.yml",
+		Err: errors.New("panic during evaluation: boom"),
+	}, 7)
+
+	rec := onlyLineWith(t, buf, MsgRuleEvaluationFailed)
+	if rec["level"] != "ERROR" {
+		t.Errorf("level = %v, want ERROR", rec["level"])
+	}
+	if rec["rule_id"] != "11111111-1111-1111-1111-111111111111" || rec["file"] != "r0.yml" {
+		t.Errorf("the line must name the rule: %v", rec)
+	}
+	if rec["event_index"] != float64(7) {
+		t.Errorf("event_index = %v, want 7", rec["event_index"])
+	}
+}
+
+// panickingObjects stands in for any bug below Handle that panics.
+type panickingObjects struct{ *fakeObjects }
+
+func (panickingObjects) Size(context.Context, string, string) (int64, error) {
+	panic("boom")
+}
+
+func TestHandle_RecoveredPanicIsAnErrorLineWithTheStableMsg(t *testing.T) {
+	h := newHarness(t, ruleset(t, matchingRule), nil)
+	log, buf := jsonLog()
+	h.proc.Log = log
+	h.proc.Objects = panickingObjects{h.obj}
+
+	if got := h.proc.Handle(context.Background(), h.msg(notification("b", testKey))); got != Transient {
+		t.Errorf("disposition = %v, want Transient", got)
+	}
+	rec := onlyLineWith(t, buf, MsgPanicRecovered)
+	if rec["level"] != "ERROR" {
+		t.Errorf("level = %v, want ERROR", rec["level"])
+	}
+	if rec["panic"] != "boom" || rec["msg_id"] != "m1" {
+		t.Errorf("the line must carry the panic and the message id: %v", rec)
+	}
+}

@@ -5,11 +5,18 @@ Before writing rules for a new lane, read
 covers which log source, what each one's licence and format is, and which of
 them this engine can actually use.
 
-One directory per log source (a *lane*). `make package` turns this tree into
-`rules-<version>.tar.gz`, which [samma-io/aws-siem](https://github.com/samma-io/aws-siem)
-uploads to the rules bucket, and each engine loads only its own `<lane>/`
-prefix at container start. `rules/examples/` is documentation, not a lane: it
-is excluded from the tarball and from the gate.
+One directory per log source (a *lane*). Each engine loads only its own
+`<lane>/` prefix at container start, from one of two places:
+
+- **baked into the image** at `/rules` (the default) -- `docker build` copies
+  this tree without the `.tests.yml` sidecars and `examples/`;
+- **the rules bucket**, when [samma-io/aws-siem](https://github.com/samma-io/aws-siem)
+  is given a `rules_dir` and uploads it. That directory must contain only
+  `<lane>/sigma-config.yml` and rule files: a sidecar there is loaded as a rule
+  and the engine refuses to start.
+
+`rules/examples/` is documentation, not a lane: it is never baked in and the
+gate skips it.
 
 ```
 rules/<source>/sigma-config.yml     # sigma-go Config: logsource + field mappings
@@ -41,6 +48,14 @@ which is the vendor-native shape plus a `source` field:
 - **github** — native GitHub audit log entries: `action`, `actor`, `actor_ip`,
   `org`, `repo`, `created_at` (epoch millis), `operation_type`,
   `programmatic_access_type`.
+- **cloudflare** — ingester records (the vendor shape plus `_partition`,
+  `_event_time`, `_dedupe_key`) under Vector's SaaS envelope: `feed` (one of
+  `access`, `audit`, `devices`, `firewall`, `gateway_dns`, `gateway_http`,
+  `gateway_network`), `event_time`, `actor_email`. The feeds share no schema
+  -- `action` is an object on `audit` (`action.type`, `action.result`) and a
+  string on `access` and `firewall` -- so every rule pins `feed`, and
+  `TestRules_MultiFeedLanesPinTheFeed` enforces it. The reference shapes are
+  the golden files in samma-io/ingester `internal/source/cloudflare/golden/`.
 
 Dotted paths such as `userIdentity.type` work because the engine builds a
 flattened match view of every event; see `internal/decode/normalize.go`.

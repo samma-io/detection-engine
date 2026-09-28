@@ -1,9 +1,15 @@
 # Every Go and Docker step runs in a container so the toolchain is the same on
 # every machine and in CI. Set GO_IMAGE to override the pin.
 GO_IMAGE   ?= golang:1.25
-IMAGE      ?= detection-engine
-IMAGE_TAG  ?= dev
-VERSION    ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+
+# We build and push our own images; there are no release tags. The tag is
+# whatever the builder passes (aws-siem hack/build-images.sh passes the short
+# sha), and the default is the same. linux/amd64 because every ECS task
+# definition in aws-siem is X86_64.
+IMAGE      ?= ghcr.io/samma-io/detection-engine
+TAG        ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo dev)
+PLATFORM   ?= linux/amd64
+VERSION    ?= $(TAG)
 COMMIT     ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo none)
 
 # A named volume for the module cache so repeated runs do not re-download.
@@ -13,7 +19,7 @@ GO_RUN = docker run --rm \
   -e CGO_ENABLED=0 -e GOFLAGS=-buildvcs=false \
   $(GO_IMAGE)
 
-.PHONY: all fmt fmt-check vet test test-race rulecheck lint build image package scrub \
+.PHONY: all fmt fmt-check vet test test-race rulecheck lint build image push scrub \
         docs docs-check local-up local-down local-seed local-run local-verify
 
 # The default gate. Run this before opening a PR.
@@ -59,15 +65,15 @@ build:
 	  -ldflags "-s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT)" \
 	  -o bin/engine ./cmd/engine
 
-## Build the same image CI publishes to ghcr.io/samma-io/detection-engine.
+## Build $(IMAGE):$(TAG), rules baked in at /rules.
 image:
-	docker build \
+	docker build --platform $(PLATFORM) \
 	  --build-arg VERSION=$(VERSION) --build-arg COMMIT=$(COMMIT) \
-	  -t $(IMAGE):$(IMAGE_TAG) .
+	  -t $(IMAGE):$(TAG) .
 
-## rules-<version>.tar.gz: the lane directories without sidecars or examples.
-package:
-	./hack/package-rules.sh $(VERSION)
+## Push $(IMAGE):$(TAG). Needs a `docker login ghcr.io` with write:packages.
+push:
+	docker push $(IMAGE):$(TAG)
 
 ## Both scrub gates that CI runs on every push.
 scrub:
@@ -89,7 +95,7 @@ local-seed:
 
 ## Run the engine image against localstack (builds the image first).
 local-run: image
-	IMAGE=$(IMAGE):$(IMAGE_TAG) ./hack/local/run.sh
+	IMAGE=$(IMAGE):$(TAG) ./hack/local/run.sh
 
 ## Put a matching object in the filtered bucket and assert an alert arrives.
 local-verify:

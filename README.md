@@ -12,13 +12,14 @@ filtered-<bucket>                 filtered-aws      --> detection-engine (aws)  
   github/date=.../...      notify filtered-gcp      --> detection-engine (gcp)      --+       (one queue)
   gcp/date=.../...                ...one queue and one engine service per lane...  --+
                                                                                         |
-                                  rules-<bucket>/<lane>/*.yml  -- read once at start    v
+                                  /rules/<lane>/*.yml (image)  -- read once at start    v
                                                                             alert-destination
 ```
 
 Status: **pre-alpha**. The engine and rules come from a production deployment;
-the open-source packaging (this repository, the aws-siem Terraform, the
-release pipeline) is under construction.
+the open-source packaging (this repository, the aws-siem Terraform) is under
+construction. There are no releases: images are built from source and pushed to
+your own registry (see [Artifacts](#artifacts)).
 
 ## Where it sits in the flow
 
@@ -53,21 +54,34 @@ another lane rather than evaluating the wrong rules against it. The lane list
 and layout are specified in aws-siem:
 [`docs/contracts/filtered-object-layout.md`](https://github.com/samma-io/aws-siem/blob/main/docs/contracts/filtered-object-layout.md),
 [`docs/contracts/lane-names.md`](https://github.com/samma-io/aws-siem/blob/main/docs/contracts/lane-names.md).
-Current lanes: `alb`, `aws`, `dns`, `gcp`, `github`, `onepassword`, `slack`, `workspace`.
+Current lanes: `alb`, `aws`, `cloudflare`, `dns`, `gcp`, `github`, `onepassword`, `slack`, `workspace`.
 
 ## Artifacts
 
-| Artifact | Where | Built by |
-|---|---|---|
-| `ghcr.io/samma-io/detection-engine:<version>` (linux/amd64, linux/arm64) | GitHub Packages | `release.yml` on a `v*` tag |
-| `rules-<version>.tar.gz` + `.sha256` | GitHub Release assets | `release.yml`, via `hack/package-rules.sh` |
+One artifact: the image, `ghcr.io/samma-io/detection-engine:<tag>`
+(linux/amd64). Nothing is released or published by CI; we build and push it
+ourselves, and the tag is whatever the builder passes -- by convention the
+repo's short git sha, with no `v` prefix:
 
-The rules tarball contains `<lane>/sigma-config.yml` and `<lane>/*.yml` for
-every lane -- no test sidecars, no `examples/`. **aws-siem uploads it to the
-rules bucket** (`aws s3 sync` of the extracted tree to the bucket root) as part
-of applying the detection-engine module; the engine reads it at container
-start, so a rule fix ships by uploading a new tarball and restarting tasks, not
-by rebuilding the image. `make package` builds the same file locally.
+```bash
+make image push                                   # ghcr.io/samma-io/detection-engine:$(git rev-parse --short HEAD)
+make image push IMAGE=ghcr.io/acme/detection-engine TAG=3c0118b
+```
+
+aws-siem's `hack/build-images.sh` does exactly this for every service repo.
+
+**Rules ship in one of two ways:**
+
+- **Baked into the image** (the default). The `rules/` tree, without the
+  `.tests.yml` sidecars and `examples/`, is copied to `/rules` at build time
+  and `ENGINE_RULES_DIR=/rules` is the image default. A rule change is a new
+  image.
+- **Uploaded from a `rules_dir`.** The aws-siem detection-engine module takes
+  a `rules_dir`, uploads it to the rules bucket and sets `ENGINE_RULES_BUCKET`
+  (with `ENGINE_RULES_DIR=` empty). The engine reads it at container start, so
+  a rule change is an apply plus a task restart, with no rebuild. The directory
+  must hold only `<lane>/sigma-config.yml` and `<lane>/*.yml` rules: a
+  `.tests.yml` sidecar in it is loaded as a rule and fails the start.
 
 ## Run standalone
 
@@ -99,7 +113,7 @@ docker run --rm -p 9090:9090 \
   -e ENGINE_QUEUE_URL=https://sqs.eu-west-1.amazonaws.com/123456789012/filtered-aws \
   -e ENGINE_ALERT_QUEUE_URL=https://sqs.eu-west-1.amazonaws.com/123456789012/detections-alerts \
   -e AWS_REGION=eu-west-1 \
-  ghcr.io/samma-io/detection-engine:latest
+  ghcr.io/samma-io/detection-engine:<tag>
 ```
 
 To run an installation's own rules instead, point the task at a bucket and
@@ -112,7 +126,7 @@ docker run --rm -p 9090:9090 \
   -e ENGINE_QUEUE_URL=... -e ENGINE_ALERT_QUEUE_URL=... -e AWS_REGION=eu-west-1 \
   -e ENGINE_RULES_DIR= \
   -e ENGINE_RULES_BUCKET=my-siem-rules \
-  ghcr.io/samma-io/detection-engine:latest
+  ghcr.io/samma-io/detection-engine:<tag>
 ```
 
 The localstack flow above seeds the bucket and runs with `ENGINE_RULES_BUCKET`,
@@ -128,7 +142,7 @@ Every problem is reported in one error at start.
 
 | Var | Required | Default | Purpose |
 |---|---|---|---|
-| `ENGINE_LOG_SOURCE` | yes | -- | lane: `alb`\|`aws`\|`dns`\|`gcp`\|`github`\|`onepassword`\|`slack`\|`workspace` |
+| `ENGINE_LOG_SOURCE` | yes | -- | lane: `alb`\|`aws`\|`cloudflare`\|`dns`\|`gcp`\|`github`\|`onepassword`\|`slack`\|`workspace` |
 | `ENGINE_QUEUE_URL` | yes | -- | the lane's `filtered-<lane>` queue |
 | `ENGINE_ALERT_QUEUE_URL` | yes | -- | the shared `detections-alerts` queue |
 | `ENGINE_RULES_DIR` | one of | `/rules` (image) | load rules from this directory; the image bakes `rules/` in here |
@@ -218,8 +232,10 @@ Apache-2.0 like the rest of the repository. See `NOTICE`.
 2. **Zero rules is a startup failure.** An engine with no rules drains its
    queue, matches nothing, deletes every message, and makes queue depth go
    *down*. No dashboard tells that apart from a quiet week.
-3. **Alert ids are content-derived**, from rule id + bucket + key + record
-   index -- never the clock, the SQS message id, or the ruleset contents.
+3. **Alert ids are content-derived**: `det_` + sha256 of schema version, rule
+   id, log source, bucket, key and record index, NUL-separated
+   (`alert.ID`) -- never the clock, the SQS message id, or the ruleset
+   contents.
    Every path here is at-least-once; consumers must upsert on the id.
 4. **Events reach the evaluator through `decode.MatchView`.** sigma-go's field
    lookup is a single flat map index, so a rule written `userIdentity.type`
@@ -256,7 +272,15 @@ Apache-2.0 like the rest of the repository. See `NOTICE`.
   detection for every other rule and loop the object to the DLQ.
 - **`detection_rule_errors_total` and `detection_panics_total` should always be
   zero.** Everything detectable at load time is rejected at load time, so a
-  non-zero value is a bug or a dependency regression. Alarm on both.
+  non-zero value is a bug or a dependency regression. Alarm on both. Each
+  increment also writes one JSON log line at level `ERROR` with a fixed `msg`,
+  which is what aws-siem's CloudWatch metric filters match -- do not reword
+  them:
+
+  | `msg` | When |
+  |---|---|
+  | `rule evaluation failed` | a rule errored or panicked on one event (the rule is skipped, the others still run) |
+  | `panic recovered` | a panic anywhere else while handling a message (the message is left for redelivery) |
 
 ## Alert shape
 
@@ -310,7 +334,6 @@ rules/<lane>/           Sigma rules + required .tests.yml sidecars
 rules/examples/         org-specific templates with placeholders (not shipped)
 hack/rulesdoc/          the `make docs` entrypoint
 hack/sigmaimport/       SigmaHQ importer
-hack/package-rules.sh   builds rules-<version>.tar.gz
 hack/local/             localstack end-to-end
 hack/scrub-check.sh     CI gate: no private identifiers in the tree
 Dockerfile              golang:1.25-alpine builder -> alpine:3.21, non-root, pinned by digest;
@@ -324,16 +347,15 @@ make            # gofmt check, vet, test   (all in golang:1.25 containers)
 make test-race  # the shared ruleset is only safe because of a sigma-go detail
 make rulecheck  # the rules gate alone
 make docs       # regenerate docs/RULES.md after any rule change
-make image      # the same image CI publishes
-make package    # rules-<version>.tar.gz
+make image      # ghcr.io/samma-io/detection-engine:<short sha>, linux/amd64
+make push       # push it (IMAGE= and TAG= override both)
 make scrub      # the private-identifier gate CI runs
 ```
 
 CI (`.github/workflows/ci.yml`) runs gofmt, vet, `go test -race`, the
 rulecheck gate, the catalogue freshness check, the scrub gate, gitleaks and a
-Trivy scan of the built image on every pull request and push to `main`. A `v*`
-tag runs `release.yml`, which publishes the multi-arch image and attaches the
-rules tarball to the GitHub release.
+Trivy scan of the built image on every pull request and push to `main`. CI
+builds the image but never pushes it.
 
 ## Licence
 

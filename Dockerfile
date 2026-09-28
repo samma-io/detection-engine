@@ -1,17 +1,16 @@
 # syntax=docker/dockerfile:1
 
 # Builder pinned to the Go minor in go.mod (1.25) and to a multi-arch index
-# digest, so a moving tag cannot change what a release was built with.
+# digest, so a moving tag cannot change what an image was built with.
 FROM --platform=$BUILDPLATFORM golang:1.25-alpine@sha256:1ae0735f00daffa3aaf1363a5184c0d2dc55c78e3db4ec70241cdac97bf84b59 AS build
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 
-# TARGETARCH rather than a hard-coded amd64: the image is published for
-# linux/amd64 and linux/arm64, and a pinned amd64 binary on an arm64 host
-# would be emulated silently -- slower and harder to notice than a build
-# failure.
+# TARGETARCH rather than a hard-coded amd64: `make image` builds linux/amd64
+# for ECS, but a local arm64 build must get an arm64 binary rather than one
+# emulated silently -- slower and harder to notice than a build failure.
 ARG TARGETOS
 ARG TARGETARCH
 ARG VERSION=dev
@@ -21,10 +20,10 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} \
       -ldflags "-s -w -X main.version=${VERSION} -X main.commit=${COMMIT}" \
       -o /out/engine ./cmd/engine
 
-# The shippable rules tree, with the same exclusions as hack/package-rules.sh:
-# .tests.yml sidecars (the engine would refuse to start on one) and
-# rules/examples/ (placeholder values). Done in its own stage so the final
-# image gets one clean COPY and never carries the deleted files in a layer.
+# The shippable rules tree, without the .tests.yml sidecars (the engine would
+# refuse to start on one) and rules/examples/ (placeholder values). Done in
+# its own stage so the final image gets one clean COPY and never carries the
+# deleted files in a layer.
 FROM alpine:3.21@sha256:ce64758a109eb420d874a118f87920e625e12d3634e03b4a5573fd9f6e5d3507 AS rules
 COPY rules/ /rules/
 RUN rm -rf /rules/examples \

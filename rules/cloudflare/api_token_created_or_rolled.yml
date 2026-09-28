@@ -1,0 +1,38 @@
+title: Cloudflare API Token Created Or Rolled
+id: b84c8d54-6427-44b7-a421-fe2ae70ff684
+status: experimental
+description: >
+  An API token was created, or its secret was rolled. A token is a standing,
+  MFA-free credential with whatever scope it was given, and a new or re-issued
+  secret is the usual way persistence is kept on a Cloudflare account after an
+  interactive session is lost. Cloudflare does not publish an enum for the v1
+  audit log's resource.type and action.type, so both are lists of the spellings
+  in use; extend them from a real record rather than loosening the match.
+references:
+  - https://developers.cloudflare.com/fundamentals/account/account-security/review-audit-logs/
+  - https://developers.cloudflare.com/fundamentals/api/get-started/create-token/
+author: samma-io
+level: medium
+tags:
+  - attack.persistence
+  - attack.t1098.001
+logsource:
+  product: cloudflare
+  service: logs
+detection:
+  selection:
+    source: cloudflare
+    feed: audit
+    action.result: true
+    action.type:
+      - create
+      - roll
+      - rotate
+    resource.type:
+      - api_token
+      - account_api_token
+      - user_api_token
+  condition: selection
+falsepositives:
+  - A CI system or Terraform rotating its own token on schedule.
+  - An engineer creating a scoped token for a new integration.
