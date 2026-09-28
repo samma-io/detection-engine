@@ -5,6 +5,7 @@
     feed: audit
     event_time: '2026-09-09T14:30:41Z'
     actor_email: someone@example.com
+    search_text: audit delete access_application someone@example.com 198.51.100.24
     id: 2b7f0c9e-5d4a-4e1b-9c3d-8a7b6c5d4e3f
     when: '2026-09-09T14:30:41Z'
     action:
@@ -72,6 +73,7 @@
     feed: access
     event_time: '2026-09-09T14:05:11Z'
     actor_email: someone@example.com
+    search_text: access login internal.example.com/admin someone@example.com 198.51.100.24
     action: login
     allowed: true
     app_domain: internal.example.com/admin

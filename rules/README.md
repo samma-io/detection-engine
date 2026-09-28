@@ -51,7 +51,10 @@ which is the vendor-native shape plus a `source` field:
 - **cloudflare** — ingester records (the vendor shape plus `_partition`,
   `_event_time`, `_dedupe_key`) under Vector's SaaS envelope: `feed` (one of
   `access`, `audit`, `devices`, `firewall`, `gateway_dns`, `gateway_http`,
-  `gateway_network`), `event_time`, `actor_email`. The feeds share no schema
+  `gateway_network`, or `logpush` from the Logpush producer), `event_time`,
+  `actor_email`, `search_text`. Firewall records' own `source` (`waf`,
+  `botFight`, ...) is renamed to `cf_source`, so `source` is always
+  `cloudflare`. The feeds share no schema
   -- `action` is an object on `audit` (`action.type`, `action.result`) and a
   string on `access` and `firewall` -- so every rule pins `feed`, and
   `TestRules_MultiFeedLanesPinTheFeed` enforces it. The reference shapes are

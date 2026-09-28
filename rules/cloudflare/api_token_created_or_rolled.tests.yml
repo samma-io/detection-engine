@@ -5,6 +5,7 @@
     feed: audit
     event_time: '2026-09-09T14:12:03Z'
     actor_email: someone@example.com
+    search_text: audit create account_api_token someone@example.com 198.51.100.24
     id: f174be97-19b1-40d6-954d-a8c7cf60aaaa
     when: '2026-09-09T14:12:03Z'
     action:
@@ -76,6 +77,7 @@
     feed: audit
     event_time: '2026-09-09T14:12:03Z'
     actor_email: someone@example.com
+    search_text: audit update gateway_rule someone@example.com 198.51.100.24
     id: f174be97-19b1-40d6-954d-a8c7cf60ffff
     when: '2026-09-09T14:12:03Z'
     action:

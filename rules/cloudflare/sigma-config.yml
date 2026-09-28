@@ -4,7 +4,12 @@
 # _partition): access, audit, devices, firewall, gateway_dns, gateway_http and
 # gateway_network. They share no schema -- audit's `action` is an object
 # ({type, result}), access and firewall carry a bare-string `action`, and the
-# gateway_* feeds are hourly counts -- so pin `feed` in every rule.
+# gateway_* feeds are hourly counts -- so pin `feed` in every rule. Records
+# from the Logpush producer arrive as feed `logpush`.
+#
+# Firewall records carry their own `source` (waf, botFight, ...); Vector
+# renames it to `cf_source` before stamping `source: cloudflare`, so match the
+# Cloudflare value as cf_source and never as source.
 title: filtered cloudflare
 logsources:
   cloudflare_logs:
