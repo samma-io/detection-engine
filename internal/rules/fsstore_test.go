@@ -117,7 +117,7 @@ func TestFSStore_GetReadsTheFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 	body, err := io.ReadAll(rc)
 	if err != nil {
 		t.Fatal(err)

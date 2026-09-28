@@ -1,6 +1,6 @@
 # Detection rules
 
-**63 rules across 8 log sources.**
+**65 rules across 9 log sources.**
 
 > Generated from the rules tree by `make docs`. Do not edit by hand —
 > `TestRules_CatalogIsUpToDate` fails if this file and the rules disagree.
@@ -52,13 +52,14 @@ Wildcards also do not work in a value: `*` is matched literally. See
 |---|---:|---:|---:|---:|---:|---:|
 | [`alb`](#alb) | – | 1 | – | – | – | **1** |
 | [`aws`](#aws) | 1 | 22 | 12 | 12 | – | **47** |
+| [`cloudflare`](#cloudflare) | – | 1 | 1 | – | – | **2** |
 | [`dns`](#dns) | – | – | 2 | – | – | **2** |
 | [`gcp`](#gcp) | 1 | 1 | – | 1 | – | **3** |
 | [`github`](#github) | 1 | 2 | – | – | – | **3** |
 | [`onepassword`](#onepassword) | – | 2 | 1 | – | – | **3** |
 | [`slack`](#slack) | – | – | 2 | – | – | **2** |
 | [`workspace`](#workspace) | 2 | – | – | – | – | **2** |
-| **Total** | **5** | **28** | **17** | **13** | **0** | **63** |
+| **Total** | **5** | **29** | **18** | **13** | **0** | **65** |
 
 ---
 
@@ -950,6 +951,49 @@ A VPC or VPC peering connection was created, deleted or modified. Accepting a pe
 **ATT&CK** attack.defense_evasion
 
 - <https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-14>
+
+---
+
+## cloudflare
+
+### 🟠 high — Cloudflare Access Application Or Policy Deleted
+
+`9dfc6c12-9d82-44b0-be44-9d4b53c3a70e` · [`rules/cloudflare/access_app_or_policy_deleted.yml`](../rules/cloudflare/access_app_or_policy_deleted.yml) · 5 tests (2 firing)
+
+> **Status: experimental.**
+
+A Cloudflare Access application or policy was deleted. Access is the authentication layer in front of internal applications; deleting the application removes that layer entirely, and deleting a policy can leave an application reachable under a broader remaining policy. Either reads as removal of a control until someone confirms it was planned. As with every audit-feed rule here, resource.type is a list because Cloudflare does not publish the v1 enum.
+
+**Fires when** `source` is `cloudflare` and `feed` is `audit` and `action.type` is `delete` and `action.result` is `true` and `resource.type` is one of `access_app`, `access_application`, `access_policy`, `access_reusable_policy`
+
+**Likely false positives**
+
+- Decommissioning an internal application, or consolidating per-app policies into a reusable one.
+
+**ATT&CK** attack.defense_evasion, attack.t1562
+
+- <https://developers.cloudflare.com/cloudflare-one/policies/access/>
+- <https://developers.cloudflare.com/fundamentals/account/account-security/review-audit-logs/>
+
+### 🟡 medium — Cloudflare API Token Created Or Rolled
+
+`b84c8d54-6427-44b7-a421-fe2ae70ff684` · [`rules/cloudflare/api_token_created_or_rolled.yml`](../rules/cloudflare/api_token_created_or_rolled.yml) · 5 tests (2 firing)
+
+> **Status: experimental.**
+
+An API token was created, or its secret was rolled. A token is a standing, MFA-free credential with whatever scope it was given, and a new or re-issued secret is the usual way persistence is kept on a Cloudflare account after an interactive session is lost. Cloudflare does not publish an enum for the v1 audit log's resource.type and action.type, so both are lists of the spellings in use; extend them from a real record rather than loosening the match.
+
+**Fires when** `source` is `cloudflare` and `feed` is `audit` and `action.result` is `true` and `action.type` is one of `create`, `roll`, `rotate` and `resource.type` is one of `api_token`, `account_api_token`, `user_api_token`
+
+**Likely false positives**
+
+- A CI system or Terraform rotating its own token on schedule.
+- An engineer creating a scoped token for a new integration.
+
+**ATT&CK** attack.persistence, attack.t1098.001
+
+- <https://developers.cloudflare.com/fundamentals/account/account-security/review-audit-logs/>
+- <https://developers.cloudflare.com/fundamentals/api/get-started/create-token/>
 
 ---
 

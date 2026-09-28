@@ -106,7 +106,7 @@ func fetch(ctx context.Context, store Store, bucket, key string) ([]byte, error)
 	if err != nil {
 		return nil, fmt.Errorf("fetching %s: %w", key, err)
 	}
-	defer rc.Close()
+	defer func() { _ = rc.Close() }()
 
 	body, err := io.ReadAll(io.LimitReader(rc, maxRuleBytes+1))
 	if err != nil {

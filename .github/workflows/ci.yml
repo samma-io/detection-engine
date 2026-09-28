@@ -28,8 +28,6 @@ jobs:
         run: go test -run 'TestRules_' -v ./internal/rulecheck/
       - name: rule catalogue is up to date
         run: go run ./hack/rulesdoc -root . -check
-      - name: rules tarball builds
-        run: ./hack/package-rules.sh ci dist
 
   scrub:
     name: scrub-check
@@ -52,6 +50,8 @@ jobs:
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
   trivy:
+    # Build only: images are pushed by aws-siem hack/build-images.sh, never
+    # from CI.
     name: trivy (image)
     runs-on: ubuntu-latest
     steps:

@@ -10,8 +10,6 @@ import (
 	"testing"
 )
 
-const module = "github.com/samma-io/detection-engine"
-
 func repoRoot(t *testing.T) string {
 	t.Helper()
 	wd, err := os.Getwd()

@@ -1,0 +1,36 @@
+title: Cloudflare Access Application Or Policy Deleted
+id: 9dfc6c12-9d82-44b0-be44-9d4b53c3a70e
+status: experimental
+description: >
+  A Cloudflare Access application or policy was deleted. Access is the
+  authentication layer in front of internal applications; deleting the
+  application removes that layer entirely, and deleting a policy can leave an
+  application reachable under a broader remaining policy. Either reads as
+  removal of a control until someone confirms it was planned. As with every
+  audit-feed rule here, resource.type is a list because Cloudflare does not
+  publish the v1 enum.
+references:
+  - https://developers.cloudflare.com/cloudflare-one/policies/access/
+  - https://developers.cloudflare.com/fundamentals/account/account-security/review-audit-logs/
+author: samma-io
+level: high
+tags:
+  - attack.defense_evasion
+  - attack.t1562
+logsource:
+  product: cloudflare
+  service: logs
+detection:
+  selection:
+    source: cloudflare
+    feed: audit
+    action.type: delete
+    action.result: true
+    resource.type:
+      - access_app
+      - access_application
+      - access_policy
+      - access_reusable_policy
+  condition: selection
+falsepositives:
+  - Decommissioning an internal application, or consolidating per-app policies into a reusable one.

@@ -123,6 +123,30 @@ type Processor struct {
 	Log     *slog.Logger
 }
 
+// Log messages that alarms are built on. The aws-siem alarms module matches
+// them with CloudWatch Logs metric filters of the form
+//
+//	{ $.level = "ERROR" && $.msg = "rule evaluation failed" }
+//
+// so they are part of the deployment contract, not wording: a rename silently
+// disables the alarm. Both mirror a counter that should always be zero
+// (detection_rule_errors_total, detection_panics_total); the log line is what
+// CloudWatch can see without a metrics scraper. A rule that panics is contained per rule and reported as a
+// rule evaluation failure; MsgPanicRecovered is the per-message backstop.
+const (
+	MsgRuleEvaluationFailed = "rule evaluation failed"
+	MsgPanicRecovered       = "panic recovered"
+)
+
+// logRuleError reports one rule failing on one event, under the stable
+// MsgRuleEvaluationFailed. It is a function of its own so the log contract can
+// be tested without a rule that fails: every known failure is rejected at load
+// or normalised away by the decoder, which is the point.
+func logRuleError(log *slog.Logger, re rules.RuleError, index int) {
+	log.Error(MsgRuleEvaluationFailed, "rule_id", re.RuleID,
+		"file", re.File, "event_index", index, "err", re.Err)
+}
+
 // Handle processes exactly one message and reports what should happen to it.
 func (p *Processor) Handle(ctx context.Context, msg Message) (disp Disposition) {
 	metrics.MessagesReceived.Inc()
@@ -138,7 +162,7 @@ func (p *Processor) Handle(ctx context.Context, msg Message) (disp Disposition) 
 	defer func() {
 		if r := recover(); r != nil {
 			metrics.Panics.Inc()
-			p.Log.Error("panic processing message",
+			p.Log.Error(MsgPanicRecovered,
 				"msg_id", msg.MessageID, "panic", fmt.Sprint(r), "stack", string(debug.Stack()))
 			disp = Transient
 		}
@@ -219,7 +243,7 @@ func (p *Processor) object(ctx context.Context, msg Message, obj decode.ObjectRe
 		log.Error("get object", "err", err)
 		return Transient
 	}
-	defer body.Close()
+	defer func() { _ = body.Close() }()
 
 	sink := p.NewSink() // fresh per object, so a previous object's batch cannot leak in
 	var (
@@ -245,8 +269,7 @@ func (p *Processor) object(ctx context.Context, msg Message, obj decode.ObjectRe
 			for _, re := range rerrs {
 				ruleErrs++
 				metrics.RuleErrors.WithLabelValues(re.RuleID).Inc()
-				log.Error("rule failed on an event", "rule_id", re.RuleID,
-					"file", re.File, "event_index", index, "err", re.Err)
+				logRuleError(log, re, index)
 			}
 
 			for _, m := range ms {

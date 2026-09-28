@@ -70,7 +70,7 @@ func Records(ctx context.Context, r io.Reader, maxLine int, onRecord RecordFunc,
 		if err != nil {
 			return fmt.Errorf("opening gzip stream: %w", err)
 		}
-		defer gz.Close()
+		defer func() { _ = gz.Close() }()
 		// Multistream is on by default and is what we want: Vector can
 		// concatenate gzip members within one object.
 		body = gz

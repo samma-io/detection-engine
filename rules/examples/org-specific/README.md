@@ -2,7 +2,7 @@
 
 The rules in this directory only make sense once they carry facts about **your**
 estate -- account ids, an email domain, 1Password vault uuids. They ship with
-placeholder values, are excluded from the rules tarball and from the
+placeholder values, are never baked into the image, are skipped by the
 `rulecheck` gate, and are never loaded by the engine.
 
 | Rule | Lane | Fill in |
@@ -34,8 +34,9 @@ placeholder values, are excluded from the rules tarball and from the
    `TestRules_EveryRuleHasAPositiveTestCase` fails if a placeholder is left in
    only one of the two files, because the rule then cannot match its own test.
 
-4. Ship the rules as usual (`make package`, upload the tarball to the rules
-   bucket, restart the lane's tasks).
+4. Ship the rules as usual: build and push a new image (`make image push`) and
+   roll the lane's service, or, if you load rules from the bucket, re-apply
+   aws-siem with your `rules_dir` and restart the lane's tasks.
 
 Notes:
 

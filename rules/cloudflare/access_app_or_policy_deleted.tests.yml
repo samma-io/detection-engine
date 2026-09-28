@@ -1,0 +1,87 @@
+- name: deleting an Access application fires
+  expected: true
+  event:
+    source: cloudflare
+    feed: audit
+    event_time: '2026-09-09T14:30:41Z'
+    actor_email: someone@example.com
+    search_text: audit delete access_application someone@example.com 198.51.100.24
+    id: 2b7f0c9e-5d4a-4e1b-9c3d-8a7b6c5d4e3f
+    when: '2026-09-09T14:30:41Z'
+    action:
+      type: delete
+      result: true
+    actor:
+      id: 9a7806061c88ada191ed06f989cc3dac
+      email: someone@example.com
+      ip: 198.51.100.24
+      type: user
+    owner:
+      id: 3f7603e2eb6d4d3aa1a7bda1234abcde
+    resource:
+      id: df7e2w5f-02b7-4d9d-af26-8d1988fca630
+      type: access_application
+    interface: UI
+    metadata:
+      name: internal admin
+      domain: internal.example.com/admin
+    _source: cloudflare
+    _partition: audit
+
+- name: deleting an Access policy fires
+  expected: true
+  event:
+    source: cloudflare
+    feed: audit
+    actor_email: someone@example.com
+    action:
+      type: delete
+      result: true
+    resource:
+      id: 5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d
+      type: access_policy
+    interface: API
+
+- name: updating an Access application does not fire
+  expected: false
+  event:
+    source: cloudflare
+    feed: audit
+    actor_email: someone@example.com
+    action:
+      type: update
+      result: true
+    resource:
+      type: access_application
+
+- name: a failed delete does not fire
+  expected: false
+  event:
+    source: cloudflare
+    feed: audit
+    actor_email: someone@example.com
+    action:
+      type: delete
+      result: false
+    resource:
+      type: access_policy
+
+- name: an Access login on the access feed does not fire
+  expected: false
+  event:
+    source: cloudflare
+    feed: access
+    event_time: '2026-09-09T14:05:11Z'
+    actor_email: someone@example.com
+    search_text: access login internal.example.com/admin someone@example.com 198.51.100.24
+    action: login
+    allowed: true
+    app_domain: internal.example.com/admin
+    app_uid: df7e2w5f-02b7-4d9d-af26-8d1988fca630
+    connection: saml
+    created_at: '2026-09-09T14:05:11Z'
+    ip_address: 198.51.100.24
+    ray_id: 8f3a1b2c4d5e6f70
+    user_email: someone@example.com
+    _source: cloudflare
+    _partition: access

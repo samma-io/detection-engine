@@ -28,10 +28,6 @@ dist/
 /engine
 /sigmaimport
 
-# release artifacts (built by hack/package-rules.sh and CI)
-rules-*.tar.gz
-rules-*.tar.gz.sha256
-
 # staging area for hack/sigmaimport; upstream corpora are never vendored
 .import-src/
 

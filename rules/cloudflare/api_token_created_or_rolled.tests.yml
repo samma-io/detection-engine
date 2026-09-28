@@ -1,0 +1,102 @@
+- name: an account API token created over the API fires
+  expected: true
+  event:
+    source: cloudflare
+    feed: audit
+    event_time: '2026-09-09T14:12:03Z'
+    actor_email: someone@example.com
+    search_text: audit create account_api_token someone@example.com 198.51.100.24
+    id: f174be97-19b1-40d6-954d-a8c7cf60aaaa
+    when: '2026-09-09T14:12:03Z'
+    action:
+      type: create
+      result: true
+    actor:
+      id: 9a7806061c88ada191ed06f989cc3dac
+      email: someone@example.com
+      ip: 198.51.100.24
+      type: user
+    owner:
+      id: 3f7603e2eb6d4d3aa1a7bda1234abcde
+    resource:
+      id: 0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f
+      type: account_api_token
+    interface: API
+    metadata:
+      token_name: terraform-dns-edit
+    _source: cloudflare
+    _partition: audit
+
+- name: a rolled token secret fires
+  expected: true
+  event:
+    source: cloudflare
+    feed: audit
+    event_time: '2026-09-09T14:20:00Z'
+    actor_email: someone@example.com
+    action:
+      type: roll
+      result: true
+    actor:
+      email: someone@example.com
+      ip: 198.51.100.24
+      type: user
+    resource:
+      id: 0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f
+      type: api_token
+    interface: UI
+
+- name: a failed token creation does not fire
+  expected: false
+  event:
+    source: cloudflare
+    feed: audit
+    actor_email: someone@example.com
+    action:
+      type: create
+      result: false
+    resource:
+      type: account_api_token
+
+- name: deleting a token does not fire
+  expected: false
+  event:
+    source: cloudflare
+    feed: audit
+    actor_email: someone@example.com
+    action:
+      type: delete
+      result: true
+    resource:
+      type: account_api_token
+
+- name: the golden gateway rule update does not fire
+  expected: false
+  event:
+    source: cloudflare
+    feed: audit
+    event_time: '2026-09-09T14:12:03Z'
+    actor_email: someone@example.com
+    search_text: audit update gateway_rule someone@example.com 198.51.100.24
+    id: f174be97-19b1-40d6-954d-a8c7cf60ffff
+    when: '2026-09-09T14:12:03Z'
+    action:
+      type: update
+      result: true
+    actor:
+      id: 9a7806061c88ada191ed06f989cc3dac
+      email: someone@example.com
+      ip: 198.51.100.24
+      type: user
+    owner:
+      id: 3f7603e2eb6d4d3aa1a7bda1234abcde
+    resource:
+      id: e4e1a6a2a8b34a5c9d0b1e2f3a4b5c6d
+      type: gateway_rule
+    interface: API
+    metadata:
+      rule_name: Block risky categories
+    newValue: '{"action":"block"}'
+    oldValue: '{"action":"allow"}'
+    _source: cloudflare
+    _partition: audit

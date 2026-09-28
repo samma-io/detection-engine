@@ -159,6 +159,7 @@ func TestRules_DoNotFireOnABareEnvelope(t *testing.T) {
 var feedPinningLanes = map[string]string{
 	"slack":       "accesslogs and integrationlogs share no fields at all",
 	"onepassword": "itemusages, signinattempts and auditevents overlap on action and uuid",
+	"cloudflare":  "audit, access and firewall all carry `action` with unrelated meanings",
 }
 
 // TestRules_MultiFeedLanesPinTheFeed enforces what those configs already say.
