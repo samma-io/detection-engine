@@ -25,6 +25,11 @@ const (
 	DefaultMaxObjectDuration  = 45 * time.Minute
 	DefaultMaxAlertsPerObject = 10_000
 	DefaultMetricsAddr        = ":9090"
+
+	TransportSQS  = "sqs"
+	TransportNATS = "nats"
+
+	DefaultNATSStream = "SIEM_LOGS"
 )
 
 type Config struct {
@@ -32,8 +37,20 @@ type Config struct {
 	// as a constant metrics label, everything this task reports.
 	Source source.Source
 
+	// Transport is "sqs" (S3 notifications, the AWS deployment) or "nats"
+	// (records carried on JetStream, the Kubernetes deployment).
+	Transport string
+
 	QueueURL      string
 	AlertQueueURL string
+
+	// NATS transport only. The subjects default to samma.logs.<lane> and
+	// samma.alerts.<lane>; see aws-siem docs/contracts/detection-alert-v1.md.
+	NATSURL      string
+	NATSStream   string
+	NATSConsumer string
+	NATSSubject  string
+	AlertSubject string
 
 	// Exactly one of RulesDir and RulesBucket is set. RulesDir is the tree
 	// baked into the image (the default); RulesBucket is the override for an
@@ -91,6 +108,12 @@ func FromEnv(getenv func(string) string) (Config, error) {
 	}
 
 	c := Config{
+		Transport:      get("ENGINE_TRANSPORT", TransportSQS),
+		NATSURL:        get("ENGINE_NATS_URL", ""),
+		NATSStream:     get("ENGINE_NATS_STREAM", DefaultNATSStream),
+		NATSConsumer:   get("ENGINE_NATS_CONSUMER", ""),
+		NATSSubject:    get("ENGINE_NATS_SUBJECT", ""),
+		AlertSubject:   get("ENGINE_ALERT_SUBJECT", ""),
 		QueueURL:       get("ENGINE_QUEUE_URL", ""),
 		AlertQueueURL:  get("ENGINE_ALERT_QUEUE_URL", ""),
 		RulesDir:       get("ENGINE_RULES_DIR", ""),
@@ -120,11 +143,32 @@ func FromEnv(getenv func(string) string) (Config, error) {
 	}
 	c.Source = src
 
-	for name, value := range map[string]string{
-		"ENGINE_QUEUE_URL":       c.QueueURL,
-		"ENGINE_ALERT_QUEUE_URL": c.AlertQueueURL,
-		"AWS_REGION":             c.AWSRegion,
-	} {
+	required := map[string]string{}
+	switch c.Transport {
+	case TransportSQS:
+		required["ENGINE_QUEUE_URL"] = c.QueueURL
+		required["ENGINE_ALERT_QUEUE_URL"] = c.AlertQueueURL
+		required["AWS_REGION"] = c.AWSRegion
+	case TransportNATS:
+		if c.NATSConsumer == "" && err == nil {
+			c.NATSConsumer = "detection-engine-" + src.Name
+		}
+		if c.NATSSubject == "" && err == nil {
+			c.NATSSubject = "samma.logs." + src.Name
+		}
+		if c.AlertSubject == "" && err == nil {
+			c.AlertSubject = "samma.alerts." + src.Name
+		}
+		required["ENGINE_NATS_URL"] = c.NATSURL
+		// Rules from a bucket still need AWS; the baked-in tree does not.
+		if c.RulesBucket != "" {
+			required["AWS_REGION"] = c.AWSRegion
+		}
+	default:
+		problems = append(problems, fmt.Sprintf("ENGINE_TRANSPORT must be %q or %q, got %q",
+			TransportSQS, TransportNATS, c.Transport))
+	}
+	for name, value := range required {
 		if value == "" {
 			problems = append(problems, name+" is required and not set")
 		}

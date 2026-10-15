@@ -20,6 +20,8 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -31,6 +33,7 @@ import (
 	"github.com/samma-io/detection-engine/internal/engine"
 	"github.com/samma-io/detection-engine/internal/health"
 	"github.com/samma-io/detection-engine/internal/metrics"
+	"github.com/samma-io/detection-engine/internal/natsadapt"
 	"github.com/samma-io/detection-engine/internal/publisher"
 	"github.com/samma-io/detection-engine/internal/rules"
 	"github.com/samma-io/detection-engine/internal/runtime/logging"
@@ -76,7 +79,9 @@ func run() error {
 
 	log.Info("starting",
 		"version", version, "commit", commit,
+		"transport", cfg.Transport,
 		"queue", cfg.QueueURL, "alert_queue", cfg.AlertQueueURL,
+		"nats_consumer", cfg.NATSConsumer, "alert_subject", cfg.AlertSubject,
 		"rules_source", cfg.RulesSource(), "rules", rulesAt,
 		"workers", cfg.Workers)
 
@@ -96,27 +101,67 @@ func run() error {
 	}
 	metrics.BuildInfo.WithLabelValues(version, commit).Set(1)
 
-	awsCfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(cfg.AWSRegion))
-	if err != nil {
-		return fmt.Errorf("aws config: %w", err)
+	// The transport decides where messages come from and where alerts go.
+	// AWS is loaded only when something needs it: the SQS transport, or a
+	// rules bucket on either transport.
+	var (
+		newQueue    func() engine.Queue
+		alertSender publisher.Sender
+		objects     engine.ObjectStore
+	)
+	if cfg.Transport == config.TransportSQS || cfg.RulesBucket != "" {
+		awsCfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(cfg.AWSRegion))
+		if err != nil {
+			return fmt.Errorf("aws config: %w", err)
+		}
+		s3Client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
+			if cfg.S3EndpointURL != "" {
+				o.BaseEndpoint = &cfg.S3EndpointURL
+				// localstack does not serve virtual-hosted-style buckets.
+				o.UsePathStyle = true
+			}
+		})
+		awsObjects := &awsadapt.Objects{Client: s3Client}
+		objects = awsObjects
+		if rulesStore == nil {
+			rulesStore = awsObjects
+		}
+		if cfg.Transport == config.TransportSQS {
+			sqsClient := sqs.NewFromConfig(awsCfg, func(o *sqs.Options) {
+				if cfg.SQSEndpointURL != "" {
+					o.BaseEndpoint = &cfg.SQSEndpointURL
+				}
+			})
+			newQueue = func() engine.Queue { return &awsadapt.Queue{Client: sqsClient, QueueURL: cfg.QueueURL} }
+			alertSender = &awsadapt.AlertQueue{Client: sqsClient, QueueURL: cfg.AlertQueueURL}
+		}
 	}
-
-	s3Client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
-		if cfg.S3EndpointURL != "" {
-			o.BaseEndpoint = &cfg.S3EndpointURL
-			// localstack does not serve virtual-hosted-style buckets.
-			o.UsePathStyle = true
+	if cfg.Transport == config.TransportNATS {
+		nc, err := nats.Connect(cfg.NATSURL, nats.Name("detection-engine-"+cfg.Source.Name),
+			nats.MaxReconnects(-1))
+		if err != nil {
+			return fmt.Errorf("nats connect: %w", err)
 		}
-	})
-	sqsClient := sqs.NewFromConfig(awsCfg, func(o *sqs.Options) {
-		if cfg.SQSEndpointURL != "" {
-			o.BaseEndpoint = &cfg.SQSEndpointURL
+		defer nc.Drain() //nolint:errcheck // best effort on the way out
+		js, err := jetstream.New(nc)
+		if err != nil {
+			return fmt.Errorf("jetstream: %w", err)
 		}
-	})
-
-	objects := &awsadapt.Objects{Client: s3Client}
-	if rulesStore == nil {
-		rulesStore = objects
+		// The consumer is created by the deployment, not here: its filter
+		// subject, AckWait and MaxDeliver are part of the contract, and an
+		// engine that created its own would silently paper over a typo.
+		consumer, err := js.Consumer(ctx, cfg.NATSStream, cfg.NATSConsumer)
+		if err != nil {
+			return fmt.Errorf("jetstream consumer %s/%s: %w", cfg.NATSStream, cfg.NATSConsumer, err)
+		}
+		if got := consumer.CachedInfo().Config.FilterSubject; got != cfg.NATSSubject {
+			// The NATS equivalent of the wrong-prefix check: evaluating this
+			// lane's rules against another lane's events is confident nonsense.
+			return fmt.Errorf("consumer %s filters %q, want %q", cfg.NATSConsumer, got, cfg.NATSSubject)
+		}
+		logs := &natsadapt.Logs{Consumer: consumer, Stream: cfg.NATSStream}
+		newQueue = func() engine.Queue { return logs }
+		alertSender = &natsadapt.Alerts{JS: js, Subject: cfg.AlertSubject}
 	}
 
 	// The admin server comes up before the rules load, so /readyz can report
@@ -165,7 +210,7 @@ func run() error {
 		Rules:   loaded.Set,
 		NewSink: func() engine.AlertSink {
 			return &publisher.Batcher{
-				Sender: &awsadapt.AlertQueue{Client: sqsClient, QueueURL: cfg.AlertQueueURL},
+				Sender: alertSender,
 				Log:    log,
 				OnOversize: func(alert.Alert) {
 					metrics.AlertsOversize.Inc()
@@ -206,7 +251,7 @@ func run() error {
 		go func(n int) {
 			defer wg.Done()
 			wlog := log.With("worker", n)
-			if err := engine.Run(ctx, &awsadapt.Queue{Client: sqsClient, QueueURL: cfg.QueueURL}, proc, runCfg, wlog); err != nil {
+			if err := engine.Run(ctx, newQueue(), proc, runCfg, wlog); err != nil {
 				wlog.Error("worker exited", "err", err)
 			}
 		}(i)

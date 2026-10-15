@@ -143,11 +143,17 @@ Every problem is reported in one error at start.
 | Var | Required | Default | Purpose |
 |---|---|---|---|
 | `ENGINE_LOG_SOURCE` | yes | -- | lane: `alb`\|`aws`\|`cloudflare`\|`dns`\|`gcp`\|`github`\|`onepassword`\|`slack`\|`workspace` |
-| `ENGINE_QUEUE_URL` | yes | -- | the lane's `filtered-<lane>` queue |
-| `ENGINE_ALERT_QUEUE_URL` | yes | -- | the shared `detections-alerts` queue |
+| `ENGINE_TRANSPORT` | no | `sqs` | `sqs` (AWS: S3 notifications) or `nats` (Kubernetes: records on JetStream) |
+| `ENGINE_QUEUE_URL` | sqs | -- | the lane's `filtered-<lane>` queue |
+| `ENGINE_ALERT_QUEUE_URL` | sqs | -- | the shared `detections-alerts` queue |
+| `ENGINE_NATS_URL` | nats | -- | e.g. `nats://nats.samma.svc:4222` |
+| `ENGINE_NATS_STREAM` | no | `SIEM_LOGS` | stream holding `samma.logs.>` |
+| `ENGINE_NATS_CONSUMER` | no | `detection-engine-<lane>` | durable pull consumer; must exist and filter `ENGINE_NATS_SUBJECT` |
+| `ENGINE_NATS_SUBJECT` | no | `samma.logs.<lane>` | checked against the consumer's filter at start |
+| `ENGINE_ALERT_SUBJECT` | no | `samma.alerts.<lane>` | alerts are published here with `Nats-Msg-Id` = alert id |
 | `ENGINE_RULES_DIR` | one of | `/rules` (image) | load rules from this directory; the image bakes `rules/` in here |
 | `ENGINE_RULES_BUCKET` | one of | -- | load rules from this S3 bucket instead; set `ENGINE_RULES_DIR=` (empty) alongside it |
-| `AWS_REGION` | yes | -- | SDK region |
+| `AWS_REGION` | sqs, or with a rules bucket | -- | SDK region |
 | `ENGINE_RULES_PREFIX` | no | `""` | prepended to `<lane>/` under the dir or bucket; a trailing `/` is added if missing |
 | `ENGINE_WORKERS` | no | `4` | concurrent workers, each with one in-flight message |
 | `ENGINE_MAX_OBJECT_BYTES` | no | `268435456` | refuse objects above this (256 MiB) |
@@ -162,7 +168,14 @@ Every problem is reported in one error at start.
 | `ENGINE_SQS_ENDPOINT_URL` | no | `""` | localstack only |
 
 Exactly one of `ENGINE_RULES_DIR` and `ENGINE_RULES_BUCKET` must be set; both
-or neither is a startup error. Standard AWS SDK credential resolution applies
+or neither is a startup error.
+
+With `ENGINE_TRANSPORT=nats` each message body is NDJSON (gzipped or not) of
+filtered records, the same lines a filtered object holds. Provenance is
+`bucket = nats:<stream>`, `key = <subject>/<stream sequence>`, so a redelivery
+yields the same alert ids. The consumer's `AckWait` plays the role of the
+visibility timeout and must match `ENGINE_VISIBILITY_TIMEOUT`; `MaxDeliver`
+plays the role of the DLQ. See aws-siem `docs/contracts/detection-alert-v1.md`. Standard AWS SDK credential resolution applies
 (task role, env, profile).
 
 ## Endpoints
