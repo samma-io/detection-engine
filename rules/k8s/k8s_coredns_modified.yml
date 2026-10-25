@@ -1,0 +1,28 @@
+title: Kubernetes CoreDNS ConfigMap Modified
+id: 094f90f0-5024-5852-9167-dabc93e54d87
+status: experimental
+description: >
+  Detects modifications to the CoreDNS configmap - may indicate DNS poisoning
+  for lateral movement. Ported from samma-io/siem-rules rule
+  k8s-coredns-modified.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_coredns_modified.yaml
+author: samma-io
+level: critical
+tags:
+  - attack.t1557
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    objectRef.resource: configmaps
+    objectRef.name: coredns
+    objectRef.namespace: kube-system
+    verb:
+    - update
+    - patch
+  condition: selection
+falsepositives:
+  - A planned CoreDNS configuration change or a cluster upgrade.

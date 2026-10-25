@@ -1,0 +1,59 @@
+# Positive case: samma-io/siem-rules test/k8s/k8s_port_forward.json, with the lane's
+# source field added and auditID replaced. Negative cases flip the field the
+# rule keys on.
+- name: the siem-rules fixture fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: 9df9d515-dce4-50fa-aa2d-89d24e085fc1
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/default/pods/my-app-7b9f5c6d4-xk2lm/portforward
+    verb: create
+    user:
+      username: developer@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.50
+    objectRef:
+      resource: pods
+      subresource: portforward
+      namespace: default
+      name: my-app-7b9f5c6d4-xk2lm
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 101
+    requestReceivedTimestamp: '2026-02-10T21:00:00.000000Z'
+    stageTimestamp: '2026-02-10T21:00:00.100000Z'
+- name: exec into a pod does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: 9df9d515-dce4-50fa-aa2d-89d24e085fc1
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/default/pods/my-app-7b9f5c6d4-xk2lm/portforward
+    verb: create
+    user:
+      username: developer@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.50
+    objectRef:
+      resource: pods
+      subresource: exec
+      namespace: default
+      name: my-app-7b9f5c6d4-xk2lm
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 101
+    requestReceivedTimestamp: '2026-02-10T21:00:00.000000Z'
+    stageTimestamp: '2026-02-10T21:00:00.100000Z'

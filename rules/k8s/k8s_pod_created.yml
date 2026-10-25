@@ -1,0 +1,33 @@
+title: Kubernetes Pod Created
+id: 7a014823-d705-52f6-9a1d-d490348e53cb
+status: experimental
+description: >
+  Detects new pod creation in the cluster via API server audit logs. Narrowed
+  from the source rule: subresource requests (exec, attach, port-forward,
+  binding) and the pods covered at higher severity by k8s_kube_system_pod and
+  k8s_privileged_pod are excluded, so one request raises one alert. Ported
+  from samma-io/siem-rules rule k8s-pod-created.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_pod_created.yaml
+author: samma-io
+level: low
+tags:
+  - attack.t1610
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    objectRef.resource: pods
+    verb: create
+    requestURI|re: /pods(\?|$)
+  filter_kube_system:
+    objectRef.namespace: kube-system
+  filter_host_namespaces:
+  - requestObject.spec.hostNetwork: true
+  - requestObject.spec.hostPID: true
+  - requestObject.spec.hostIPC: true
+  condition: selection and not 1 of filter_*
+falsepositives:
+  - Every rollout, scale-up and job run. Informational on its own.

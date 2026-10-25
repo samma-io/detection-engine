@@ -1,0 +1,85 @@
+# Positive case: samma-io/siem-rules test/k8s/k8s_kube_system_pod.json, with the lane's
+# source field added and auditID replaced. Negative cases flip the field the
+# rule keys on.
+- name: the siem-rules fixture fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: 5a5833ac-92dc-57f9-883a-a2d52b9aa68d
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/kube-system/pods
+    verb: create
+    user:
+      username: attacker@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.5.99
+    objectRef:
+      resource: pods
+      namespace: kube-system
+      name: kube-proxy-backdoor
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-11T00:00:00.000000Z'
+    stageTimestamp: '2026-02-11T00:00:00.100000Z'
+- name: a pod in another namespace does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: 5a5833ac-92dc-57f9-883a-a2d52b9aa68d
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/default/pods
+    verb: create
+    user:
+      username: attacker@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.5.99
+    objectRef:
+      resource: pods
+      namespace: default
+      name: kube-proxy-backdoor
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-11T00:00:00.000000Z'
+    stageTimestamp: '2026-02-11T00:00:00.100000Z'
+- name: exec into a kube-system pod does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: 5a5833ac-92dc-57f9-883a-a2d52b9aa68d
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/kube-system/pods/kube-proxy-backdoor/exec?command=sh&stdin=true&tty=true
+    verb: create
+    user:
+      username: attacker@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.5.99
+    objectRef:
+      resource: pods
+      namespace: kube-system
+      name: kube-proxy-backdoor
+      apiVersion: v1
+      subresource: exec
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-11T00:00:00.000000Z'
+    stageTimestamp: '2026-02-11T00:00:00.100000Z'

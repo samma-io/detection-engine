@@ -41,6 +41,10 @@ var overlappingRules = map[string]string{
 		"one says who, the other says how.",
 	"console_login_without_mfa.yml+root_activity_in_management_account.yml": "" +
 		"same pair as above, in a management account.",
+	"k8s_forbidden_access.yml+k8s_secret_accessed.yml": "" +
+		"a denied secret read is both: one says secrets were the target, the " +
+		"other that RBAC refused it. Excluding 403 from the secret rule would " +
+		"drop a credential-harvesting attempt from high to medium.",
 }
 
 func TestRules_DoNotSemanticallyDuplicateEachOther(t *testing.T) {

@@ -1,0 +1,59 @@
+# Positive case: samma-io/siem-rules test/k8s/k8s_rbac_modified.json, with the lane's
+# source field added and auditID replaced. Negative cases flip the field the
+# rule keys on.
+- name: the siem-rules fixture fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: fec2a164-a119-5a59-9ae9-2150a9427305
+    stage: ResponseComplete
+    requestURI: /apis/rbac.authorization.k8s.io/v1/clusterroles/my-custom-role
+    verb: update
+    user:
+      username: admin@example.com
+      groups:
+      - system:masters
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.10
+    objectRef:
+      resource: clusterroles
+      name: my-custom-role
+      apiGroup: rbac.authorization.k8s.io
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 200
+    requestReceivedTimestamp: '2026-02-10T21:30:00.000000Z'
+    stageTimestamp: '2026-02-10T21:30:00.100000Z'
+- name: reading a clusterrole does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: fec2a164-a119-5a59-9ae9-2150a9427305
+    stage: ResponseComplete
+    requestURI: /apis/rbac.authorization.k8s.io/v1/clusterroles/my-custom-role
+    verb: get
+    user:
+      username: admin@example.com
+      groups:
+      - system:masters
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.10
+    objectRef:
+      resource: clusterroles
+      name: my-custom-role
+      apiGroup: rbac.authorization.k8s.io
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 200
+    requestReceivedTimestamp: '2026-02-10T21:30:00.000000Z'
+    stageTimestamp: '2026-02-10T21:30:00.100000Z'

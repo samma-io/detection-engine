@@ -60,6 +60,15 @@ which is the vendor-native shape plus a `source` field:
   `TestRules_MultiFeedLanesPinTheFeed` enforces it. The reference shapes are
   the golden files in samma-io/ingester `internal/source/cloudflare/golden/`.
 
+- **k8s** — Kubernetes audit events (`audit.k8s.io/v1` `Event`), one per
+  message on `samma.logs.k8s` (NATS transport only): `kind`, `verb`,
+  `requestURI`, `user.username`, `objectRef.resource`, `objectRef.subresource`,
+  `objectRef.namespace`, `objectRef.name`, `requestObject.*`,
+  `responseStatus.code`. Exec, attach, port-forward and token requests are
+  `verb: create` on the parent resource, so a rule about creating a pod or a
+  serviceaccount must pin the collection URI (`requestURI|re: /pods(\?|$)`)
+  or it also fires on every one of those.
+
 Dotted paths such as `userIdentity.type` work because the engine builds a
 flattened match view of every event; see `internal/decode/normalize.go`.
 Upstream SigmaHQ rules for these products can usually be dropped in unchanged,

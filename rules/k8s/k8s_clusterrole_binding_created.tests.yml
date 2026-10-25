@@ -1,0 +1,85 @@
+# Positive case: samma-io/siem-rules test/k8s/k8s_clusterrole_binding_created.json, with the lane's
+# source field added and auditID replaced. Negative cases flip the field the
+# rule keys on.
+- name: the siem-rules fixture fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: deece6f1-fa5b-5dca-9c75-d7472555c7be
+    stage: ResponseComplete
+    requestURI: /apis/rbac.authorization.k8s.io/v1/clusterrolebindings
+    verb: create
+    user:
+      username: admin@example.com
+      groups:
+      - system:masters
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.10
+    objectRef:
+      resource: clusterrolebindings
+      name: suspicious-admin-binding
+      apiGroup: rbac.authorization.k8s.io
+      apiVersion: v1
+    requestObject:
+      kind: ClusterRoleBinding
+      apiVersion: rbac.authorization.k8s.io/v1
+      metadata:
+        name: suspicious-admin-binding
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: cluster-admin
+      subjects:
+      - kind: ServiceAccount
+        name: attacker-sa
+        namespace: default
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-10T18:30:00.000000Z'
+    stageTimestamp: '2026-02-10T18:30:00.100000Z'
+- name: deleting a binding does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: deece6f1-fa5b-5dca-9c75-d7472555c7be
+    stage: ResponseComplete
+    requestURI: /apis/rbac.authorization.k8s.io/v1/clusterrolebindings
+    verb: delete
+    user:
+      username: admin@example.com
+      groups:
+      - system:masters
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.10
+    objectRef:
+      resource: clusterrolebindings
+      name: suspicious-admin-binding
+      apiGroup: rbac.authorization.k8s.io
+      apiVersion: v1
+    requestObject:
+      kind: ClusterRoleBinding
+      apiVersion: rbac.authorization.k8s.io/v1
+      metadata:
+        name: suspicious-admin-binding
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: cluster-admin
+      subjects:
+      - kind: ServiceAccount
+        name: attacker-sa
+        namespace: default
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-10T18:30:00.000000Z'
+    stageTimestamp: '2026-02-10T18:30:00.100000Z'

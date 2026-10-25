@@ -1,0 +1,65 @@
+# Positive case: samma-io/siem-rules test/k8s/k8s_impersonation.json, with the lane's
+# source field added and auditID replaced. Negative cases flip the field the
+# rule keys on.
+- name: the siem-rules fixture fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: 8beccc67-f028-5000-896d-bc708a7a826b
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/default/pods
+    verb: impersonate
+    user:
+      username: attacker@example.com
+      groups:
+      - system:authenticated
+    impersonatedUser:
+      username: system:admin
+      groups:
+      - system:masters
+    sourceIPs:
+    - 10.0.5.99
+    objectRef:
+      resource: users
+      name: system:admin
+      apiGroup: ''
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-11T03:00:00.000000Z'
+    stageTimestamp: '2026-02-11T03:00:00.100000Z'
+- name: an ordinary get does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: 8beccc67-f028-5000-896d-bc708a7a826b
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/default/pods
+    verb: get
+    user:
+      username: attacker@example.com
+      groups:
+      - system:authenticated
+    impersonatedUser:
+      username: system:admin
+      groups:
+      - system:masters
+    sourceIPs:
+    - 10.0.5.99
+    objectRef:
+      resource: users
+      name: system:admin
+      apiGroup: ''
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-11T03:00:00.000000Z'
+    stageTimestamp: '2026-02-11T03:00:00.100000Z'

@@ -1,0 +1,27 @@
+title: Kubernetes Pod Created In kube-system
+id: 45e97ba6-efa0-5385-b50f-4f97251ec609
+status: experimental
+description: >
+  Detects pod creation in kube-system namespace - may indicate masquerading as
+  system components. Narrowed from the source rule to creates on the pods
+  collection, so an exec or attach into a kube-system pod is not reported as a
+  new pod. Ported from samma-io/siem-rules rule k8s-kube-system-pod.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_kube_system_pod.yaml
+author: samma-io
+level: high
+tags:
+  - attack.t1036
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    objectRef.resource: pods
+    verb: create
+    objectRef.namespace: kube-system
+    requestURI|re: /pods(\?|$)
+  condition: selection
+falsepositives:
+  - Cluster add-ons and DaemonSet rollouts in kube-system.

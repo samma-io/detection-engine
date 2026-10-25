@@ -1,0 +1,17 @@
+# sigma-go Config for the scanner lane.
+#
+# Records are Samma scanner messages, relayed unchanged from the operator's
+# NATS (samma-io.scan.<scanner>) to samma.logs.scanner with `source: scanner`
+# added. See aws-siem docs/contracts/nats-transport.md. There is no S3
+# producer for this lane: it exists only on the NATS transport.
+#
+# These are scan results about targets the organisation owns, not vendor
+# audit records. Rules on this lane match finding fields only.
+title: scanner
+logsources:
+  samma_scanner:
+    product: samma
+    service: scanner
+    index: scanner
+defaultindex: scanner
+fieldmappings: {}

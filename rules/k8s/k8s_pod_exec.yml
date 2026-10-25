@@ -1,0 +1,25 @@
+title: Kubernetes Exec Into Pod
+id: 247af81a-dd65-5cce-b412-6d7a5f98f861
+status: experimental
+description: >
+  Detects command execution inside a running pod via kubectl exec - indicates
+  lateral movement or container administration. Ported from
+  samma-io/siem-rules rule k8s-pod-exec.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_pod_exec.yaml
+author: samma-io
+level: high
+tags:
+  - attack.t1609
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    objectRef.resource: pods
+    objectRef.subresource: exec
+    verb: create
+  condition: selection
+falsepositives:
+  - An operator debugging a container; tooling that execs for health checks.

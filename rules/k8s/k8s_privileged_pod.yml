@@ -1,0 +1,29 @@
+title: Kubernetes Pod With Host Namespaces Created
+id: 52e0a62e-b6fe-5996-bedd-b89746f5bf80
+status: experimental
+description: >
+  Detects creation of pods with privileged security context or host namespace
+  access - escape to host risk. Ported from samma-io/siem-rules rule
+  k8s-privileged-pod.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_privileged_pod.yaml
+author: samma-io
+level: critical
+tags:
+  - attack.t1611
+  - attack.t1610
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    objectRef.resource: pods
+    verb: create
+  selection_1:
+  - requestObject.spec.hostNetwork: true
+  - requestObject.spec.hostPID: true
+  - requestObject.spec.hostIPC: true
+  condition: selection and selection_1
+falsepositives:
+  - Node agents (CNI, storage, monitoring) that need host namespaces.

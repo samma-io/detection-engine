@@ -1,0 +1,59 @@
+# Positive case: samma-io/siem-rules test/k8s/k8s_user_login.json, with the lane's
+# source field added and auditID replaced. Negative cases flip the field the
+# rule keys on.
+- name: the siem-rules fixture fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: 7689ce10-46ff-5306-824e-568bac304243
+    stage: ResponseComplete
+    requestURI: /apis/authentication.k8s.io/v1/tokenreviews
+    verb: authenticate
+    user:
+      username: system:serviceaccount:kube-system:default
+      uid: 12345-abcde
+      groups:
+      - system:serviceaccounts
+      - system:authenticated
+    sourceIPs:
+    - 10.0.0.1
+    objectRef:
+      resource: users
+      apiGroup: authentication.k8s.io
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 200
+    requestReceivedTimestamp: '2026-02-10T12:00:00.000000Z'
+    stageTimestamp: '2026-02-10T12:00:00.100000Z'
+- name: an ordinary get does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: 7689ce10-46ff-5306-824e-568bac304243
+    stage: ResponseComplete
+    requestURI: /apis/authentication.k8s.io/v1/tokenreviews
+    verb: get
+    user:
+      username: system:serviceaccount:kube-system:default
+      uid: 12345-abcde
+      groups:
+      - system:serviceaccounts
+      - system:authenticated
+    sourceIPs:
+    - 10.0.0.1
+    objectRef:
+      resource: users
+      apiGroup: authentication.k8s.io
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 200
+    requestReceivedTimestamp: '2026-02-10T12:00:00.000000Z'
+    stageTimestamp: '2026-02-10T12:00:00.100000Z'

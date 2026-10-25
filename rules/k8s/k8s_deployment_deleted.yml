@@ -1,0 +1,27 @@
+title: Kubernetes Workload Deleted
+id: 991bc12c-060f-56a6-9cfb-9d9c79b3cc15
+status: experimental
+description: >
+  Detects deletion of deployments, statefulsets, or daemonsets - potential
+  data destruction or service disruption. Ported from samma-io/siem-rules rule
+  k8s-deployment-deleted.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_deployment_deleted.yaml
+author: samma-io
+level: high
+tags:
+  - attack.t1485
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    verb: delete
+    objectRef.resource:
+    - deployments
+    - statefulsets
+    - daemonsets
+  condition: selection
+falsepositives:
+  - Uninstalling an application, or a GitOps controller pruning it.

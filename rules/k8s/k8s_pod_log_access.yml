@@ -1,0 +1,25 @@
+title: Kubernetes Pod Logs Read
+id: ef2e5e80-da23-5adf-8b45-1b7176242284
+status: experimental
+description: >
+  Detects access to pod logs via API - may indicate reconnaissance to extract
+  sensitive data from application output. Ported from samma-io/siem-rules rule
+  k8s-pod-log-access.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_pod_log_access.yaml
+author: samma-io
+level: low
+tags:
+  - attack.t1613
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    objectRef.resource: pods
+    objectRef.subresource: log
+    verb: get
+  condition: selection
+falsepositives:
+  - Log shippers and operators reading logs while debugging.

@@ -1,0 +1,23 @@
+title: Kubernetes User Impersonation
+id: 8c01fd33-a911-555a-bd5e-eb73625d05b0
+status: experimental
+description: >
+  Detects user impersonation requests (--as flag) which bypass normal
+  authentication to act as another identity. Ported from samma-io/siem-rules
+  rule k8s-impersonation.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_impersonation.yaml
+author: samma-io
+level: critical
+tags:
+  - attack.t1078
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    verb: impersonate
+  condition: selection
+falsepositives:
+  - Administrators testing RBAC with kubectl --as.

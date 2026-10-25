@@ -1,0 +1,59 @@
+# Positive case: samma-io/siem-rules test/k8s/k8s_pod_attach.json, with the lane's
+# source field added and auditID replaced. Negative cases flip the field the
+# rule keys on.
+- name: the siem-rules fixture fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: 1ccad7b8-8356-56b6-9f23-ee67ec82c42c
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/default/pods/my-app-7b9f5c6d4-xk2lm/attach?stdin=true&stdout=true&tty=true
+    verb: create
+    user:
+      username: developer@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.50
+    objectRef:
+      resource: pods
+      subresource: attach
+      namespace: default
+      name: my-app-7b9f5c6d4-xk2lm
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 101
+    requestReceivedTimestamp: '2026-02-10T20:30:00.000000Z'
+    stageTimestamp: '2026-02-10T20:30:00.100000Z'
+- name: reading pod logs does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: 1ccad7b8-8356-56b6-9f23-ee67ec82c42c
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/default/pods/my-app-7b9f5c6d4-xk2lm/attach?stdin=true&stdout=true&tty=true
+    verb: get
+    user:
+      username: developer@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.50
+    objectRef:
+      resource: pods
+      subresource: log
+      namespace: default
+      name: my-app-7b9f5c6d4-xk2lm
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 101
+    requestReceivedTimestamp: '2026-02-10T20:30:00.000000Z'
+    stageTimestamp: '2026-02-10T20:30:00.100000Z'

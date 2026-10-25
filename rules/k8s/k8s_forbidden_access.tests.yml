@@ -1,0 +1,56 @@
+# Positive case: samma-io/siem-rules test/k8s/k8s_forbidden_access.json, with the lane's
+# source field added and auditID replaced. Negative cases flip the field the
+# rule keys on.
+- name: the siem-rules fixture fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: 1b8fd868-fe4f-5d6a-bb6e-d4d45f0fdfe5
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/kube-system/secrets
+    verb: list
+    user:
+      username: attacker@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.5.99
+    objectRef:
+      resource: secrets
+      namespace: kube-system
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 403
+      reason: Forbidden
+    requestReceivedTimestamp: '2026-02-11T02:00:00.000000Z'
+    stageTimestamp: '2026-02-11T02:00:00.100000Z'
+- name: an allowed request does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: 1b8fd868-fe4f-5d6a-bb6e-d4d45f0fdfe5
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/kube-system/secrets
+    verb: list
+    user:
+      username: attacker@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.5.99
+    objectRef:
+      resource: secrets
+      namespace: kube-system
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 200
+    requestReceivedTimestamp: '2026-02-11T02:00:00.000000Z'
+    stageTimestamp: '2026-02-11T02:00:00.100000Z'

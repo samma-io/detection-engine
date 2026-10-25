@@ -1,0 +1,59 @@
+# Positive case: samma-io/siem-rules test/k8s/k8s_cronjob_created.json, with the lane's
+# source field added and auditID replaced. Negative cases flip the field the
+# rule keys on.
+- name: the siem-rules fixture fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: 18a7bc6a-b762-5b33-a989-adae7d02d1c2
+    stage: ResponseComplete
+    requestURI: /apis/batch/v1/namespaces/default/cronjobs
+    verb: create
+    user:
+      username: developer@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.50
+    objectRef:
+      resource: cronjobs
+      namespace: default
+      name: data-exfil-job
+      apiGroup: batch
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-10T19:00:00.000000Z'
+    stageTimestamp: '2026-02-10T19:00:00.100000Z'
+- name: deleting a cronjob does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: 18a7bc6a-b762-5b33-a989-adae7d02d1c2
+    stage: ResponseComplete
+    requestURI: /apis/batch/v1/namespaces/default/cronjobs
+    verb: delete
+    user:
+      username: developer@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.50
+    objectRef:
+      resource: cronjobs
+      namespace: default
+      name: data-exfil-job
+      apiGroup: batch
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-10T19:00:00.000000Z'
+    stageTimestamp: '2026-02-10T19:00:00.100000Z'

@@ -74,6 +74,16 @@ var registry = map[string]Source{
 	// three gateway_* aggregates -- told apart by .feed (the ingester's
 	// _partition), the same way onepassword is.
 	"cloudflare": {Name: "cloudflare", ConfigFile: "sigma-config.yml"},
+
+	// k8s and scanner exist only on the NATS transport (ENGINE_TRANSPORT=nats);
+	// nothing writes them to the filtered bucket, so aws-siem creates no queue
+	// for them. See aws-siem docs/contracts/nats-transport.md.
+	//
+	// k8s is Kubernetes audit events (audit.k8s.io/v1), one per message on
+	// samma.logs.k8s. scanner is the Samma scanners' schema v2 messages
+	// (finding and run), relayed unchanged to samma.logs.scanner.
+	"k8s":     {Name: "k8s", ConfigFile: "sigma-config.yml"},
+	"scanner": {Name: "scanner", ConfigFile: "sigma-config.yml"},
 }
 
 // Lookup resolves a source name, naming every valid one when it fails.

@@ -1,6 +1,6 @@
 # Detection rules
 
-**65 rules across 9 log sources.**
+**92 rules across 10 log sources.**
 
 > Generated from the rules tree by `make docs`. Do not edit by hand —
 > `TestRules_CatalogIsUpToDate` fails if this file and the rules disagree.
@@ -56,10 +56,11 @@ Wildcards also do not work in a value: `*` is matched literally. See
 | [`dns`](#dns) | – | – | 2 | – | – | **2** |
 | [`gcp`](#gcp) | 1 | 1 | – | 1 | – | **3** |
 | [`github`](#github) | 1 | 2 | – | – | – | **3** |
+| [`k8s`](#k8s) | 8 | 11 | 6 | 2 | – | **27** |
 | [`onepassword`](#onepassword) | – | 2 | 1 | – | – | **3** |
 | [`slack`](#slack) | – | – | 2 | – | – | **2** |
 | [`workspace`](#workspace) | 2 | – | – | – | – | **2** |
-| **Total** | **5** | **29** | **18** | **13** | **0** | **65** |
+| **Total** | **13** | **40** | **24** | **15** | **0** | **92** |
 
 ---
 
@@ -1139,6 +1140,496 @@ A member was promoted to organization owner, or an outside collaborator was adde
 - Planned onboarding of a new platform administrator.
 
 **ATT&CK** attack.persistence, attack.privilege_escalation
+
+---
+
+## k8s
+
+### 🔴 critical — Kubernetes Admission Webhook Created Or Modified
+
+`10946f6e-f74f-5fef-843d-c0d3e7188eb2` · [`rules/k8s/k8s_webhook_modified.yml`](../rules/k8s/k8s_webhook_modified.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects creation or modification of admission webhooks - can be used to intercept and mutate all cluster operations. Ported from samma-io/siem-rules rule k8s-webhook-modified.
+
+**Fires when** `kind` is `Event` and `verb` is one of `create`, `update`, `patch` and `objectRef.resource` is one of `mutatingwebhookconfigurations`, `validatingwebhookconfigurations`
+
+**Likely false positives**
+
+- Installing or upgrading an operator that ships admission webhooks.
+
+**ATT&CK** attack.t1525
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_webhook_modified.yaml>
+
+### 🔴 critical — Kubernetes Anonymous API Request
+
+`58d61fa9-a318-57d1-81d8-10296d50cfcb` · [`rules/k8s/k8s_anonymous_access.yml`](../rules/k8s/k8s_anonymous_access.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects anonymous or unauthenticated API requests which may indicate misconfigured RBAC or unauthorized access. Ported from samma-io/siem-rules rule k8s-anonymous-access.
+
+**Fires when** `kind` is `Event` and `user.username` is `system:anonymous`
+
+**Likely false positives**
+
+- Health checks against /healthz, /livez or /readyz on a cluster that allows anonymous auth for them.
+
+**ATT&CK** attack.t1078
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_anonymous_access.yaml>
+
+### 🔴 critical — Kubernetes CoreDNS ConfigMap Modified
+
+`094f90f0-5024-5852-9167-dabc93e54d87` · [`rules/k8s/k8s_coredns_modified.yml`](../rules/k8s/k8s_coredns_modified.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects modifications to the CoreDNS configmap - may indicate DNS poisoning for lateral movement. Ported from samma-io/siem-rules rule k8s-coredns-modified.
+
+**Fires when** `kind` is `Event` and `objectRef.resource` is `configmaps` and `objectRef.name` is `coredns` and `objectRef.namespace` is `kube-system` and `verb` is one of `update`, `patch`
+
+**Likely false positives**
+
+- A planned CoreDNS configuration change or a cluster upgrade.
+
+**ATT&CK** attack.t1557
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_coredns_modified.yaml>
+
+### 🔴 critical — Kubernetes Events Deleted
+
+`936f57ce-3685-5098-a580-6c4f215e870d` · [`rules/k8s/k8s_event_deleted.yml`](../rules/k8s/k8s_event_deleted.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects deletion of Kubernetes events - may indicate an attacker covering their tracks. Ported from samma-io/siem-rules rule k8s-event-deleted.
+
+**Fires when** `kind` is `Event` and `objectRef.resource` is `events` and `verb` is one of `delete`, `deletecollection`
+
+**Likely false positives**
+
+- The API server's own event TTL garbage collection, if it is audited.
+
+**ATT&CK** attack.t1070
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_event_deleted.yaml>
+
+### 🔴 critical — Kubernetes Namespace Deleted
+
+`35aab55a-b033-53c2-927c-930f6e15305e` · [`rules/k8s/k8s_namespace_deleted.yml`](../rules/k8s/k8s_namespace_deleted.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects deletion of Kubernetes namespaces - potential data destruction or service disruption. Ported from samma-io/siem-rules rule k8s-namespace-deleted.
+
+**Fires when** `kind` is `Event` and `objectRef.resource` is `namespaces` and `verb` is `delete`
+
+**Likely false positives**
+
+- Tearing down an environment or a GitOps prune.
+
+**ATT&CK** attack.t1485
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_namespace_deleted.yaml>
+
+### 🔴 critical — Kubernetes Pod With Host Namespaces Created
+
+`52e0a62e-b6fe-5996-bedd-b89746f5bf80` · [`rules/k8s/k8s_privileged_pod.yml`](../rules/k8s/k8s_privileged_pod.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects creation of pods with privileged security context or host namespace access - escape to host risk. Ported from samma-io/siem-rules rule k8s-privileged-pod.
+
+**Fires when** (`kind` is `Event` and `objectRef.resource` is `pods` and `verb` is `create`) **and** (`requestObject.spec.hostNetwork` is `true` or `requestObject.spec.hostPID` is `true` or `requestObject.spec.hostIPC` is `true`)
+
+**Likely false positives**
+
+- Node agents (CNI, storage, monitoring) that need host namespaces.
+
+**ATT&CK** attack.t1611, attack.t1610
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_privileged_pod.yaml>
+
+### 🔴 critical — Kubernetes Role Binding Created
+
+`bbfb67d5-6fba-565e-9660-d1bfa6ce2b21` · [`rules/k8s/k8s_clusterrole_binding_created.yml`](../rules/k8s/k8s_clusterrole_binding_created.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects creation of ClusterRoleBindings - may indicate privilege escalation especially if binding cluster-admin. Ported from samma-io/siem-rules rule k8s-clusterrole-binding-created.
+
+**Fires when** `kind` is `Event` and `verb` is `create` and `objectRef.resource` is one of `clusterrolebindings`, `rolebindings`
+
+**Likely false positives**
+
+- Helm charts and operators installing their own RBAC.
+
+**ATT&CK** attack.t1098.006, attack.t1078
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_clusterrole_binding_created.yaml>
+
+### 🔴 critical — Kubernetes User Impersonation
+
+`8c01fd33-a911-555a-bd5e-eb73625d05b0` · [`rules/k8s/k8s_impersonation.yml`](../rules/k8s/k8s_impersonation.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects user impersonation requests (--as flag) which bypass normal authentication to act as another identity. Ported from samma-io/siem-rules rule k8s-impersonation.
+
+**Fires when** `kind` is `Event` and `verb` is `impersonate`
+
+**Likely false positives**
+
+- Administrators testing RBAC with kubectl --as.
+
+**ATT&CK** attack.t1078
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_impersonation.yaml>
+
+### 🟠 high — Kubernetes Attach To Running Container
+
+`0868fa4d-a6b5-53f1-b5dd-de1149f810b0` · [`rules/k8s/k8s_pod_attach.yml`](../rules/k8s/k8s_pod_attach.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects attaching to a running container - indicates interactive access for lateral movement. Ported from samma-io/siem-rules rule k8s-pod-attach.
+
+**Fires when** `kind` is `Event` and `objectRef.resource` is `pods` and `objectRef.subresource` is `attach` and `verb` is `create`
+
+**Likely false positives**
+
+- An operator debugging a container interactively.
+
+**ATT&CK** attack.t1609
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_pod_attach.yaml>
+
+### 🟠 high — Kubernetes Exec Into Pod
+
+`247af81a-dd65-5cce-b412-6d7a5f98f861` · [`rules/k8s/k8s_pod_exec.yml`](../rules/k8s/k8s_pod_exec.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects command execution inside a running pod via kubectl exec - indicates lateral movement or container administration. Ported from samma-io/siem-rules rule k8s-pod-exec.
+
+**Fires when** `kind` is `Event` and `objectRef.resource` is `pods` and `objectRef.subresource` is `exec` and `verb` is `create`
+
+**Likely false positives**
+
+- An operator debugging a container; tooling that execs for health checks.
+
+**ATT&CK** attack.t1609
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_pod_exec.yaml>
+
+### 🟠 high — Kubernetes NetworkPolicy Changed
+
+`ec8657f8-a27f-5d47-96e4-76b192c1f7cd` · [`rules/k8s/k8s_network_policy_changed.yml`](../rules/k8s/k8s_network_policy_changed.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects creation, modification, or deletion of network policies - may weaken network segmentation. Ported from samma-io/siem-rules rule k8s-network-policy-changed.
+
+**Fires when** `kind` is `Event` and `objectRef.resource` is `networkpolicies` and `verb` is one of `create`, `update`, `patch`, `delete`
+
+**Likely false positives**
+
+- Normal application deployments that carry their own policies.
+
+**ATT&CK** attack.t1562.001
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_network_policy_changed.yaml>
+
+### 🟠 high — Kubernetes NodePort Service Created
+
+`631fa06f-c644-58b0-b69d-d2f6c060c2f2` · [`rules/k8s/k8s_nodeport_created.yml`](../rules/k8s/k8s_nodeport_created.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects creation of NodePort services which expose cluster ports externally - potential unauthorized network exposure. Ported from samma-io/siem-rules rule k8s-nodeport-created.
+
+**Fires when** `kind` is `Event` and `objectRef.resource` is `services` and `verb` is `create` and `requestObject.spec.type` is `NodePort`
+
+**Likely false positives**
+
+- Services that are meant to be exposed on the node network.
+
+**ATT&CK** attack.t1133
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_nodeport_created.yaml>
+
+### 🟠 high — Kubernetes Pod Created In kube-system
+
+`45e97ba6-efa0-5385-b50f-4f97251ec609` · [`rules/k8s/k8s_kube_system_pod.yml`](../rules/k8s/k8s_kube_system_pod.yml) · 3 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects pod creation in kube-system namespace - may indicate masquerading as system components. Narrowed from the source rule to creates on the pods collection, so an exec or attach into a kube-system pod is not reported as a new pod. Ported from samma-io/siem-rules rule k8s-kube-system-pod.
+
+**Fires when** `kind` is `Event` and `objectRef.resource` is `pods` and `verb` is `create` and `objectRef.namespace` is `kube-system` and `requestURI` matches the regular expression `/pods(\?|$)`
+
+**Likely false positives**
+
+- Cluster add-ons and DaemonSet rollouts in kube-system.
+
+**ATT&CK** attack.t1036
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_kube_system_pod.yaml>
+
+### 🟠 high — Kubernetes Port Forward To Pod
+
+`d76549f4-6bd1-5232-9147-52c368fb03a0` · [`rules/k8s/k8s_port_forward.yml`](../rules/k8s/k8s_port_forward.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects port forwarding to pods - may indicate protocol tunneling or unauthorized access to internal services. Ported from samma-io/siem-rules rule k8s-port-forward.
+
+**Fires when** `kind` is `Event` and `objectRef.resource` is `pods` and `objectRef.subresource` is `portforward` and `verb` is `create`
+
+**Likely false positives**
+
+- Developers reaching a service through kubectl port-forward.
+
+**ATT&CK** attack.t1572
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_port_forward.yaml>
+
+### 🟠 high — Kubernetes Role Or ClusterRole Modified
+
+`3995db62-57da-57cd-8f11-f21ab43e3c16` · [`rules/k8s/k8s_rbac_modified.yml`](../rules/k8s/k8s_rbac_modified.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects modification of RBAC roles or cluster roles - may indicate privilege escalation or account manipulation. Ported from samma-io/siem-rules rule k8s-rbac-modified.
+
+**Fires when** `kind` is `Event` and `verb` is one of `update`, `patch` and `objectRef.resource` is one of `clusterroles`, `roles`
+
+**Likely false positives**
+
+- Helm upgrades and operators reconciling their own roles.
+
+**ATT&CK** attack.t1098
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_rbac_modified.yaml>
+
+### 🟠 high — Kubernetes Secret Created, Changed Or Deleted
+
+`24c61686-b618-5917-a184-c53dd1196fa6` · [`rules/k8s/k8s_secret_modified.yml`](../rules/k8s/k8s_secret_modified.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects creation, update, or deletion of secrets - may indicate credential tampering or exfiltration setup. Ported from samma-io/siem-rules rule k8s-secret-modified.
+
+**Fires when** `kind` is `Event` and `objectRef.resource` is `secrets` and `verb` is one of `create`, `update`, `patch`, `delete`
+
+**Likely false positives**
+
+- Deployments, cert-manager renewals and secret operators.
+
+**ATT&CK** attack.t1552.007
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_secret_modified.yaml>
+
+### 🟠 high — Kubernetes Secret Read
+
+`a44d32ae-e879-57ea-9cba-f513d69b3076` · [`rules/k8s/k8s_secret_accessed.yml`](../rules/k8s/k8s_secret_accessed.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects access to Kubernetes secrets (get/list) which may indicate credential harvesting. Ported from samma-io/siem-rules rule k8s-secret-accessed.
+
+**Fires when** `kind` is `Event` and `objectRef.resource` is `secrets` and `verb` is one of `get`, `list`, `watch`
+
+**Likely false positives**
+
+- Controllers and workloads that read their own secrets.
+
+**ATT&CK** attack.t1552.007
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_secret_accessed.yaml>
+
+### 🟠 high — Kubernetes ServiceAccount Token Requested
+
+`9d723255-9c22-5374-a9b4-97e995fbd4b4` · [`rules/k8s/k8s_token_created.yml`](../rules/k8s/k8s_token_created.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects service account token generation requests - may indicate credential theft or unauthorized access attempts. Ported from samma-io/siem-rules rule k8s-token-created.
+
+**Fires when** `kind` is `Event` and `objectRef.resource` is `serviceaccounts` and `objectRef.subresource` is `token` and `verb` is `create`
+
+**Likely false positives**
+
+- The kubelet requesting projected tokens for pods.
+
+**ATT&CK** attack.t1528, attack.t1078.004
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_token_created.yaml>
+
+### 🟠 high — Kubernetes Workload Deleted
+
+`991bc12c-060f-56a6-9cfb-9d9c79b3cc15` · [`rules/k8s/k8s_deployment_deleted.yml`](../rules/k8s/k8s_deployment_deleted.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects deletion of deployments, statefulsets, or daemonsets - potential data destruction or service disruption. Ported from samma-io/siem-rules rule k8s-deployment-deleted.
+
+**Fires when** `kind` is `Event` and `verb` is `delete` and `objectRef.resource` is one of `deployments`, `statefulsets`, `daemonsets`
+
+**Likely false positives**
+
+- Uninstalling an application, or a GitOps controller pruning it.
+
+**ATT&CK** attack.t1485
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_deployment_deleted.yaml>
+
+### 🟡 medium — Kubernetes API Request Forbidden
+
+`6663d741-20f1-52a5-bc1d-f98345dd327b` · [`rules/k8s/k8s_forbidden_access.yml`](../rules/k8s/k8s_forbidden_access.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects 403 Forbidden responses from the API server - indicates RBAC probing or unauthorized access attempts. Ported from samma-io/siem-rules rule k8s-forbidden-access.
+
+**Fires when** `kind` is `Event` and `responseStatus.code` is `403`
+
+**Likely false positives**
+
+- Controllers starting before their RBAC is applied; users running a command they lack rights for.
+
+**ATT&CK** attack.t1613
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_forbidden_access.yaml>
+
+### 🟡 medium — Kubernetes CronJob Created
+
+`fde69c96-1eb9-5b3a-8ceb-1fce61b8a842` · [`rules/k8s/k8s_cronjob_created.yml`](../rules/k8s/k8s_cronjob_created.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects creation of CronJob resources which can be used for persistence via scheduled execution. Ported from samma-io/siem-rules rule k8s-cronjob-created.
+
+**Fires when** `kind` is `Event` and `objectRef.resource` is `cronjobs` and `verb` is `create`
+
+**Likely false positives**
+
+- Deployments that ship scheduled jobs (backups, reports).
+
+**ATT&CK** attack.t1053.007
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_cronjob_created.yaml>
+
+### 🟡 medium — Kubernetes Ingress Created
+
+`b7804635-afef-5c26-9940-ca9c7ae99502` · [`rules/k8s/k8s_ingress_created.yml`](../rules/k8s/k8s_ingress_created.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects creation of Ingress resources which expose services externally. Ported from samma-io/siem-rules rule k8s-ingress-created.
+
+**Fires when** `kind` is `Event` and `objectRef.resource` is `ingresses` and `verb` is `create`
+
+**Likely false positives**
+
+- Normal application deployments.
+
+**ATT&CK** attack.t1133
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_ingress_created.yaml>
+
+### 🟡 medium — Kubernetes ServiceAccount Created
+
+`a93db80d-639a-57a7-90f4-0a7b797ea370` · [`rules/k8s/k8s_service_account_created.yml`](../rules/k8s/k8s_service_account_created.yml) · 3 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects creation of new service accounts which could be used for persistence or privilege escalation. Narrowed from the source rule to creates on the serviceaccounts collection, so a token request (serviceaccounts/token) is reported only by k8s_token_created. Ported from samma-io/siem-rules rule k8s-service-account-created.
+
+**Fires when** `kind` is `Event` and `objectRef.resource` is `serviceaccounts` and `verb` is `create` and `requestURI` matches the regular expression `/serviceaccounts(\?|$)`
+
+**Likely false positives**
+
+- Normal application deployments.
+
+**ATT&CK** attack.t1136
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_service_account_created.yaml>
+
+### 🟡 medium — Kubernetes User Authentication
+
+`0cc55620-7b42-5d35-bda1-8849ba1c9be9` · [`rules/k8s/k8s_user_login.yml`](../rules/k8s/k8s_user_login.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Alerts on Kubernetes user authentication events. Ported from samma-io/siem-rules rule k8s-user-login.
+
+**Fires when** `kind` is `Event` and `objectRef.resource` is `users` and `verb` is `authenticate`
+
+**Likely false positives**
+
+- Every token review by the API server.
+
+**ATT&CK** attack.t1078
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_user_login.yaml>
+
+### 🟡 medium — Kubernetes Workload Patched
+
+`afdd1a35-8577-5c03-ab7e-aa9b671de93a` · [`rules/k8s/k8s_workload_patched.yml`](../rules/k8s/k8s_workload_patched.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects patch operations on deployments, daemonsets, or statefulsets - may indicate sidecar injection or unauthorized modification. Ported from samma-io/siem-rules rule k8s-workload-patched.
+
+**Fires when** `kind` is `Event` and `verb` is `patch` and `objectRef.resource` is one of `deployments`, `daemonsets`, `statefulsets`
+
+**Likely false positives**
+
+- kubectl rollout restart, scaling, and GitOps reconciliation.
+
+**ATT&CK** attack.t1610
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_workload_patched.yaml>
+
+### 🔵 low — Kubernetes Pod Created
+
+`7a014823-d705-52f6-9a1d-d490348e53cb` · [`rules/k8s/k8s_pod_created.yml`](../rules/k8s/k8s_pod_created.yml) · 5 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects new pod creation in the cluster via API server audit logs. Narrowed from the source rule: subresource requests (exec, attach, port-forward, binding) and the pods covered at higher severity by k8s_kube_system_pod and k8s_privileged_pod are excluded, so one request raises one alert. Ported from samma-io/siem-rules rule k8s-pod-created.
+
+**Fires when** (`kind` is `Event` and `objectRef.resource` is `pods` and `verb` is `create` and `requestURI` matches the regular expression `/pods(\?|$)`) **and not** ((`requestObject.spec.hostNetwork` is `true` or `requestObject.spec.hostPID` is `true` or `requestObject.spec.hostIPC` is `true`) **or** `objectRef.namespace` is `kube-system`)
+
+**Likely false positives**
+
+- Every rollout, scale-up and job run. Informational on its own.
+
+**ATT&CK** attack.t1610
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_pod_created.yaml>
+
+### 🔵 low — Kubernetes Pod Logs Read
+
+`ef2e5e80-da23-5adf-8b45-1b7176242284` · [`rules/k8s/k8s_pod_log_access.yml`](../rules/k8s/k8s_pod_log_access.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Detects access to pod logs via API - may indicate reconnaissance to extract sensitive data from application output. Ported from samma-io/siem-rules rule k8s-pod-log-access.
+
+**Fires when** `kind` is `Event` and `objectRef.resource` is `pods` and `objectRef.subresource` is `log` and `verb` is `get`
+
+**Likely false positives**
+
+- Log shippers and operators reading logs while debugging.
+
+**ATT&CK** attack.t1613
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_pod_log_access.yaml>
 
 ---
 

@@ -1,0 +1,59 @@
+# Positive case: samma-io/siem-rules test/k8s/k8s_ingress_created.json, with the lane's
+# source field added and auditID replaced. Negative cases flip the field the
+# rule keys on.
+- name: the siem-rules fixture fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: f2af1371-86b2-5e67-bffd-fb8045f05f62
+    stage: ResponseComplete
+    requestURI: /apis/networking.k8s.io/v1/namespaces/default/ingresses
+    verb: create
+    user:
+      username: developer@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.50
+    objectRef:
+      resource: ingresses
+      namespace: default
+      name: my-app-ingress
+      apiGroup: networking.k8s.io
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-10T16:30:00.000000Z'
+    stageTimestamp: '2026-02-10T16:30:00.100000Z'
+- name: deleting an ingress does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: f2af1371-86b2-5e67-bffd-fb8045f05f62
+    stage: ResponseComplete
+    requestURI: /apis/networking.k8s.io/v1/namespaces/default/ingresses
+    verb: delete
+    user:
+      username: developer@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.50
+    objectRef:
+      resource: ingresses
+      namespace: default
+      name: my-app-ingress
+      apiGroup: networking.k8s.io
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-10T16:30:00.000000Z'
+    stageTimestamp: '2026-02-10T16:30:00.100000Z'

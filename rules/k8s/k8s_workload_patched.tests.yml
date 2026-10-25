@@ -1,0 +1,59 @@
+# Positive case: samma-io/siem-rules test/k8s/k8s_workload_patched.json, with the lane's
+# source field added and auditID replaced. Negative cases flip the field the
+# rule keys on.
+- name: the siem-rules fixture fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: 87a477b9-7a6a-5518-b8c2-a5362ce320ed
+    stage: ResponseComplete
+    requestURI: /apis/apps/v1/namespaces/default/deployments/web-app
+    verb: patch
+    user:
+      username: attacker@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.5.99
+    objectRef:
+      resource: deployments
+      namespace: default
+      name: web-app
+      apiGroup: apps
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 200
+    requestReceivedTimestamp: '2026-02-11T01:00:00.000000Z'
+    stageTimestamp: '2026-02-11T01:00:00.100000Z'
+- name: a full update does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: 87a477b9-7a6a-5518-b8c2-a5362ce320ed
+    stage: ResponseComplete
+    requestURI: /apis/apps/v1/namespaces/default/deployments/web-app
+    verb: update
+    user:
+      username: attacker@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.5.99
+    objectRef:
+      resource: deployments
+      namespace: default
+      name: web-app
+      apiGroup: apps
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 200
+    requestReceivedTimestamp: '2026-02-11T01:00:00.000000Z'
+    stageTimestamp: '2026-02-11T01:00:00.100000Z'

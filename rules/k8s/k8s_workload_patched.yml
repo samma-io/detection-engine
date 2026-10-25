@@ -1,0 +1,27 @@
+title: Kubernetes Workload Patched
+id: afdd1a35-8577-5c03-ab7e-aa9b671de93a
+status: experimental
+description: >
+  Detects patch operations on deployments, daemonsets, or statefulsets - may
+  indicate sidecar injection or unauthorized modification. Ported from
+  samma-io/siem-rules rule k8s-workload-patched.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_workload_patched.yaml
+author: samma-io
+level: medium
+tags:
+  - attack.t1610
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    verb: patch
+    objectRef.resource:
+    - deployments
+    - daemonsets
+    - statefulsets
+  condition: selection
+falsepositives:
+  - kubectl rollout restart, scaling, and GitOps reconciliation.

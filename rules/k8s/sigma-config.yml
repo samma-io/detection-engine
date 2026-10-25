@@ -1,0 +1,25 @@
+# sigma-go Config for the Kubernetes audit lane.
+#
+# Records are Kubernetes audit events (audit.k8s.io/v1 Event), one per NATS
+# message on samma.logs.k8s, with `source: k8s` added. See aws-siem
+# docs/contracts/nats-transport.md. There is no S3 producer for this lane: it
+# exists only on the NATS transport.
+#
+# Nested paths such as objectRef.resource and requestObject.spec.hostNetwork
+# resolve through the engine's dot-flattened match view; no mapping is needed.
+#
+# Array fields (sourceIPs, user.groups) need a self-mapping below before a rule
+# can match one element exactly -- see the note in rules/aws/sigma-config.yml.
+# No rule here matches on one yet.
+#
+# Every audit event carries `kind: Event`, and the rules ported from
+# samma-io/siem-rules pin it. Keep doing so: it is what separates an audit
+# record from anything else that might one day share the subject.
+title: k8s audit
+logsources:
+  k8s_audit:
+    product: kubernetes
+    service: audit
+    index: k8s
+defaultindex: k8s
+fieldmappings: {}
