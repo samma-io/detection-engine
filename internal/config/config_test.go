@@ -208,3 +208,38 @@ func TestFromEnv_OverridesAreParsed(t *testing.T) {
 		t.Errorf("MaxDecodeErrorRate = %v, want 0.5", c.MaxDecodeErrorRate)
 	}
 }
+
+func TestFromEnv_NATSTransportNeedsNoAWS(t *testing.T) {
+	c, err := config.FromEnv(env(map[string]string{
+		"ENGINE_LOG_SOURCE": "workspace",
+		"ENGINE_TRANSPORT":  "nats",
+		"ENGINE_NATS_URL":   "nats://nats.samma.svc:4222",
+		"ENGINE_RULES_DIR":  "/rules",
+	}))
+	if err != nil {
+		t.Fatalf("FromEnv: %v", err)
+	}
+	if c.NATSStream != "SIEM_LOGS" || c.NATSConsumer != "detection-engine-workspace" ||
+		c.NATSSubject != "samma.logs.workspace" || c.AlertSubject != "samma.alerts.workspace" {
+		t.Errorf("NATS defaults = %q %q %q %q", c.NATSStream, c.NATSConsumer, c.NATSSubject, c.AlertSubject)
+	}
+}
+
+func TestFromEnv_NATSTransportRequiresAURL(t *testing.T) {
+	_, err := config.FromEnv(env(map[string]string{
+		"ENGINE_LOG_SOURCE": "workspace",
+		"ENGINE_TRANSPORT":  "nats",
+		"ENGINE_RULES_DIR":  "/rules",
+	}))
+	if err == nil || !strings.Contains(err.Error(), "ENGINE_NATS_URL") {
+		t.Fatalf("want an error naming ENGINE_NATS_URL, got %v", err)
+	}
+}
+
+func TestFromEnv_UnknownTransportIsAnError(t *testing.T) {
+	m := valid()
+	m["ENGINE_TRANSPORT"] = "kafka"
+	if _, err := config.FromEnv(env(m)); err == nil || !strings.Contains(err.Error(), "ENGINE_TRANSPORT") {
+		t.Fatalf("want an error naming ENGINE_TRANSPORT, got %v", err)
+	}
+}

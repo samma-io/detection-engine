@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/samma-io/detection-engine/internal/alert"
+	"github.com/samma-io/detection-engine/internal/decode"
 	"github.com/samma-io/detection-engine/internal/rules"
 	"github.com/samma-io/detection-engine/internal/source"
 )
@@ -70,6 +71,7 @@ type fakeObjects struct {
 	size    int64
 	getErr  error
 	headErr error
+	gets    int
 }
 
 func (o *fakeObjects) Size(context.Context, string, string) (int64, error) {
@@ -83,6 +85,7 @@ func (o *fakeObjects) Size(context.Context, string, string) (int64, error) {
 }
 
 func (o *fakeObjects) Get(context.Context, string, string) (io.ReadCloser, error) {
+	o.gets++
 	if o.getErr != nil {
 		return nil, o.getErr
 	}
@@ -677,5 +680,37 @@ func TestHandle_RecoveredPanicIsAnErrorLineWithTheStableMsg(t *testing.T) {
 	}
 	if rec["panic"] != "boom" || rec["msg_id"] != "m1" {
 		t.Errorf("the line must carry the panic and the message id: %v", rec)
+	}
+}
+
+func inlineMsg(body []byte) Message {
+	return Message{MessageID: "samma.logs.aws/7", ReceiptHandle: "7", ReceiveCount: 1,
+		Inline: &Inline{Ref: decode.ObjectRef{Bucket: "nats:SIEM_LOGS", Key: "samma.logs.aws/7"}, Body: body}}
+}
+
+func TestHandle_InlineRecordsAreEvaluatedWithStreamProvenance(t *testing.T) {
+	h := newHarness(t, ruleset(t, matchingRule), nil)
+
+	// Plain NDJSON, not gzipped: the decoder sniffs either.
+	body := []byte("{\"eventName\":\"StopLogging\"}\n{\"eventName\":\"GetObject\"}\n")
+	if got := h.proc.Handle(context.Background(), inlineMsg(body)); got != Accepted {
+		t.Fatalf("disposition = %v, want Accepted", got)
+	}
+	if len(h.sink.added) != 1 {
+		t.Fatalf("alerts = %d, want 1", len(h.sink.added))
+	}
+	if p := h.sink.added[0].Provenance; p.Bucket != "nats:SIEM_LOGS" || p.Key != "samma.logs.aws/7" {
+		t.Errorf("provenance = %s/%s", p.Bucket, p.Key)
+	}
+	if h.obj.gets != 0 {
+		t.Errorf("an inline message must not touch the object store")
+	}
+}
+
+func TestHandle_OversizeInlineMessageIsTransient(t *testing.T) {
+	h := newHarness(t, ruleset(t, matchingRule), nil)
+	h.proc.Limits.MaxObjectBytes = 4
+	if got := h.proc.Handle(context.Background(), inlineMsg([]byte(`{"eventName":"StopLogging"}`))); got != Transient {
+		t.Fatalf("disposition = %v, want Transient", got)
 	}
 }

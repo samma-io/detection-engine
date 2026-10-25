@@ -2,6 +2,7 @@
 package engine
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -34,6 +35,20 @@ type Message struct {
 	// ReceiveCount is ApproximateReceiveCount. It exists to be observed: it is
 	// how a message walking toward the DLQ becomes visible before it arrives.
 	ReceiveCount int
+
+	// Inline is set when the message carries its records itself rather than
+	// naming S3 objects -- the NATS transport. Body is then unused.
+	Inline *Inline
+}
+
+// Inline is one message's records and the provenance they are attributed to.
+//
+// Ref.Bucket and Ref.Key are what alert ids are derived from, so the
+// transport must make them stable across redeliveries: NATS uses the stream
+// name and the stream sequence, never a delivery id.
+type Inline struct {
+	Ref  decode.ObjectRef
+	Body []byte
 }
 
 // Queue is the slice of SQS the engine consumes.
@@ -168,6 +183,10 @@ func (p *Processor) Handle(ctx context.Context, msg Message) (disp Disposition) 
 		}
 	}()
 
+	if msg.Inline != nil {
+		return p.inline(ctx, msg)
+	}
+
 	notif, err := decode.ParseNotification([]byte(msg.Body))
 	if err != nil {
 		// Not deleted. The body will not parse on redelivery either, so it
@@ -245,6 +264,33 @@ func (p *Processor) object(ctx context.Context, msg Message, obj decode.ObjectRe
 	}
 	defer func() { _ = body.Close() }()
 
+	return p.evaluate(ctx, log, msg, obj, body, size, start)
+}
+
+// inline evaluates records carried in the message itself. The limits are the
+// same as for an object, so a transport change does not loosen them.
+func (p *Processor) inline(ctx context.Context, msg Message) Disposition {
+	in := msg.Inline
+	log := p.Log.With("msg_id", msg.MessageID, "bucket", in.Ref.Bucket, "key", in.Ref.Key)
+	start := p.Now()
+
+	ctx, cancel := context.WithTimeout(ctx, p.Limits.MaxObjectDuration)
+	defer cancel()
+
+	size := int64(len(in.Body))
+	if p.Limits.MaxObjectBytes > 0 && size > p.Limits.MaxObjectBytes {
+		metrics.Poison.WithLabelValues("oversize_object").Inc()
+		log.Error("message is over the size limit, not acknowledging",
+			"bytes", size, "limit", p.Limits.MaxObjectBytes)
+		return Transient
+	}
+	return p.evaluate(ctx, log, msg, in.Ref, bytes.NewReader(in.Body), size, start)
+}
+
+// evaluate decodes one body, matches every record and publishes the alerts.
+// It returns Accepted only once every alert is durable.
+func (p *Processor) evaluate(ctx context.Context, log *slog.Logger, msg Message,
+	obj decode.ObjectRef, body io.Reader, size int64, start time.Time) Disposition {
 	sink := p.NewSink() // fresh per object, so a previous object's batch cannot leak in
 	var (
 		good, bad, matched int
@@ -252,7 +298,7 @@ func (p *Processor) object(ctx context.Context, msg Message, obj decode.ObjectRe
 		fatal              error
 	)
 
-	err = decode.Records(ctx, body, p.Limits.MaxLineBytes,
+	err := decode.Records(ctx, body, p.Limits.MaxLineBytes,
 		func(index int, event map[string]any) error {
 			good++
 			metrics.Events.Inc()
