@@ -1,0 +1,302 @@
+# v2 events are built with samma-io/detect v2.0.2 common/samma_finding/schema.py
+# (build_finding / build_run), with the lane's source field added.
+- name: a deprecated TLS protocol fires
+  expected: true
+  event:
+    checkId: SAMMA-TLS-PROTOCOL-DEPRECATED
+    compliance: []
+    cveIds: []
+    emittedAt: '2026-10-24T02:00:21Z'
+    endpoint:
+      host: api.example.com
+      port: 443
+      scheme: https
+    evidence: negotiated TLSv1
+    host: api.example.com
+    kind: finding
+    port: 443
+    raw:
+      address:
+        address: 192.0.2.10
+        family: ipv4
+      cipher: AES128-SHA
+      host: api.example.com
+      port: 443
+      protocol: TLSv1
+      type: TLSScan
+      valid: true
+    references:
+    - https://datatracker.ietf.org/doc/html/rfc8996
+    - https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html
+    remediation: Disable SSLv3, TLS 1.0 and TLS 1.1 in the ingress controller or server TLS options and allow TLS 1.2 and 1.3 only.
+    runId: tls-scanner-api-example-com-28934712-k9z2p
+    samma-io:
+      id: scanner-db-example-com
+      json: '{}'
+      scanner: tls-scanner
+      tags:
+      - scanner
+    scanner: tls-scanner
+    scannerVersion: 2.0.2
+    schema: samma.io/scan/v2
+    severity: HIGH
+    source: scanner
+    target: api.example.com
+    title: Deprecated TLS protocol version negotiated
+    type: TLSScan
+- name: SSH protocol 1 fires
+  expected: true
+  event:
+    checkId: SAMMA-SSH-PROTOCOL-V1
+    compliance: []
+    cveIds: []
+    emittedAt: '2026-10-24T02:00:21Z'
+    endpoint:
+      host: bastion.example.com
+      port: 22
+      scheme: ssh
+    evidence: 'banner announces protocol 1.99: SSH-1.99-OpenSSH_3.9p1'
+    host: bastion.example.com
+    kind: finding
+    port: 22
+    raw:
+      address:
+        address: 192.0.2.30
+        family: ipv4
+      banner: SSH-1.99-OpenSSH_3.9p1
+      host: bastion.example.com
+      port: 22
+      software: OpenSSH_3.9p1
+      type: SSHBanner
+    references:
+    - https://datatracker.ietf.org/doc/html/rfc4253
+    remediation: Disable SSH protocol 1 (Protocol 2 in sshd_config, or upgrade to a server that only speaks protocol 2).
+    runId: ssh-banner-scanner-bastion-example-com-28934712-k9z2p
+    samma-io:
+      id: scanner-db-example-com
+      json: '{}'
+      scanner: ssh-banner-scanner
+      tags:
+      - scanner
+    scanner: ssh-banner-scanner
+    scannerVersion: 2.0.2
+    schema: samma.io/scan/v2
+    severity: HIGH
+    source: scanner
+    target: bastion.example.com
+    title: SSH protocol version 1 is offered
+    type: SSHBanner
+- name: an expired domain without a port fires
+  expected: true
+  event:
+    checkId: SAMMA-WHOIS-DOMAIN-EXPIRED
+    compliance: []
+    cveIds: []
+    emittedAt: '2026-10-24T02:00:21Z'
+    endpoint:
+      host: example.com
+      port: null
+      scheme: whois
+    evidence: registration expired on 2026-10-01 (23 days ago)
+    host: example.com
+    kind: finding
+    raw:
+      expiration_date: '2026-10-01T00:00:00Z'
+      host: example.com
+      name_servers:
+      - ns1.example.com
+      registrar: Example Registrar
+      type: WHOISScan
+    references: []
+    remediation: Renew the domain immediately; after the grace period it can be registered by someone else and every host under it taken over.
+    runId: whois-scanner-example-com-28934712-k9z2p
+    samma-io:
+      id: scanner-db-example-com
+      json: '{}'
+      scanner: whois-scanner
+      tags:
+      - scanner
+    scanner: whois-scanner
+    scannerVersion: 2.0.2
+    schema: samma.io/scan/v2
+    severity: HIGH
+    source: scanner
+    target: example.com
+    title: Domain registration has expired
+    type: WHOISScan
+- name: a MEDIUM finding does not fire
+  expected: false
+  event:
+    checkId: SAMMA-TLS-CIPHER-WEAK
+    compliance: []
+    cveIds: []
+    emittedAt: '2026-10-24T02:00:21Z'
+    endpoint:
+      host: api.example.com
+      port: 443
+      scheme: https
+    evidence: negotiated AES128-SHA
+    host: api.example.com
+    kind: finding
+    port: 443
+    raw:
+      address:
+        address: 192.0.2.10
+        family: ipv4
+      cipher: AES128-SHA
+      host: api.example.com
+      port: 443
+      protocol: TLSv1.2
+      type: TLSScan
+      valid: true
+    references:
+    - https://datatracker.ietf.org/doc/html/rfc7465
+    - https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html
+    remediation: Remove RC4, DES, 3DES, NULL, export and anonymous cipher suites and suites with MD5 from the server cipher list; prefer AEAD suites with forward secrecy.
+    runId: tls-scanner-api-example-com-28934712-k9z2p
+    samma-io:
+      id: scanner-db-example-com
+      json: '{}'
+      scanner: tls-scanner
+      tags:
+      - scanner
+    scanner: tls-scanner
+    scannerVersion: 2.0.2
+    schema: samma.io/scan/v2
+    severity: MEDIUM
+    source: scanner
+    target: api.example.com
+    title: Weak cipher suite negotiated
+    type: TLSScan
+- name: an INFO inventory finding does not fire
+  expected: false
+  event:
+    checkId: SAMMA-TLS-CERTIFICATE
+    compliance: []
+    cveIds: []
+    emittedAt: '2026-10-24T02:00:21Z'
+    endpoint:
+      host: api.example.com
+      port: 443
+      scheme: https
+    evidence: issuer Example CA, 61 days left
+    host: api.example.com
+    kind: finding
+    port: 443
+    raw:
+      address:
+        address: 192.0.2.10
+        family: ipv4
+      cipher: TLS_AES_128_GCM_SHA256
+      host: api.example.com
+      port: 443
+      protocol: TLSv1.3
+      type: TLSScan
+      valid: true
+    references: []
+    remediation: 'No action is needed. This record keeps the certificate inventory: issuer, expiry, negotiated protocol and cipher.'
+    runId: tls-scanner-api-example-com-28934712-k9z2p
+    samma-io:
+      id: scanner-db-example-com
+      json: '{}'
+      scanner: tls-scanner
+      tags:
+      - scanner
+    scanner: tls-scanner
+    scannerVersion: 2.0.2
+    schema: samma.io/scan/v2
+    severity: INFO
+    source: scanner
+    target: api.example.com
+    title: TLS certificate observed
+    type: TLSScan
+- name: an exposed admin port fires only its own rule
+  expected: false
+  event:
+    checkId: SAMMA-PORT-OPEN-ADMIN
+    compliance: []
+    cveIds: []
+    emittedAt: '2026-10-24T02:00:21Z'
+    endpoint:
+      host: db.example.com
+      port: 5432
+      scheme: postgresql
+    evidence: tcp/5432 open on 192.0.2.20 (ipv4); port is normally postgresql
+    host: db.example.com
+    kind: finding
+    port: 5432
+    raw:
+      addresses:
+      - address: 192.0.2.20
+        family: ipv4
+        status: open
+      host: db.example.com
+      port: 5432
+      status: open
+      type: PortScan
+    references:
+    - https://cheatsheetseries.owasp.org/cheatsheets/Attack_Surface_Analysis_Cheat_Sheet.html
+    - https://www.cisecurity.org/controls/v8
+    remediation: Close the port at the firewall or load balancer, or restrict it to trusted networks (VPN, bastion host, private peering). Management and database services should not be reachable from the public internet.
+    runId: port-scanner-db-example-com-28934712-k9z2p
+    samma-io:
+      id: scanner-db-example-com
+      json: '{}'
+      scanner: port-scanner
+      tags:
+      - scanner
+    scanner: port-scanner
+    scannerVersion: 2.0.2
+    schema: samma.io/scan/v2
+    severity: HIGH
+    source: scanner
+    status: open
+    target: db.example.com
+    title: Administrative or database port is reachable from the internet
+    type: PortScan
+- name: a run message does not fire
+  expected: false
+  event:
+    emittedAt: '2026-10-24T02:00:21Z'
+    findingCount: 2
+    finishedAt: '2026-10-24T02:00:21Z'
+    kind: run
+    message: ''
+    outcome: succeeded
+    runId: tls-scanner-api-example-com-28934712-k9z2p
+    samma-io:
+      id: scanner-db-example-com
+      json: '{}'
+      scanner: tls-scanner
+      tags:
+      - scanner
+    scan: done
+    scanner: tls-scanner
+    scannerVersion: 2.0.2
+    schema: samma.io/scan/v2
+    source: scanner
+    startedAt: '2026-10-24T02:00:04Z'
+    target: api.example.com
+- name: a failed run does not fire
+  expected: false
+  event:
+    emittedAt: '2026-10-24T02:00:21Z'
+    findingCount: 0
+    finishedAt: '2026-10-24T02:00:21Z'
+    kind: run
+    message: 'gaierror: [Errno -2] Name or service not known'
+    outcome: failed
+    runId: port-scanner-db-example-com-28934712-k9z2p
+    samma-io:
+      id: scanner-db-example-com
+      json: '{}'
+      scanner: port-scanner
+      tags:
+      - scanner
+    scan: done
+    scanner: port-scanner
+    scannerVersion: 2.0.2
+    schema: samma.io/scan/v2
+    source: scanner
+    startedAt: '2026-10-24T02:00:04Z'
+    target: db.example.com

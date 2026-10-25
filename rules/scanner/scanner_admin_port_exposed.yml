@@ -1,0 +1,29 @@
+title: Administrative Or Database Port Reachable On A Scanned Target
+id: 053a9feb-5096-46f4-9a5b-0bdf6d0596f7
+status: experimental
+description: >
+  The detect port-scanner found a management, database or cluster-internal
+  port (SSH, RDP, PostgreSQL, Redis, the kubelet, ...) accepting connections
+  on a target the organisation scans. This is the schema v2 successor of
+  samma-io/siem-rules nmap-open-port: an ordinary open port is an INFO
+  inventory fact (SAMMA-PORT-OPEN) and does not alert; an exposed admin
+  service is a finding. endpoint carries the host, port and service name.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/nmap/nmap-portscan.yaml
+  - https://github.com/samma-io/detect/blob/main/common/samma_finding/catalog/port_scanner.py
+author: samma-io
+level: high
+tags:
+  - attack.discovery
+  - attack.t1046
+logsource:
+  product: samma
+  service: scanner
+detection:
+  selection:
+    schema: samma.io/scan/v2
+    kind: finding
+    checkId: SAMMA-PORT-OPEN-ADMIN
+  condition: selection
+falsepositives:
+  - A bastion or service that is meant to be public on an admin port, such as SSH on a jump host.
