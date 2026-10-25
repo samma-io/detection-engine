@@ -1,6 +1,8 @@
 # Every Go and Docker step runs in a container so the toolchain is the same on
-# every machine and in CI. Set GO_IMAGE to override the pin.
-GO_IMAGE   ?= golang:1.25
+# every machine and in CI. Set GO_IMAGE to override the pin. The default is
+# the Dockerfile's build image, so it satisfies the go directive in go.mod;
+# bump the two together.
+GO_IMAGE   ?= golang:1.27-alpine@sha256:b8c9b82affbbb82a020bbcf998dad2ba9516944ac7e883524642a481a9505e9c
 
 # We build and push our own images; there are no release tags. The tag is
 # whatever the builder passes (aws-siem hack/build-images.sh passes the short
