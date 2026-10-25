@@ -62,7 +62,8 @@ which is the vendor-native shape plus a `source` field:
 
 - **k8s** — Kubernetes audit events (`audit.k8s.io/v1` `Event`), one per
   message on `samma.logs.k8s` (NATS transport only): `kind`, `verb`,
-  `requestURI`, `user.username`, `objectRef.resource`, `objectRef.subresource`,
+  `requestURI`, `user.username`, `impersonatedUser.username` (present only on an
+  impersonated request), `objectRef.resource`, `objectRef.subresource`,
   `objectRef.namespace`, `objectRef.name`, `requestObject.*`,
   `responseStatus.code`. Exec, attach, port-forward and token requests are
   `verb: create` on the parent resource, so a rule about creating a pod or a

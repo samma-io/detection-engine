@@ -1,14 +1,24 @@
-title: Kubernetes User Authentication
+title: Kubernetes Identity Check (kubectl auth whoami)
 id: 0cc55620-7b42-5d35-bda1-8849ba1c9be9
 status: experimental
 description: >
-  Alerts on Kubernetes user authentication events. Ported from
-  samma-io/siem-rules rule k8s-user-login.
+  Detects a SelfSubjectReview, the request behind kubectl auth whoami, which
+  asks the API server which identity a credential authenticates as. Someone
+  holding a token they did not mint (a leaked kubeconfig, a stolen service
+  account token) typically runs this first. Kubernetes has no login event:
+  every request authenticates on its own and is audited as itself. The rule
+  this was ported from, samma-io/siem-rules k8s-user-login, keyed on verb
+  authenticate on users, which the API server never writes. TokenReviews are
+  not a substitute: they are made by components (metrics-server, aggregated
+  API servers, webhook authenticators) checking someone else's token, so
+  user names the reviewer, not the person, and they arrive constantly.
 references:
   - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_user_login.yaml
+  - https://kubernetes.io/docs/reference/access-authn-authz/authentication/#self-subject-review
 author: samma-io
-level: medium
+level: low
 tags:
+  - attack.t1033
   - attack.t1078
 logsource:
   product: kubernetes
@@ -16,8 +26,9 @@ logsource:
 detection:
   selection:
     kind: Event
-    objectRef.resource: users
-    verb: authenticate
+    verb: create
+    objectRef.apiGroup: authentication.k8s.io
+    objectRef.resource: selfsubjectreviews
   condition: selection
 falsepositives:
-  - Every token review by the API server.
+  - Administrators running kubectl auth whoami to check which context they are in.

@@ -1,35 +1,136 @@
-# Positive case: samma-io/siem-rules test/k8s/k8s_user_login.json, with the lane's
-# source field added and auditID replaced. Negative cases flip the field the
-# rule keys on.
-- name: the siem-rules fixture fires
+# Built from the audit.k8s.io/v1 Events of the authentication.k8s.io/v1 API,
+# with the lane's source field added. kubectl auth whoami creates a
+# SelfSubjectReview; components create TokenReviews; kubectl auth can-i
+# creates a SelfSubjectAccessReview in authorization.k8s.io.
+- name: kubectl auth whoami by a user fires
   expected: true
   event:
     source: k8s
     kind: Event
     apiVersion: audit.k8s.io/v1
     level: Metadata
-    auditID: 7689ce10-46ff-5306-824e-568bac304243
+    auditID: 4d7a2c91-6e3b-4f05-8b18-9c2e7a5d1f64
     stage: ResponseComplete
-    requestURI: /apis/authentication.k8s.io/v1/tokenreviews
-    verb: authenticate
+    requestURI: /apis/authentication.k8s.io/v1/selfsubjectreviews
+    verb: create
     user:
-      username: system:serviceaccount:kube-system:default
-      uid: 12345-abcde
+      username: alice@example.com
       groups:
-      - system:serviceaccounts
+      - developers
       - system:authenticated
     sourceIPs:
-    - 10.0.0.1
+    - 10.0.5.99
+    userAgent: kubectl/v1.31.2 (linux/amd64) kubernetes/5864a46
     objectRef:
-      resource: users
+      resource: selfsubjectreviews
       apiGroup: authentication.k8s.io
       apiVersion: v1
     responseStatus:
       metadata: {}
-      code: 200
+      code: 201
     requestReceivedTimestamp: '2026-02-10T12:00:00.000000Z'
-    stageTimestamp: '2026-02-10T12:00:00.100000Z'
-- name: an ordinary get does not fire
+    stageTimestamp: '2026-02-10T12:00:00.003000Z'
+    annotations:
+      authorization.k8s.io/decision: allow
+      authorization.k8s.io/reason: 'RBAC: allowed by ClusterRoleBinding "system:basic-user" of ClusterRole "system:basic-user" to Group "system:authenticated"'
+- name: a service account token checking itself from outside the cluster fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: 8e1f5b73-2a49-4c6d-9f30-1b7d4e8a6c25
+    stage: ResponseComplete
+    requestURI: /apis/authentication.k8s.io/v1/selfsubjectreviews
+    verb: create
+    user:
+      username: system:serviceaccount:ci:build-bot
+      uid: 5a3e9c71-0b24-4d8f-a6e2-7f1c3b9d0e48
+      groups:
+      - system:serviceaccounts
+      - system:serviceaccounts:ci
+      - system:authenticated
+      extra:
+        authentication.kubernetes.io/credential-id:
+        - JTI=2f6c8e14-9a3b-4d71-b5e0-6c8f2a4d9e13
+    sourceIPs:
+    - 203.0.113.45
+    userAgent: kubectl/v1.30.4 (darwin/arm64) kubernetes/a51b3b7
+    objectRef:
+      resource: selfsubjectreviews
+      apiGroup: authentication.k8s.io
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-10T12:10:00.000000Z'
+    stageTimestamp: '2026-02-10T12:10:00.002000Z'
+    annotations:
+      authorization.k8s.io/decision: allow
+      authorization.k8s.io/reason: 'RBAC: allowed by ClusterRoleBinding "system:basic-user" of ClusterRole "system:basic-user" to Group "system:authenticated"'
+- name: a TokenReview by metrics-server does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: 2b6d9f40-7c15-4e83-a2f9-5d0e1c7b4a38
+    stage: ResponseComplete
+    requestURI: /apis/authentication.k8s.io/v1/tokenreviews
+    verb: create
+    user:
+      username: system:serviceaccount:kube-system:metrics-server
+      uid: 7c2a5e19-4d83-4b06-9e71-0f3b8d6a2c54
+      groups:
+      - system:serviceaccounts
+      - system:serviceaccounts:kube-system
+      - system:authenticated
+    sourceIPs:
+    - 10.42.0.12
+    userAgent: metrics-server/v0.7.2 (linux/amd64) kubernetes/$Format
+    objectRef:
+      resource: tokenreviews
+      apiGroup: authentication.k8s.io
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-10T12:00:01.000000Z'
+    stageTimestamp: '2026-02-10T12:00:01.001000Z'
+    annotations:
+      authorization.k8s.io/decision: allow
+      authorization.k8s.io/reason: 'RBAC: allowed by ClusterRoleBinding "metrics-server:system:auth-delegator" of ClusterRole "system:auth-delegator" to ServiceAccount "metrics-server/kube-system"'
+- name: kubectl auth can-i (a SelfSubjectAccessReview) does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: 5f0c3a86-1e74-4b29-8d65-3a9e2f7c0b14
+    stage: ResponseComplete
+    requestURI: /apis/authorization.k8s.io/v1/selfsubjectaccessreviews
+    verb: create
+    user:
+      username: alice@example.com
+      groups:
+      - developers
+      - system:authenticated
+    sourceIPs:
+    - 10.0.5.99
+    userAgent: kubectl/v1.31.2 (linux/amd64) kubernetes/5864a46
+    objectRef:
+      resource: selfsubjectaccessreviews
+      apiGroup: authorization.k8s.io
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-10T12:00:02.000000Z'
+    stageTimestamp: '2026-02-10T12:00:02.001000Z'
+- name: the old siem-rules fixture (verb authenticate on users) does not fire
   expected: false
   event:
     source: k8s
@@ -39,7 +140,7 @@
     auditID: 7689ce10-46ff-5306-824e-568bac304243
     stage: ResponseComplete
     requestURI: /apis/authentication.k8s.io/v1/tokenreviews
-    verb: get
+    verb: authenticate
     user:
       username: system:serviceaccount:kube-system:default
       uid: 12345-abcde
