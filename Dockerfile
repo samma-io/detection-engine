@@ -2,7 +2,7 @@
 
 # Builder pinned to the Go minor in go.mod (1.25) and to a multi-arch index
 # digest, so a moving tag cannot change what an image was built with.
-FROM --platform=$BUILDPLATFORM golang:1.25-alpine@sha256:1ae0735f00daffa3aaf1363a5184c0d2dc55c78e3db4ec70241cdac97bf84b59 AS build
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine@sha256:b8c9b82affbbb82a020bbcf998dad2ba9516944ac7e883524642a481a9505e9c AS build
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
@@ -24,7 +24,7 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} \
 # refuse to start on one) and rules/examples/ (placeholder values). Done in
 # its own stage so the final image gets one clean COPY and never carries the
 # deleted files in a layer.
-FROM alpine:3.21@sha256:ce64758a109eb420d874a118f87920e625e12d3634e03b4a5573fd9f6e5d3507 AS rules
+FROM alpine:3.21@sha256:ee16d92f96db08d9d2d07da48555a27f3a69d8f0759021dbc601195ed0d2b5bd AS rules
 COPY rules/ /rules/
 RUN rm -rf /rules/examples \
  && find /rules -type f ! -name '*.yml' ! -name '*.yaml' -delete \
@@ -35,7 +35,7 @@ RUN rm -rf /rules/examples \
 # Alpine rather than distroless, deliberately: the ECS health check runs a
 # shell command (wget against /healthz), and distroless/static has no shell,
 # so the check could never pass and the task would be killed as unhealthy.
-FROM alpine:3.21@sha256:ce64758a109eb420d874a118f87920e625e12d3634e03b4a5573fd9f6e5d3507
+FROM alpine:3.21@sha256:ee16d92f96db08d9d2d07da48555a27f3a69d8f0759021dbc601195ed0d2b5bd
 RUN apk add --no-cache ca-certificates wget \
  && adduser -D -u 65532 engine
 COPY --from=build /out/engine /app/engine
