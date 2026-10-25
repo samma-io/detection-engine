@@ -56,12 +56,12 @@ Wildcards also do not work in a value: `*` is matched literally. See
 | [`dns`](#dns) | – | – | 2 | – | – | **2** |
 | [`gcp`](#gcp) | 1 | 1 | – | 1 | – | **3** |
 | [`github`](#github) | 1 | 2 | – | – | – | **3** |
-| [`k8s`](#k8s) | 8 | 11 | 6 | 2 | – | **27** |
+| [`k8s`](#k8s) | 8 | 11 | 5 | 3 | – | **27** |
 | [`onepassword`](#onepassword) | – | 2 | 1 | – | – | **3** |
 | [`scanner`](#scanner) | – | 3 | 1 | – | – | **4** |
 | [`slack`](#slack) | – | – | 2 | – | – | **2** |
 | [`workspace`](#workspace) | 2 | – | – | – | – | **2** |
-| **Total** | **13** | **43** | **25** | **15** | **0** | **96** |
+| **Total** | **13** | **43** | **24** | **16** | **0** | **96** |
 
 ---
 
@@ -1274,17 +1274,18 @@ Detects creation of ClusterRoleBindings - may indicate privilege escalation espe
 
 ### 🔴 critical — Kubernetes User Impersonation
 
-`8c01fd33-a911-555a-bd5e-eb73625d05b0` · [`rules/k8s/k8s_impersonation.yml`](../rules/k8s/k8s_impersonation.yml) · 2 tests (1 firing)
+`8c01fd33-a911-555a-bd5e-eb73625d05b0` · [`rules/k8s/k8s_impersonation.yml`](../rules/k8s/k8s_impersonation.yml) · 4 tests (2 firing)
 
 > **Status: experimental.**
 
-Detects user impersonation requests (--as flag) which bypass normal authentication to act as another identity. Ported from samma-io/siem-rules rule k8s-impersonation.
+Detects an API request made while impersonating another identity (kubectl --as / --as-group, or the Impersonate-User header). The audit event of an impersonated request carries impersonatedUser, and user is the impersonator; there is no event with verb impersonate. A refused impersonation records no impersonatedUser: it is a 403, which k8s_forbidden_access covers. Ported from samma-io/siem-rules rule k8s-impersonation.
 
-**Fires when** `kind` is `Event` and `verb` is `impersonate`
+**Fires when** `kind` is `Event` **and not** `impersonatedUser.username` is `null`
 
 **Likely false positives**
 
 - Administrators testing RBAC with kubectl --as.
+- Proxies that act for their users through impersonation (Rancher, Teleport, kube-oidc-proxy, Argo CD sync impersonation); every request they make fires.
 
 **ATT&CK** attack.t1078
 
@@ -1560,24 +1561,6 @@ Detects creation of new service accounts which could be used for persistence or 
 
 - <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_service_account_created.yaml>
 
-### 🟡 medium — Kubernetes User Authentication
-
-`0cc55620-7b42-5d35-bda1-8849ba1c9be9` · [`rules/k8s/k8s_user_login.yml`](../rules/k8s/k8s_user_login.yml) · 2 tests (1 firing)
-
-> **Status: experimental.**
-
-Alerts on Kubernetes user authentication events. Ported from samma-io/siem-rules rule k8s-user-login.
-
-**Fires when** `kind` is `Event` and `objectRef.resource` is `users` and `verb` is `authenticate`
-
-**Likely false positives**
-
-- Every token review by the API server.
-
-**ATT&CK** attack.t1078
-
-- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_user_login.yaml>
-
 ### 🟡 medium — Kubernetes Workload Patched
 
 `afdd1a35-8577-5c03-ab7e-aa9b671de93a` · [`rules/k8s/k8s_workload_patched.yml`](../rules/k8s/k8s_workload_patched.yml) · 2 tests (1 firing)
@@ -1595,6 +1578,25 @@ Detects patch operations on deployments, daemonsets, or statefulsets - may indic
 **ATT&CK** attack.t1610
 
 - <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_workload_patched.yaml>
+
+### 🔵 low — Kubernetes Identity Check (kubectl auth whoami)
+
+`0cc55620-7b42-5d35-bda1-8849ba1c9be9` · [`rules/k8s/k8s_user_login.yml`](../rules/k8s/k8s_user_login.yml) · 5 tests (2 firing)
+
+> **Status: experimental.**
+
+Detects a SelfSubjectReview, the request behind kubectl auth whoami, which asks the API server which identity a credential authenticates as. Someone holding a token they did not mint (a leaked kubeconfig, a stolen service account token) typically runs this first. Kubernetes has no login event: every request authenticates on its own and is audited as itself. The rule this was ported from, samma-io/siem-rules k8s-user-login, keyed on verb authenticate on users, which the API server never writes. TokenReviews are not a substitute: they are made by components (metrics-server, aggregated API servers, webhook authenticators) checking someone else's token, so user names the reviewer, not the person, and they arrive constantly.
+
+**Fires when** `kind` is `Event` and `verb` is `create` and `objectRef.apiGroup` is `authentication.k8s.io` and `objectRef.resource` is `selfsubjectreviews`
+
+**Likely false positives**
+
+- Administrators running kubectl auth whoami to check which context they are in.
+
+**ATT&CK** attack.t1033, attack.t1078
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_user_login.yaml>
+- <https://kubernetes.io/docs/reference/access-authn-authz/authentication/#self-subject-review>
 
 ### 🔵 low — Kubernetes Pod Created
 

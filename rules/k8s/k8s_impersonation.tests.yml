@@ -1,65 +1,141 @@
-# Positive case: samma-io/siem-rules test/k8s/k8s_impersonation.json, with the lane's
-# source field added and auditID replaced. Negative cases flip the field the
-# rule keys on.
-- name: the siem-rules fixture fires
+# Built from the audit.k8s.io/v1 Event the API server writes for an
+# impersonated request: user is the impersonator, impersonatedUser the identity
+# acted as, and verb, objectRef and requestURI are those of the request itself.
+# The lane's source field is added. A refused impersonation is answered by the
+# impersonation filter with a 403 before impersonatedUser is recorded.
+- name: kubectl --as=system:admin get pods fires
   expected: true
   event:
     source: k8s
     kind: Event
     apiVersion: audit.k8s.io/v1
     level: Metadata
-    auditID: 8beccc67-f028-5000-896d-bc708a7a826b
+    auditID: 3f9d1c52-8a7e-4b0f-9c61-2d4e5a7b8c90
     stage: ResponseComplete
-    requestURI: /api/v1/namespaces/default/pods
-    verb: impersonate
+    requestURI: /api/v1/namespaces/default/pods?limit=500
+    verb: list
     user:
-      username: attacker@example.com
+      username: alice@example.com
       groups:
+      - developers
       - system:authenticated
     impersonatedUser:
       username: system:admin
       groups:
-      - system:masters
+      - system:authenticated
     sourceIPs:
     - 10.0.5.99
+    userAgent: kubectl/v1.31.2 (linux/amd64) kubernetes/5864a46
     objectRef:
-      resource: users
-      name: system:admin
-      apiGroup: ''
+      resource: pods
+      namespace: default
       apiVersion: v1
     responseStatus:
       metadata: {}
-      code: 201
+      code: 200
     requestReceivedTimestamp: '2026-02-11T03:00:00.000000Z'
-    stageTimestamp: '2026-02-11T03:00:00.100000Z'
-- name: an ordinary get does not fire
+    stageTimestamp: '2026-02-11T03:00:00.012000Z'
+    annotations:
+      authorization.k8s.io/decision: allow
+      authorization.k8s.io/reason: 'RBAC: allowed by ClusterRoleBinding "admins" of ClusterRole "cluster-admin" to User "system:admin"'
+- name: a service account acting as another service account fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: 6b2e0d47-91c3-4f58-a7d2-0e8f4c1b3a65
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/kube-system/configmaps/kube-proxy
+    verb: get
+    user:
+      username: system:serviceaccount:ci:deployer
+      uid: 0d6f8a3e-5b21-4c7e-9f04-6a1c2e8d7b53
+      groups:
+      - system:serviceaccounts
+      - system:serviceaccounts:ci
+      - system:authenticated
+    impersonatedUser:
+      username: system:serviceaccount:kube-system:replicaset-controller
+      groups:
+      - system:serviceaccounts
+      - system:serviceaccounts:kube-system
+      - system:authenticated
+    sourceIPs:
+    - 10.42.3.17
+    userAgent: deployer/1.4.0
+    objectRef:
+      resource: configmaps
+      namespace: kube-system
+      name: kube-proxy
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 200
+    requestReceivedTimestamp: '2026-02-11T03:05:00.000000Z'
+    stageTimestamp: '2026-02-11T03:05:00.004000Z'
+    annotations:
+      authorization.k8s.io/decision: allow
+      authorization.k8s.io/reason: ''
+- name: the same request without impersonation does not fire
   expected: false
   event:
     source: k8s
     kind: Event
     apiVersion: audit.k8s.io/v1
     level: Metadata
-    auditID: 8beccc67-f028-5000-896d-bc708a7a826b
+    auditID: 9a4c7e21-3d58-4b6f-8e02-7c1d5f9a2b36
     stage: ResponseComplete
-    requestURI: /api/v1/namespaces/default/pods
-    verb: get
+    requestURI: /api/v1/namespaces/default/pods?limit=500
+    verb: list
     user:
-      username: attacker@example.com
+      username: alice@example.com
       groups:
+      - developers
       - system:authenticated
-    impersonatedUser:
-      username: system:admin
-      groups:
-      - system:masters
     sourceIPs:
     - 10.0.5.99
+    userAgent: kubectl/v1.31.2 (linux/amd64) kubernetes/5864a46
     objectRef:
-      resource: users
-      name: system:admin
-      apiGroup: ''
+      resource: pods
+      namespace: default
       apiVersion: v1
     responseStatus:
       metadata: {}
-      code: 201
+      code: 200
     requestReceivedTimestamp: '2026-02-11T03:00:00.000000Z'
-    stageTimestamp: '2026-02-11T03:00:00.100000Z'
+    stageTimestamp: '2026-02-11T03:00:00.010000Z'
+    annotations:
+      authorization.k8s.io/decision: allow
+      authorization.k8s.io/reason: 'RBAC: allowed by RoleBinding "developers/default" of ClusterRole "view" to Group "developers"'
+- name: a refused impersonation (403, no impersonatedUser) does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: c1e85f30-7b26-4d9a-b4f1-3e6a0c2d8f47
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/default/pods?limit=500
+    verb: list
+    user:
+      username: alice@example.com
+      groups:
+      - developers
+      - system:authenticated
+    sourceIPs:
+    - 10.0.5.99
+    userAgent: kubectl/v1.31.2 (linux/amd64) kubernetes/5864a46
+    objectRef:
+      resource: pods
+      namespace: default
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      status: Failure
+      reason: Forbidden
+      code: 403
+    requestReceivedTimestamp: '2026-02-11T03:01:00.000000Z'
+    stageTimestamp: '2026-02-11T03:01:00.002000Z'

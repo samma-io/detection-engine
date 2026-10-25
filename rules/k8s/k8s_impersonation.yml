@@ -2,9 +2,12 @@ title: Kubernetes User Impersonation
 id: 8c01fd33-a911-555a-bd5e-eb73625d05b0
 status: experimental
 description: >
-  Detects user impersonation requests (--as flag) which bypass normal
-  authentication to act as another identity. Ported from samma-io/siem-rules
-  rule k8s-impersonation.
+  Detects an API request made while impersonating another identity (kubectl
+  --as / --as-group, or the Impersonate-User header). The audit event of an
+  impersonated request carries impersonatedUser, and user is the impersonator;
+  there is no event with verb impersonate. A refused impersonation records no
+  impersonatedUser: it is a 403, which k8s_forbidden_access covers. Ported
+  from samma-io/siem-rules rule k8s-impersonation.
 references:
   - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_impersonation.yaml
 author: samma-io
@@ -17,7 +20,12 @@ logsource:
 detection:
   selection:
     kind: Event
-    verb: impersonate
-  condition: selection
+  # sigma-go matches the string 'null' against a field that is not there, so
+  # this is "impersonatedUser.username is absent". A bare |re would not do:
+  # an absent field reads as "<nil>" and would match.
+  filter_not_impersonated:
+    impersonatedUser.username: 'null'
+  condition: selection and not filter_not_impersonated
 falsepositives:
   - Administrators testing RBAC with kubectl --as.
+  - Proxies that act for their users through impersonation (Rancher, Teleport, kube-oidc-proxy, Argo CD sync impersonation); every request they make fires.
