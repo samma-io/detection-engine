@@ -7,6 +7,22 @@
 #
 # These are scan results about targets the organisation owns, not vendor
 # audit records. Rules on this lane match finding fields only.
+#
+# Two generations of message share the subjects:
+#
+#   schema v2 (samma-io/detect): `schema: samma.io/scan/v2`, `kind` finding or
+#     run. A finding carries checkId, severity (CRITICAL..INFO), title,
+#     endpoint{host,port,scheme}, evidence and raw, and mirrors host, port,
+#     status and type at the top level. Rules pin schema and kind: finding;
+#     run messages are lifecycle, not detections.
+#   legacy v1 (the classic nmap and nikto images, via sammaParser): the
+#     scanner's own flat record (type, target, port, ...) with no schema
+#     field, plus lifecycle records {event: scanner_start|scanner_stop} and
+#     {scan: done}. Rules pin the scanner's own `type`.
+#
+# Both carry the samma-io block (scanner, id, tags, json; the legacy one adds
+# target_id and scan_id). samma-io.tags is an array: matching one element
+# exactly needs a self-mapping here first (see rules/aws/sigma-config.yml).
 title: scanner
 logsources:
   samma_scanner:

@@ -1,0 +1,30 @@
+title: Open TCP Port Reported By The nmap Scanner
+id: 8667c34a-e4b6-4fb4-95da-c959b9432be3
+status: experimental
+description: >
+  The classic nmap port scanner (samma-io/nmap nmap_portscanner.py, run by
+  the operator as nmap/port) listed a TCP port on a scanned target. nmap
+  still emits legacy v1 records through sammaParser -- type, scanner,
+  target, port and protocol at the top level plus the samma-io block -- and
+  no schema field. The record does not carry the port state, so this fires
+  on every port nmap lists, which is the open ones in the common case.
+  Ported from samma-io/siem-rules rule nmap-open-port.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/nmap/nmap-portscan.yaml
+  - https://github.com/samma-io/nmap/blob/main/nmap_portscanner.py
+author: samma-io
+level: medium
+tags:
+  - attack.discovery
+  - attack.t1046
+logsource:
+  product: samma
+  service: scanner
+detection:
+  selection:
+    type: nmap
+    scanner: nmap_port
+    protocol: tcp
+  condition: selection
+falsepositives:
+  - Every service the target is meant to expose (80, 443). Tune per target.

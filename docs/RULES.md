@@ -1,6 +1,6 @@
 # Detection rules
 
-**92 rules across 10 log sources.**
+**96 rules across 11 log sources.**
 
 > Generated from the rules tree by `make docs`. Do not edit by hand —
 > `TestRules_CatalogIsUpToDate` fails if this file and the rules disagree.
@@ -58,9 +58,10 @@ Wildcards also do not work in a value: `*` is matched literally. See
 | [`github`](#github) | 1 | 2 | – | – | – | **3** |
 | [`k8s`](#k8s) | 8 | 11 | 6 | 2 | – | **27** |
 | [`onepassword`](#onepassword) | – | 2 | 1 | – | – | **3** |
+| [`scanner`](#scanner) | – | 3 | 1 | – | – | **4** |
 | [`slack`](#slack) | – | – | 2 | – | – | **2** |
 | [`workspace`](#workspace) | 2 | – | – | – | – | **2** |
-| **Total** | **13** | **40** | **24** | **15** | **0** | **92** |
+| **Total** | **13** | **43** | **25** | **15** | **0** | **96** |
 
 ---
 
@@ -1688,6 +1689,83 @@ A failed sign-in on the 1Password Events API. Credential failures against the pa
 **ATT&CK** attack.credential_access
 
 - <https://developer.1password.com/docs/events-api/>
+
+---
+
+## scanner
+
+### 🟠 high — Administrative Or Database Port Reachable On A Scanned Target
+
+`053a9feb-5096-46f4-9a5b-0bdf6d0596f7` · [`rules/scanner/scanner_admin_port_exposed.yml`](../rules/scanner/scanner_admin_port_exposed.yml) · 4 tests (1 firing)
+
+> **Status: experimental.**
+
+The detect port-scanner found a management, database or cluster-internal port (SSH, RDP, PostgreSQL, Redis, the kubelet, ...) accepting connections on a target the organisation scans. This is the schema v2 successor of samma-io/siem-rules nmap-open-port: an ordinary open port is an INFO inventory fact (SAMMA-PORT-OPEN) and does not alert; an exposed admin service is a finding. endpoint carries the host, port and service name.
+
+**Fires when** `schema` is `samma.io/scan/v2` and `kind` is `finding` and `checkId` is `SAMMA-PORT-OPEN-ADMIN`
+
+**Likely false positives**
+
+- A bastion or service that is meant to be public on an admin port, such as SSH on a jump host.
+
+**ATT&CK** attack.discovery, attack.t1046
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/nmap/nmap-portscan.yaml>
+- <https://github.com/samma-io/detect/blob/main/common/samma_finding/catalog/port_scanner.py>
+
+### 🟠 high — High Or Critical Severity Scanner Finding
+
+`3cd1f737-b3f3-40a0-af2a-e460eafe2594` · [`rules/scanner/scanner_high_severity_finding.yml`](../rules/scanner/scanner_high_severity_finding.yml) · 8 tests (3 firing)
+
+> **Status: experimental.**
+
+A Samma detect scanner reported a HIGH or CRITICAL finding on a scanned target: today a deprecated TLS protocol, an expired or invalid certificate, SSH protocol 1, or an expired domain registration. The checkId names the check and endpoint the host and port. Checks with a rule of their own (SAMMA-PORT-OPEN-ADMIN) are excluded so one finding raises one alert. A run message, or a finding at MEDIUM and below, never fires.
+
+**Fires when** (`schema` is `samma.io/scan/v2` and `kind` is `finding` and `severity` is one of `HIGH`, `CRITICAL`) **and not** `checkId` is `SAMMA-PORT-OPEN-ADMIN`
+
+**Likely false positives**
+
+- A test or staging host that is knowingly left on an old configuration.
+
+- <https://github.com/samma-io/detect#the-check-catalogue>
+
+### 🟠 high — Nikto Finding With An OSVDB Reference
+
+`986854c1-e287-4db1-bf23-82d4fa901a9a` · [`rules/scanner/scanner_nikto_osvdb_finding.yml`](../rules/scanner/scanner_nikto_osvdb_finding.yml) · 4 tests (1 firing)
+
+> **Status: experimental.**
+
+The classic nikto scanner (samma-io/nikto, run by the operator as nikto) reported a finding that Nikto ties to a known OSVDB entry. nikto still emits legacy v1 records through sammaParser, one per row of Nikto's CSV report: host, ip, port, OSVDB, request, nikto_url, finding. The image installs Ubuntu's Nikto 2.1.5, whose CSV writes OSVDB-<n> with n=0 for a finding without an entry and leaves the column empty on the per-host banner row; both are excluded. Ported from samma-io/siem-rules rule nikto-critical-finding.
+
+**Fires when** `type` is `Nikto` and `OSVDB` matches the regular expression `^OSVDB-[1-9]`
+
+**Likely false positives**
+
+- Informational OSVDB entries (directory indexing, default files) on hosts where they are expected.
+
+**ATT&CK** attack.initial_access, attack.t1190
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/nikto/nikto-findings.yaml>
+- <https://github.com/samma-io/nikto/blob/main/code/scan.py>
+
+### 🟡 medium — Open TCP Port Reported By The nmap Scanner
+
+`8667c34a-e4b6-4fb4-95da-c959b9432be3` · [`rules/scanner/scanner_nmap_open_tcp_port.yml`](../rules/scanner/scanner_nmap_open_tcp_port.yml) · 6 tests (1 firing)
+
+> **Status: experimental.**
+
+The classic nmap port scanner (samma-io/nmap nmap_portscanner.py, run by the operator as nmap/port) listed a TCP port on a scanned target. nmap still emits legacy v1 records through sammaParser -- type, scanner, target, port and protocol at the top level plus the samma-io block -- and no schema field. The record does not carry the port state, so this fires on every port nmap lists, which is the open ones in the common case. Ported from samma-io/siem-rules rule nmap-open-port.
+
+**Fires when** `type` is `nmap` and `scanner` is `nmap_port` and `protocol` is `tcp`
+
+**Likely false positives**
+
+- Every service the target is meant to expose (80, 443). Tune per target.
+
+**ATT&CK** attack.discovery, attack.t1046
+
+- <https://github.com/samma-io/siem-rules/blob/main/rules/nmap/nmap-portscan.yaml>
+- <https://github.com/samma-io/nmap/blob/main/nmap_portscanner.py>
 
 ---
 

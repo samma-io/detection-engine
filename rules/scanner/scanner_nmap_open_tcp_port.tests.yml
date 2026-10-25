@@ -1,0 +1,118 @@
+# Legacy records follow samma-io/nmap nmap_portscanner.py and its sammaParser.logger(): the scanner's
+# record plus the samma-io block, with the lane's source field added.
+- name: a TCP port listed by nmap fires
+  expected: true
+  event:
+    type: nmap
+    scanner: nmap_port
+    target: www.example.com
+    port: '443'
+    protocol: tcp
+    samma-io:
+      scanner: nmap
+      id: scanner-www-example-com
+      target_id: ''
+      scan_id: 5f0c8a52-3f7e-4f1b-9d3a-6f2b8e1c4a90
+      tags:
+      - scanner
+      json: '{}'
+    source: scanner
+- name: a UDP port does not fire
+  expected: false
+  event:
+    type: nmap
+    scanner: nmap_port
+    target: www.example.com
+    port: '53'
+    protocol: udp
+    samma-io:
+      scanner: nmap
+      id: scanner-www-example-com
+      target_id: ''
+      scan_id: 5f0c8a52-3f7e-4f1b-9d3a-6f2b8e1c4a90
+      tags:
+      - scanner
+      json: '{}'
+    source: scanner
+- name: the scanner_start lifecycle event does not fire
+  expected: false
+  event:
+    event: scanner_start
+    samma-io:
+      scanner: nmap
+      id: scanner-www-example-com
+      target_id: ''
+      scan_id: 5f0c8a52-3f7e-4f1b-9d3a-6f2b8e1c4a90
+      tags:
+      - scanner
+      json: '{}'
+    source: scanner
+- name: the scanner_stop lifecycle event does not fire
+  expected: false
+  event:
+    event: scanner_stop
+    samma-io:
+      scanner: nmap
+      id: scanner-www-example-com
+      target_id: ''
+      scan_id: 5f0c8a52-3f7e-4f1b-9d3a-6f2b8e1c4a90
+      tags:
+      - scanner
+      json: '{}'
+    source: scanner
+- name: the scan done marker does not fire
+  expected: false
+  event:
+    scan: done
+    samma-io:
+      scanner: nmap
+      id: scanner-www-example-com
+      target_id: ''
+      scan_id: 5f0c8a52-3f7e-4f1b-9d3a-6f2b8e1c4a90
+      tags:
+      - scanner
+      json: '{}'
+    source: scanner
+- name: a detect port-scanner v2 finding does not fire
+  expected: false
+  event:
+    checkId: SAMMA-PORT-OPEN
+    compliance: []
+    cveIds: []
+    emittedAt: '2026-10-24T02:00:21Z'
+    endpoint:
+      host: www.example.com
+      port: 443
+      scheme: https
+    evidence: tcp/443 open on 192.0.2.10 (ipv4)
+    host: www.example.com
+    kind: finding
+    port: 443
+    raw:
+      addresses:
+      - address: 192.0.2.10
+        family: ipv4
+        status: open
+      host: www.example.com
+      port: 443
+      status: open
+      type: PortScan
+    references:
+    - https://cheatsheetseries.owasp.org/cheatsheets/Attack_Surface_Analysis_Cheat_Sheet.html
+    remediation: No action is needed when the service is meant to be public. Otherwise close the port or restrict it at the firewall.
+    runId: port-scanner-www-example-com-28934712-k9z2p
+    samma-io:
+      id: scanner-db-example-com
+      json: '{}'
+      scanner: port-scanner
+      tags:
+      - scanner
+    scanner: port-scanner
+    scannerVersion: 2.0.2
+    schema: samma.io/scan/v2
+    severity: INFO
+    source: scanner
+    status: open
+    target: www.example.com
+    title: TCP port is open
+    type: PortScan

@@ -69,6 +69,16 @@ which is the vendor-native shape plus a `source` field:
   serviceaccount must pin the collection URI (`requestURI|re: /pods(\?|$)`)
   or it also fires on every one of those.
 
+- **scanner** — Samma scanner messages relayed to `samma.logs.scanner` (NATS
+  transport only). samma-io/detect publishes schema v2: `schema:
+  samma.io/scan/v2`, `kind` (`finding` or `run`), `checkId`, `severity`,
+  `endpoint.host`/`endpoint.port`/`endpoint.scheme`, `title`, `evidence`.
+  The classic nmap and nikto images still publish legacy v1 records with no
+  `schema` (nmap: `type: nmap`, `scanner: nmap_port`, `port`, `protocol`;
+  nikto: `type: Nikto`, `OSVDB`, `nikto_url`, `finding`). Pin `kind: finding`
+  or the legacy `type`, so lifecycle messages (`kind: run`,
+  `event: scanner_start`, `scan: done`) never alert.
+
 Dotted paths such as `userIdentity.type` work because the engine builds a
 flattened match view of every event; see `internal/decode/normalize.go`.
 Upstream SigmaHQ rules for these products can usually be dropped in unchanged,

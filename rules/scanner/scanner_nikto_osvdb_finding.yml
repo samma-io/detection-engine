@@ -1,0 +1,30 @@
+title: Nikto Finding With An OSVDB Reference
+id: 986854c1-e287-4db1-bf23-82d4fa901a9a
+status: experimental
+description: >
+  The classic nikto scanner (samma-io/nikto, run by the operator as nikto)
+  reported a finding that Nikto ties to a known OSVDB entry. nikto still
+  emits legacy v1 records through sammaParser, one per row of Nikto's CSV
+  report: host, ip, port, OSVDB, request, nikto_url, finding. The image
+  installs Ubuntu's Nikto 2.1.5, whose CSV writes OSVDB-<n> with n=0 for a
+  finding without an entry and leaves the column empty on the per-host banner
+  row; both are excluded. Ported from samma-io/siem-rules rule
+  nikto-critical-finding.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/nikto/nikto-findings.yaml
+  - https://github.com/samma-io/nikto/blob/main/code/scan.py
+author: samma-io
+level: high
+tags:
+  - attack.initial_access
+  - attack.t1190
+logsource:
+  product: samma
+  service: scanner
+detection:
+  selection:
+    type: Nikto
+    OSVDB|re: ^OSVDB-[1-9]
+  condition: selection
+falsepositives:
+  - Informational OSVDB entries (directory indexing, default files) on hosts where they are expected.

@@ -1,0 +1,29 @@
+title: High Or Critical Severity Scanner Finding
+id: 3cd1f737-b3f3-40a0-af2a-e460eafe2594
+status: experimental
+description: >
+  A Samma detect scanner reported a HIGH or CRITICAL finding on a scanned
+  target: today a deprecated TLS protocol, an expired or invalid certificate,
+  SSH protocol 1, or an expired domain registration. The checkId names the
+  check and endpoint the host and port. Checks with a rule of their own
+  (SAMMA-PORT-OPEN-ADMIN) are excluded so one finding raises one alert. A
+  run message, or a finding at MEDIUM and below, never fires.
+references:
+  - https://github.com/samma-io/detect#the-check-catalogue
+author: samma-io
+level: high
+logsource:
+  product: samma
+  service: scanner
+detection:
+  selection:
+    schema: samma.io/scan/v2
+    kind: finding
+    severity:
+      - HIGH
+      - CRITICAL
+  filter_own_rule:
+    checkId: SAMMA-PORT-OPEN-ADMIN
+  condition: selection and not filter_own_rule
+falsepositives:
+  - A test or staging host that is knowingly left on an old configuration.

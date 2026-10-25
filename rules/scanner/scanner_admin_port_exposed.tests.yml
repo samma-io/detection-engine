@@ -1,0 +1,129 @@
+# v2 events are built with samma-io/detect v2.0.2 common/samma_finding/schema.py
+# (build_finding / build_run), with the lane's source field added.
+- name: postgres reachable on a scanned target fires
+  expected: true
+  event:
+    checkId: SAMMA-PORT-OPEN-ADMIN
+    compliance: []
+    cveIds: []
+    emittedAt: '2026-10-24T02:00:21Z'
+    endpoint:
+      host: db.example.com
+      port: 5432
+      scheme: postgresql
+    evidence: tcp/5432 open on 192.0.2.20 (ipv4); port is normally postgresql
+    host: db.example.com
+    kind: finding
+    port: 5432
+    raw:
+      addresses:
+      - address: 192.0.2.20
+        family: ipv4
+        status: open
+      host: db.example.com
+      port: 5432
+      status: open
+      type: PortScan
+    references:
+    - https://cheatsheetseries.owasp.org/cheatsheets/Attack_Surface_Analysis_Cheat_Sheet.html
+    - https://www.cisecurity.org/controls/v8
+    remediation: Close the port at the firewall or load balancer, or restrict it to trusted networks (VPN, bastion host, private peering). Management and database services should not be reachable from the public internet.
+    runId: port-scanner-db-example-com-28934712-k9z2p
+    samma-io:
+      id: scanner-db-example-com
+      json: '{}'
+      scanner: port-scanner
+      tags:
+      - scanner
+    scanner: port-scanner
+    scannerVersion: 2.0.2
+    schema: samma.io/scan/v2
+    severity: HIGH
+    source: scanner
+    status: open
+    target: db.example.com
+    title: Administrative or database port is reachable from the internet
+    type: PortScan
+- name: an ordinary open port (INFO inventory) does not fire
+  expected: false
+  event:
+    checkId: SAMMA-PORT-OPEN
+    compliance: []
+    cveIds: []
+    emittedAt: '2026-10-24T02:00:21Z'
+    endpoint:
+      host: www.example.com
+      port: 443
+      scheme: https
+    evidence: tcp/443 open on 192.0.2.10 (ipv4)
+    host: www.example.com
+    kind: finding
+    port: 443
+    raw:
+      addresses:
+      - address: 192.0.2.10
+        family: ipv4
+        status: open
+      host: www.example.com
+      port: 443
+      status: open
+      type: PortScan
+    references:
+    - https://cheatsheetseries.owasp.org/cheatsheets/Attack_Surface_Analysis_Cheat_Sheet.html
+    remediation: No action is needed when the service is meant to be public. Otherwise close the port or restrict it at the firewall.
+    runId: port-scanner-www-example-com-28934712-k9z2p
+    samma-io:
+      id: scanner-db-example-com
+      json: '{}'
+      scanner: port-scanner
+      tags:
+      - scanner
+    scanner: port-scanner
+    scannerVersion: 2.0.2
+    schema: samma.io/scan/v2
+    severity: INFO
+    source: scanner
+    status: open
+    target: www.example.com
+    title: TCP port is open
+    type: PortScan
+- name: a failed port-scanner run does not fire
+  expected: false
+  event:
+    emittedAt: '2026-10-24T02:00:21Z'
+    findingCount: 0
+    finishedAt: '2026-10-24T02:00:21Z'
+    kind: run
+    message: 'gaierror: [Errno -2] Name or service not known'
+    outcome: failed
+    runId: port-scanner-db-example-com-28934712-k9z2p
+    samma-io:
+      id: scanner-db-example-com
+      json: '{}'
+      scanner: port-scanner
+      tags:
+      - scanner
+    scan: done
+    scanner: port-scanner
+    scannerVersion: 2.0.2
+    schema: samma.io/scan/v2
+    source: scanner
+    startedAt: '2026-10-24T02:00:04Z'
+    target: db.example.com
+- name: a legacy nmap port record does not fire
+  expected: false
+  event:
+    type: nmap
+    scanner: nmap_port
+    target: www.example.com
+    port: '443'
+    protocol: tcp
+    samma-io:
+      scanner: nmap
+      id: scanner-www-example-com
+      target_id: ''
+      scan_id: 5f0c8a52-3f7e-4f1b-9d3a-6f2b8e1c4a90
+      tags:
+      - scanner
+      json: '{}'
+    source: scanner

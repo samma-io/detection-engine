@@ -1,0 +1,78 @@
+# Legacy records follow samma-io/nikto code/scan.py and its sammaParser.logger(): the scanner's
+# record plus the samma-io block, with the lane's source field added.
+- name: a finding with an OSVDB entry fires
+  expected: true
+  event:
+    host: www.example.com
+    target: www.example.com
+    type: Nikto
+    ip: 192.0.2.10
+    port: '443'
+    OSVDB: OSVDB-3092
+    request: GET
+    nikto_url: /admin/
+    finding: '/admin/: This might be interesting...'
+    samma-io:
+      scanner: nikto
+      id: scanner-www-example-com
+      target_id: ''
+      scan_id: 5f0c8a52-3f7e-4f1b-9d3a-6f2b8e1c4a90
+      tags:
+      - scanner
+      json: '{}'
+    source: scanner
+- name: OSVDB-0 (no entry) does not fire
+  expected: false
+  event:
+    host: www.example.com
+    target: www.example.com
+    type: Nikto
+    ip: 192.0.2.10
+    port: '443'
+    OSVDB: OSVDB-0
+    request: GET
+    nikto_url: /
+    finding: The anti-clickjacking X-Frame-Options header is not present.
+    samma-io:
+      scanner: nikto
+      id: scanner-www-example-com
+      target_id: ''
+      scan_id: 5f0c8a52-3f7e-4f1b-9d3a-6f2b8e1c4a90
+      tags:
+      - scanner
+      json: '{}'
+    source: scanner
+- name: the per-host banner row does not fire
+  expected: false
+  event:
+    host: www.example.com
+    target: www.example.com
+    type: Nikto
+    ip: 192.0.2.10
+    port: '443'
+    OSVDB: ''
+    request: ''
+    nikto_url: ''
+    finding: Apache/2.4.58 (Ubuntu)
+    samma-io:
+      scanner: nikto
+      id: scanner-www-example-com
+      target_id: ''
+      scan_id: 5f0c8a52-3f7e-4f1b-9d3a-6f2b8e1c4a90
+      tags:
+      - scanner
+      json: '{}'
+    source: scanner
+- name: the scan done marker does not fire
+  expected: false
+  event:
+    scan: done
+    samma-io:
+      scanner: nikto
+      id: scanner-www-example-com
+      target_id: ''
+      scan_id: 5f0c8a52-3f7e-4f1b-9d3a-6f2b8e1c4a90
+      tags:
+      - scanner
+      json: '{}'
+    source: scanner
