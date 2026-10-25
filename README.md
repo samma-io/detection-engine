@@ -353,14 +353,14 @@ hack/rulesdoc/          the `make docs` entrypoint
 hack/sigmaimport/       SigmaHQ importer
 hack/local/             localstack end-to-end
 hack/scrub-check.sh     CI gate: no private identifiers in the tree
-Dockerfile              golang:1.25-alpine builder -> alpine:3.21, non-root, pinned by digest;
+Dockerfile              golang:1.27-alpine builder -> alpine:3.21, non-root, pinned by digest;
                         bakes rules/ into /rules (ENGINE_RULES_DIR default)
 ```
 
 ## Development
 
 ```bash
-make            # gofmt check, vet, test   (all in golang:1.25 containers)
+make            # gofmt check, vet, test   (all in golang:1.27-alpine containers)
 make test-race  # the shared ruleset is only safe because of a sigma-go detail
 make rulecheck  # the rules gate alone
 make docs       # regenerate docs/RULES.md after any rule change
