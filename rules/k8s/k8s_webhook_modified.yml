@@ -1,0 +1,29 @@
+title: Kubernetes Admission Webhook Created Or Modified
+id: 10946f6e-f74f-5fef-843d-c0d3e7188eb2
+status: experimental
+description: >
+  Detects creation or modification of admission webhooks - can be used to
+  intercept and mutate all cluster operations. Ported from samma-io/siem-rules
+  rule k8s-webhook-modified.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_webhook_modified.yaml
+author: samma-io
+level: critical
+tags:
+  - attack.t1525
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    verb:
+    - create
+    - update
+    - patch
+    objectRef.resource:
+    - mutatingwebhookconfigurations
+    - validatingwebhookconfigurations
+  condition: selection
+falsepositives:
+  - Installing or upgrading an operator that ships admission webhooks.

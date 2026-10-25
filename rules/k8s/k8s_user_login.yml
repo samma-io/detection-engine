@@ -1,0 +1,23 @@
+title: Kubernetes User Authentication
+id: 0cc55620-7b42-5d35-bda1-8849ba1c9be9
+status: experimental
+description: >
+  Alerts on Kubernetes user authentication events. Ported from
+  samma-io/siem-rules rule k8s-user-login.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_user_login.yaml
+author: samma-io
+level: medium
+tags:
+  - attack.t1078
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    objectRef.resource: users
+    verb: authenticate
+  condition: selection
+falsepositives:
+  - Every token review by the API server.

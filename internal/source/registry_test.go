@@ -17,15 +17,29 @@ import (
 // lane there, add it here and to the registry in the same change.
 var detectionSources = []string{"aws", "gcp", "github", "workspace", "slack", "onepassword", "dns", "alb", "cloudflare"}
 
+// natsOnlySources are lanes that exist only on the NATS transport, so the
+// Terraform lane list (which creates SQS queues) does not carry them. They
+// mirror the "Lanes on NATS" table in aws-siem docs/contracts/nats-transport.md.
+var natsOnlySources = []string{"k8s", "scanner"}
+
+func allSources() []string {
+	return append(append([]string{}, detectionSources...), natsOnlySources...)
+}
+
 func TestRegistry_HasAnEntryForEveryDetectionSource(t *testing.T) {
 	for _, name := range detectionSources {
 		if _, err := source.Lookup(name); err != nil {
 			t.Errorf("terraform creates a queue for %q but the registry has no entry: %v", name, err)
 		}
 	}
-	if got, want := len(source.Names()), len(detectionSources); got != want {
-		t.Errorf("registry has %d sources, terraform has %d: %v vs %v",
-			got, want, source.Names(), detectionSources)
+	for _, name := range natsOnlySources {
+		if _, err := source.Lookup(name); err != nil {
+			t.Errorf("the NATS contract reserves lane %q but the registry has no entry: %v", name, err)
+		}
+	}
+	if got, want := len(source.Names()), len(allSources()); got != want {
+		t.Errorf("registry has %d sources, terraform plus the NATS-only lanes have %d: %v vs %v",
+			got, want, source.Names(), allSources())
 	}
 }
 
@@ -35,7 +49,7 @@ func TestLookup_UnknownSourceNamesTheValidOnes(t *testing.T) {
 		t.Fatal("expected an error for an unknown source")
 	}
 	// The operator reading this is looking at a task that will not start.
-	for _, name := range detectionSources {
+	for _, name := range allSources() {
 		if !strings.Contains(err.Error(), name) {
 			t.Errorf("error should list %q as valid, got: %v", name, err)
 		}

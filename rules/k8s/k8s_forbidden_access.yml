@@ -1,0 +1,23 @@
+title: Kubernetes API Request Forbidden
+id: 6663d741-20f1-52a5-bc1d-f98345dd327b
+status: experimental
+description: >
+  Detects 403 Forbidden responses from the API server - indicates RBAC probing
+  or unauthorized access attempts. Ported from samma-io/siem-rules rule
+  k8s-forbidden-access.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_forbidden_access.yaml
+author: samma-io
+level: medium
+tags:
+  - attack.t1613
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    responseStatus.code: 403
+  condition: selection
+falsepositives:
+  - Controllers starting before their RBAC is applied; users running a command they lack rights for.

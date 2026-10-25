@@ -1,0 +1,23 @@
+title: Kubernetes Anonymous API Request
+id: 58d61fa9-a318-57d1-81d8-10296d50cfcb
+status: experimental
+description: >
+  Detects anonymous or unauthenticated API requests which may indicate
+  misconfigured RBAC or unauthorized access. Ported from samma-io/siem-rules
+  rule k8s-anonymous-access.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_anonymous_access.yaml
+author: samma-io
+level: critical
+tags:
+  - attack.t1078
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    user.username: system:anonymous
+  condition: selection
+falsepositives:
+  - Health checks against /healthz, /livez or /readyz on a cluster that allows anonymous auth for them.

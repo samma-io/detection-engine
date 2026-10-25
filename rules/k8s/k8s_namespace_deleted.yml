@@ -1,0 +1,24 @@
+title: Kubernetes Namespace Deleted
+id: 35aab55a-b033-53c2-927c-930f6e15305e
+status: experimental
+description: >
+  Detects deletion of Kubernetes namespaces - potential data destruction or
+  service disruption. Ported from samma-io/siem-rules rule
+  k8s-namespace-deleted.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_namespace_deleted.yaml
+author: samma-io
+level: critical
+tags:
+  - attack.t1485
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    objectRef.resource: namespaces
+    verb: delete
+  condition: selection
+falsepositives:
+  - Tearing down an environment or a GitOps prune.

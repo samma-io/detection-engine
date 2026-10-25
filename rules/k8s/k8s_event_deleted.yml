@@ -1,0 +1,25 @@
+title: Kubernetes Events Deleted
+id: 936f57ce-3685-5098-a580-6c4f215e870d
+status: experimental
+description: >
+  Detects deletion of Kubernetes events - may indicate an attacker covering
+  their tracks. Ported from samma-io/siem-rules rule k8s-event-deleted.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_event_deleted.yaml
+author: samma-io
+level: critical
+tags:
+  - attack.t1070
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    objectRef.resource: events
+    verb:
+    - delete
+    - deletecollection
+  condition: selection
+falsepositives:
+  - The API server's own event TTL garbage collection, if it is audited.

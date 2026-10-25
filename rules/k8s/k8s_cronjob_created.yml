@@ -1,0 +1,24 @@
+title: Kubernetes CronJob Created
+id: fde69c96-1eb9-5b3a-8ceb-1fce61b8a842
+status: experimental
+description: >
+  Detects creation of CronJob resources which can be used for persistence via
+  scheduled execution. Ported from samma-io/siem-rules rule
+  k8s-cronjob-created.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_cronjob_created.yaml
+author: samma-io
+level: medium
+tags:
+  - attack.t1053.007
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    objectRef.resource: cronjobs
+    verb: create
+  condition: selection
+falsepositives:
+  - Deployments that ship scheduled jobs (backups, reports).

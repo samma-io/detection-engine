@@ -1,0 +1,28 @@
+title: Kubernetes Role Or ClusterRole Modified
+id: 3995db62-57da-57cd-8f11-f21ab43e3c16
+status: experimental
+description: >
+  Detects modification of RBAC roles or cluster roles - may indicate privilege
+  escalation or account manipulation. Ported from samma-io/siem-rules rule
+  k8s-rbac-modified.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_rbac_modified.yaml
+author: samma-io
+level: high
+tags:
+  - attack.t1098
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    verb:
+    - update
+    - patch
+    objectRef.resource:
+    - clusterroles
+    - roles
+  condition: selection
+falsepositives:
+  - Helm upgrades and operators reconciling their own roles.

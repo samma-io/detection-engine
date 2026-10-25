@@ -1,0 +1,27 @@
+title: Kubernetes Role Binding Created
+id: bbfb67d5-6fba-565e-9660-d1bfa6ce2b21
+status: experimental
+description: >
+  Detects creation of ClusterRoleBindings - may indicate privilege escalation
+  especially if binding cluster-admin. Ported from samma-io/siem-rules rule
+  k8s-clusterrole-binding-created.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_clusterrole_binding_created.yaml
+author: samma-io
+level: critical
+tags:
+  - attack.t1098.006
+  - attack.t1078
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    verb: create
+    objectRef.resource:
+    - clusterrolebindings
+    - rolebindings
+  condition: selection
+falsepositives:
+  - Helm charts and operators installing their own RBAC.

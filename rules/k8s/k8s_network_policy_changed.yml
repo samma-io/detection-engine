@@ -1,0 +1,28 @@
+title: Kubernetes NetworkPolicy Changed
+id: ec8657f8-a27f-5d47-96e4-76b192c1f7cd
+status: experimental
+description: >
+  Detects creation, modification, or deletion of network policies - may weaken
+  network segmentation. Ported from samma-io/siem-rules rule
+  k8s-network-policy-changed.
+references:
+  - https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_network_policy_changed.yaml
+author: samma-io
+level: high
+tags:
+  - attack.t1562.001
+logsource:
+  product: kubernetes
+  service: audit
+detection:
+  selection:
+    kind: Event
+    objectRef.resource: networkpolicies
+    verb:
+    - create
+    - update
+    - patch
+    - delete
+  condition: selection
+falsepositives:
+  - Normal application deployments that carry their own policies.

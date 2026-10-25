@@ -1,0 +1,146 @@
+# Positive case: samma-io/siem-rules test/k8s/k8s_pod_created.json, with the lane's
+# source field added and auditID replaced. Negative cases flip the field the
+# rule keys on.
+- name: the siem-rules fixture fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: 6edf6657-7e28-5032-835e-0010af624e74
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/default/pods
+    verb: create
+    user:
+      username: developer@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.50
+    objectRef:
+      resource: pods
+      namespace: default
+      name: my-app-7b9f5c6d4-xk2lm
+      apiVersion: v1
+      subresource: ''
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-10T14:00:00.000000Z'
+    stageTimestamp: '2026-02-10T14:00:00.150000Z'
+- name: deleting a pod does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: 6edf6657-7e28-5032-835e-0010af624e74
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/default/pods
+    verb: delete
+    user:
+      username: developer@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.50
+    objectRef:
+      resource: pods
+      namespace: default
+      name: my-app-7b9f5c6d4-xk2lm
+      apiVersion: v1
+      subresource: ''
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-10T14:00:00.000000Z'
+    stageTimestamp: '2026-02-10T14:00:00.150000Z'
+- name: exec into a pod does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: 6edf6657-7e28-5032-835e-0010af624e74
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/default/pods/my-app-7b9f5c6d4-xk2lm/exec?command=sh&stdin=true&tty=true
+    verb: create
+    user:
+      username: developer@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.50
+    objectRef:
+      resource: pods
+      namespace: default
+      name: my-app-7b9f5c6d4-xk2lm
+      apiVersion: v1
+      subresource: exec
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-10T14:00:00.000000Z'
+    stageTimestamp: '2026-02-10T14:00:00.150000Z'
+- name: a pod in kube-system does not fire here (k8s_kube_system_pod covers it)
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: 6edf6657-7e28-5032-835e-0010af624e74
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/kube-system/pods
+    verb: create
+    user:
+      username: developer@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.50
+    objectRef:
+      resource: pods
+      namespace: kube-system
+      name: my-app-7b9f5c6d4-xk2lm
+      apiVersion: v1
+      subresource: ''
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-10T14:00:00.000000Z'
+    stageTimestamp: '2026-02-10T14:00:00.150000Z'
+- name: a hostNetwork pod does not fire here (k8s_privileged_pod covers it)
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: 6edf6657-7e28-5032-835e-0010af624e74
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/default/pods
+    verb: create
+    user:
+      username: developer@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.50
+    objectRef:
+      resource: pods
+      namespace: default
+      name: my-app-7b9f5c6d4-xk2lm
+      apiVersion: v1
+      subresource: ''
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-10T14:00:00.000000Z'
+    stageTimestamp: '2026-02-10T14:00:00.150000Z'
+    requestObject:
+      spec:
+        hostNetwork: true

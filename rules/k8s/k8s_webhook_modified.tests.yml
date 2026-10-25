@@ -1,0 +1,59 @@
+# Positive case: samma-io/siem-rules test/k8s/k8s_webhook_modified.json, with the lane's
+# source field added and auditID replaced. Negative cases flip the field the
+# rule keys on.
+- name: the siem-rules fixture fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: 37abd384-ca8a-5328-a8e1-02dacf732e61
+    stage: ResponseComplete
+    requestURI: /apis/admissionregistration.k8s.io/v1/mutatingwebhookconfigurations
+    verb: create
+    user:
+      username: admin@example.com
+      groups:
+      - system:masters
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.10
+    objectRef:
+      resource: mutatingwebhookconfigurations
+      name: backdoor-webhook
+      apiGroup: admissionregistration.k8s.io
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-10T22:00:00.000000Z'
+    stageTimestamp: '2026-02-10T22:00:00.100000Z'
+- name: reading a webhook configuration does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: 37abd384-ca8a-5328-a8e1-02dacf732e61
+    stage: ResponseComplete
+    requestURI: /apis/admissionregistration.k8s.io/v1/mutatingwebhookconfigurations
+    verb: get
+    user:
+      username: admin@example.com
+      groups:
+      - system:masters
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.10
+    objectRef:
+      resource: mutatingwebhookconfigurations
+      name: backdoor-webhook
+      apiGroup: admissionregistration.k8s.io
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 201
+    requestReceivedTimestamp: '2026-02-10T22:00:00.000000Z'
+    stageTimestamp: '2026-02-10T22:00:00.100000Z'

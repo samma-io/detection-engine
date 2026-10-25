@@ -1,0 +1,57 @@
+# Positive case: samma-io/siem-rules test/k8s/k8s_coredns_modified.json, with the lane's
+# source field added and auditID replaced. Negative cases flip the field the
+# rule keys on.
+- name: the siem-rules fixture fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: 713bd3e6-596b-5a8f-882f-ff4cbf3ea2b3
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/kube-system/configmaps/coredns
+    verb: update
+    user:
+      username: attacker@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.5.99
+    objectRef:
+      resource: configmaps
+      namespace: kube-system
+      name: coredns
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 200
+    requestReceivedTimestamp: '2026-02-10T22:30:00.000000Z'
+    stageTimestamp: '2026-02-10T22:30:00.100000Z'
+- name: reading the coredns configmap does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: 713bd3e6-596b-5a8f-882f-ff4cbf3ea2b3
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/kube-system/configmaps/coredns
+    verb: get
+    user:
+      username: attacker@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.5.99
+    objectRef:
+      resource: configmaps
+      namespace: kube-system
+      name: coredns
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 200
+    requestReceivedTimestamp: '2026-02-10T22:30:00.000000Z'
+    stageTimestamp: '2026-02-10T22:30:00.100000Z'
