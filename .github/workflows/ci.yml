@@ -52,8 +52,7 @@ jobs:
           ./gitleaks git --redact --verbose --exit-code 1 .
 
   trivy:
-    # Build only: images are pushed by aws-siem hack/build-images.sh, never
-    # from CI.
+    # Build and scan only; the publish job pushes after every check passes.
     name: trivy (image)
     runs-on: ubuntu-latest
     steps:
@@ -67,3 +66,20 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
           severity: HIGH,CRITICAL
+
+  # Pushes ghcr.io/samma-io/detection-engine:<short sha> once every check on main has
+  # passed; the same tag aws-siem/hack/build-images.sh would give it. Pull
+  # requests never push.
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, scrub, gitleaks, trivy]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: log in to ghcr.io
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: build and push
+        run: make image push IMAGE=ghcr.io/samma-io/detection-engine TAG="${GITHUB_SHA::7}"
