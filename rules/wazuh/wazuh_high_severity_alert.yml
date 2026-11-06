@@ -1,0 +1,19 @@
+title: High Severity Wazuh Alert
+id: e7d98a0e-69be-4ce0-93bb-e80b5fa0b73f
+status: experimental
+description: >
+  Wazuh raised an alert at level 12 or above, which its rule classification
+  reserves for high-importance events. This forwards Wazuh's own severity
+  judgement so that a serious alert from any Wazuh rule reaches the alert queue.
+author: samma-io
+level: high
+logsource:
+  product: wazuh
+  service: alerts
+detection:
+  selection:
+    feed: alerts
+    rule.level|gte: 12
+  condition: selection
+falsepositives:
+  - A noisy Wazuh rule whose level has been raised locally.

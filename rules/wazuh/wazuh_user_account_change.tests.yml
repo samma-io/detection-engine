@@ -1,0 +1,70 @@
+# Wazuh rule ids from the ruleset of the deployed 4.14.0 manager.
+- name: a new user fires
+  expected: true
+  event:
+    source: wazuh
+    feed: alerts
+    id: '1793947677.293'
+    timestamp: '2026-11-06T06:47:57.677+0000'
+    event_time: '2026-11-06T06:47:57.677Z'
+    rule:
+      id: '5902'
+      level: 8
+      description: New user added to the system
+      groups: [syslog, adduser]
+      firedtimes: 1
+      mail: false
+    agent:
+      id: '001'
+      name: test-agent
+    manager:
+      name: wazuh-manager-worker-0-0
+    location: wazuh-monitord
+    full_log: New user added to the system
+    search_text: New user added to the system
+- name: a changed user fires
+  expected: true
+  event:
+    source: wazuh
+    feed: alerts
+    id: '1793947677.293'
+    timestamp: '2026-11-06T06:47:57.677+0000'
+    event_time: '2026-11-06T06:47:57.677Z'
+    rule:
+      id: '5904'
+      level: 8
+      description: Information from the user was changed
+      groups: [syslog, adduser]
+      firedtimes: 1
+      mail: false
+    agent:
+      id: '001'
+      name: test-agent
+    manager:
+      name: wazuh-manager-worker-0-0
+    location: wazuh-monitord
+    full_log: Information from the user was changed
+    search_text: Information from the user was changed
+- name: a deleted group does not fire
+  expected: false
+  event:
+    source: wazuh
+    feed: alerts
+    id: '1793947677.293'
+    timestamp: '2026-11-06T06:47:57.677+0000'
+    event_time: '2026-11-06T06:47:57.677Z'
+    rule:
+      id: '5903'
+      level: 3
+      description: Group (or user) deleted from the system
+      groups: [syslog, adduser]
+      firedtimes: 1
+      mail: false
+    agent:
+      id: '001'
+      name: test-agent
+    manager:
+      name: wazuh-manager-worker-0-0
+    location: wazuh-monitord
+    full_log: Group (or user) deleted from the system
+    search_text: Group (or user) deleted from the system

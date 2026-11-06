@@ -1,0 +1,24 @@
+title: SSH Brute Force Detected By Wazuh
+id: e6cb1b50-cf33-4cf7-816c-43b0e47a9e36
+status: experimental
+description: >
+  Wazuh correlated repeated sshd authentication failures on a monitored host
+  (Wazuh rules 5712 and 5720, both level 10, so below the high severity
+  threshold rule). Someone is guessing credentials against that host.
+author: samma-io
+level: high
+tags:
+  - attack.credential-access
+  - attack.t1110
+logsource:
+  product: wazuh
+  service: alerts
+detection:
+  selection:
+    feed: alerts
+    rule.id:
+      - '5712'
+      - '5720'
+  condition: selection
+falsepositives:
+  - A misconfigured automation account retrying with a stale key or password.

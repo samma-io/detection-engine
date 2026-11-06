@@ -1,0 +1,25 @@
+title: Wazuh Agent Connected For The First Time Or Removed
+id: 25bae5f2-0e1e-417e-b61a-d4679493998d
+status: experimental
+description: >
+  A new agent connected to the Wazuh manager, or an agent was removed (Wazuh
+  rules 501 and 505). Agents enroll with a shared password, so an unexpected
+  agent may mean that password has leaked, and a removed agent stops
+  monitoring its host.
+author: samma-io
+level: low
+tags:
+  - attack.defense-evasion
+  - attack.t1562.001
+logsource:
+  product: wazuh
+  service: alerts
+detection:
+  selection:
+    feed: alerts
+    rule.id:
+      - '501'
+      - '505'
+  condition: selection
+falsepositives:
+  - Planned enrollment or decommissioning of a host.

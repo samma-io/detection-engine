@@ -81,9 +81,11 @@ var registry = map[string]Source{
 	//
 	// k8s is Kubernetes audit events (audit.k8s.io/v1), one per message on
 	// samma.logs.k8s. scanner is the Samma scanners' schema v2 messages
-	// (finding and run), relayed unchanged to samma.logs.scanner.
+	// (finding and run), relayed unchanged to samma.logs.scanner. wazuh is
+	// Wazuh alerts from alerts.json, one per message on samma.logs.wazuh.
 	"k8s":     {Name: "k8s", ConfigFile: "sigma-config.yml"},
 	"scanner": {Name: "scanner", ConfigFile: "sigma-config.yml"},
+	"wazuh":   {Name: "wazuh", ConfigFile: "sigma-config.yml"},
 }
 
 // Lookup resolves a source name, naming every valid one when it fails.

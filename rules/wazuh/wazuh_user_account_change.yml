@@ -1,0 +1,24 @@
+title: User Account Added Or Changed On A Wazuh Agent
+id: 214dca2c-85aa-4056-9182-baa11cef3b4e
+status: experimental
+description: >
+  A monitored host reported a new local user or a change to an existing one
+  (Wazuh rules 5902 and 5904). A new or altered account is a common way to keep
+  access to a compromised host.
+author: samma-io
+level: medium
+tags:
+  - attack.persistence
+  - attack.t1136
+logsource:
+  product: wazuh
+  service: alerts
+detection:
+  selection:
+    feed: alerts
+    rule.id:
+      - '5902'
+      - '5904'
+  condition: selection
+falsepositives:
+  - Planned administration or configuration management creating accounts.
