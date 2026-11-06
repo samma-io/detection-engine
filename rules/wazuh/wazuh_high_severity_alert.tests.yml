@@ -1,0 +1,70 @@
+# Levels 11 and 12 sit either side of the threshold; a record from another feed never fires.
+- name: level 12 fires
+  expected: true
+  event:
+    source: wazuh
+    feed: alerts
+    id: '1793947677.293'
+    timestamp: '2026-11-06T06:47:57.677+0000'
+    event_time: '2026-11-06T06:47:57.677Z'
+    rule:
+      id: '100100'
+      level: 12
+      description: High importance event
+      groups: [local]
+      firedtimes: 1
+      mail: false
+    agent:
+      id: '001'
+      name: test-agent
+    manager:
+      name: wazuh-manager-worker-0-0
+    location: wazuh-monitord
+    full_log: High importance event
+    search_text: High importance event
+- name: level 15 fires
+  expected: true
+  event:
+    source: wazuh
+    feed: alerts
+    id: '1793947677.293'
+    timestamp: '2026-11-06T06:47:57.677+0000'
+    event_time: '2026-11-06T06:47:57.677Z'
+    rule:
+      id: '100101'
+      level: 15
+      description: Severe attack
+      groups: [local]
+      firedtimes: 1
+      mail: false
+    agent:
+      id: '001'
+      name: test-agent
+    manager:
+      name: wazuh-manager-worker-0-0
+    location: wazuh-monitord
+    full_log: Severe attack
+    search_text: Severe attack
+- name: level 11 does not fire
+  expected: false
+  event:
+    source: wazuh
+    feed: alerts
+    id: '1793947677.293'
+    timestamp: '2026-11-06T06:47:57.677+0000'
+    event_time: '2026-11-06T06:47:57.677Z'
+    rule:
+      id: '100102'
+      level: 11
+      description: Below threshold
+      groups: [local]
+      firedtimes: 1
+      mail: false
+    agent:
+      id: '001'
+      name: test-agent
+    manager:
+      name: wazuh-manager-worker-0-0
+    location: wazuh-monitord
+    full_log: Below threshold
+    search_text: Below threshold

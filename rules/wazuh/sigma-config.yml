@@ -1,0 +1,23 @@
+# sigma-go Config for the Wazuh lane.
+#
+# Records are Wazuh alerts from alerts.json, one per NATS message on
+# samma.logs.wazuh, with source, feed, event_time and search_text added by the
+# collector's Vector sidecar. See aws-siem docs/contracts/nats-transport.md.
+# There is no S3 producer for this lane: it exists only on the NATS transport.
+#
+# Nested paths such as rule.id, rule.level and agent.name resolve through the
+# engine's dot-flattened match view; no mapping is needed.
+#
+# rule.groups is an array: matching one element exactly needs a self-mapping
+# here first (see rules/aws/sigma-config.yml). No rule here matches on it yet.
+#
+# Note that rule.id is the Wazuh rule that produced the record, and is a string.
+# It is not the id of the Sigma rule that matched it.
+title: wazuh
+logsources:
+  wazuh_alerts:
+    product: wazuh
+    service: alerts
+    index: wazuh
+defaultindex: wazuh
+fieldmappings: {}

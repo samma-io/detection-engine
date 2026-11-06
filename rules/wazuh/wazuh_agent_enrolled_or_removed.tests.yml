@@ -1,0 +1,70 @@
+# Rule 501 is taken from a real record on samma.logs.wazuh; agent restarts are rule 503.
+- name: a new agent fires
+  expected: true
+  event:
+    source: wazuh
+    feed: alerts
+    id: '1793947677.293'
+    timestamp: '2026-11-06T06:47:57.677+0000'
+    event_time: '2026-11-06T06:47:57.677Z'
+    rule:
+      id: '501'
+      level: 3
+      description: New wazuh agent connected.
+      groups: [ossec]
+      firedtimes: 1
+      mail: false
+    agent:
+      id: '001'
+      name: test-agent
+    manager:
+      name: wazuh-manager-worker-0-0
+    location: wazuh-monitord
+    full_log: New wazuh agent connected.
+    search_text: New wazuh agent connected.
+- name: a removed agent fires
+  expected: true
+  event:
+    source: wazuh
+    feed: alerts
+    id: '1793947677.293'
+    timestamp: '2026-11-06T06:47:57.677+0000'
+    event_time: '2026-11-06T06:47:57.677Z'
+    rule:
+      id: '505'
+      level: 3
+      description: Wazuh agent removed.
+      groups: [ossec]
+      firedtimes: 1
+      mail: false
+    agent:
+      id: '001'
+      name: test-agent
+    manager:
+      name: wazuh-manager-worker-0-0
+    location: wazuh-monitord
+    full_log: Wazuh agent removed.
+    search_text: Wazuh agent removed.
+- name: an agent restart does not fire
+  expected: false
+  event:
+    source: wazuh
+    feed: alerts
+    id: '1793947677.293'
+    timestamp: '2026-11-06T06:47:57.677+0000'
+    event_time: '2026-11-06T06:47:57.677Z'
+    rule:
+      id: '503'
+      level: 3
+      description: Wazuh agent started.
+      groups: [ossec]
+      firedtimes: 1
+      mail: false
+    agent:
+      id: '001'
+      name: test-agent
+    manager:
+      name: wazuh-manager-worker-0-0
+    location: wazuh-monitord
+    full_log: Wazuh agent started.
+    search_text: Wazuh agent started.

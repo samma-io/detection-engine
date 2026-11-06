@@ -1,6 +1,6 @@
 # Detection rules
 
-**96 rules across 11 log sources.**
+**100 rules across 12 log sources.**
 
 > Generated from the rules tree by `make docs`. Do not edit by hand —
 > `TestRules_CatalogIsUpToDate` fails if this file and the rules disagree.
@@ -60,8 +60,9 @@ Wildcards also do not work in a value: `*` is matched literally. See
 | [`onepassword`](#onepassword) | – | 2 | 1 | – | – | **3** |
 | [`scanner`](#scanner) | – | 3 | 1 | – | – | **4** |
 | [`slack`](#slack) | – | – | 2 | – | – | **2** |
+| [`wazuh`](#wazuh) | – | 2 | 1 | 1 | – | **4** |
 | [`workspace`](#workspace) | 2 | – | – | – | – | **2** |
-| **Total** | **13** | **43** | **24** | **16** | **0** | **96** |
+| **Total** | **13** | **45** | **25** | **17** | **0** | **100** |
 
 ---
 
@@ -1810,6 +1811,72 @@ A Slack sign-in came from an address belonging to a hosting provider or commerci
 **ATT&CK** attack.initial_access, attack.t1078.004
 
 - <https://api.slack.com/methods/team.accessLogs>
+
+---
+
+## wazuh
+
+### 🟠 high — High Severity Wazuh Alert
+
+`e7d98a0e-69be-4ce0-93bb-e80b5fa0b73f` · [`rules/wazuh/wazuh_high_severity_alert.yml`](../rules/wazuh/wazuh_high_severity_alert.yml) · 3 tests (2 firing)
+
+> **Status: experimental.**
+
+Wazuh raised an alert at level 12 or above, which its rule classification reserves for high-importance events. This forwards Wazuh's own severity judgement so that a serious alert from any Wazuh rule reaches the alert queue.
+
+**Fires when** `feed` is `alerts` and `rule.level` is at least `12`
+
+**Likely false positives**
+
+- A noisy Wazuh rule whose level has been raised locally.
+
+### 🟠 high — SSH Brute Force Detected By Wazuh
+
+`e6cb1b50-cf33-4cf7-816c-43b0e47a9e36` · [`rules/wazuh/wazuh_ssh_brute_force.yml`](../rules/wazuh/wazuh_ssh_brute_force.yml) · 3 tests (2 firing)
+
+> **Status: experimental.**
+
+Wazuh correlated repeated sshd authentication failures on a monitored host (Wazuh rules 5712 and 5720, both level 10, so below the high severity threshold rule). Someone is guessing credentials against that host.
+
+**Fires when** `feed` is `alerts` and `rule.id` is one of `5712`, `5720`
+
+**Likely false positives**
+
+- A misconfigured automation account retrying with a stale key or password.
+
+**ATT&CK** attack.credential-access, attack.t1110
+
+### 🟡 medium — User Account Added Or Changed On A Wazuh Agent
+
+`214dca2c-85aa-4056-9182-baa11cef3b4e` · [`rules/wazuh/wazuh_user_account_change.yml`](../rules/wazuh/wazuh_user_account_change.yml) · 3 tests (2 firing)
+
+> **Status: experimental.**
+
+A monitored host reported a new local user or a change to an existing one (Wazuh rules 5902 and 5904). A new or altered account is a common way to keep access to a compromised host.
+
+**Fires when** `feed` is `alerts` and `rule.id` is one of `5902`, `5904`
+
+**Likely false positives**
+
+- Planned administration or configuration management creating accounts.
+
+**ATT&CK** attack.persistence, attack.t1136
+
+### 🔵 low — Wazuh Agent Connected For The First Time Or Removed
+
+`25bae5f2-0e1e-417e-b61a-d4679493998d` · [`rules/wazuh/wazuh_agent_enrolled_or_removed.yml`](../rules/wazuh/wazuh_agent_enrolled_or_removed.yml) · 3 tests (2 firing)
+
+> **Status: experimental.**
+
+A new agent connected to the Wazuh manager, or an agent was removed (Wazuh rules 501 and 505). Agents enroll with a shared password, so an unexpected agent may mean that password has leaked, and a removed agent stops monitoring its host.
+
+**Fires when** `feed` is `alerts` and `rule.id` is one of `501`, `505`
+
+**Likely false positives**
+
+- Planned enrollment or decommissioning of a host.
+
+**ATT&CK** attack.defense-evasion, attack.t1562.001
 
 ---
 
