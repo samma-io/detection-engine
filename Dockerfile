@@ -46,4 +46,6 @@ ENV ENGINE_RULES_DIR=/rules
 USER 65532:65532
 EXPOSE 9090
 HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://localhost:9090/healthz >/dev/null || exit 1
+# Links the GHCR package to this repo, which gives this repo's Actions access to it.
+LABEL org.opencontainers.image.source="https://github.com/samma-io/detection-engine"
 ENTRYPOINT ["/app/engine"]
