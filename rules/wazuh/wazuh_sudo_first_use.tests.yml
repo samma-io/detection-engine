@@ -1,0 +1,60 @@
+# Wazuh rule ids from the ruleset of the deployed 4.14.0 manager; events
+# modelled on real alerts from the v2 test agent, with names and hosts replaced.
+- name: wazuh rule 5403 fires
+  expected: true
+  event:
+    source: wazuh
+    feed: alerts
+    id: '1794135635.33743'
+    timestamp: 2026-11-08T11:00:35.792+0000
+    event_time: '2026-11-08T11:00:35.792Z'
+    rule:
+      id: '5403'
+      level: 4
+      description: First time user executed sudo.
+      groups:
+      - syslog
+      - sudo
+      firedtimes: 1
+      mail: false
+    agent:
+      id: '001'
+      name: test-agent
+    manager:
+      name: wazuh-manager-worker-0-0
+    location: /hostfs/var/log/auth.log
+    full_log: 'base sudo: root :  PWD=/ ; USER=alice ; COMMAND=/usr/bin/env HOME=/home/alice /usr/bin/true'
+    search_text: 'base sudo: root :  PWD=/ ; USER=alice ; COMMAND=/usr/bin/env HOME=/home/alice /usr/bin/true'
+    data:
+      srcuser: root
+      dstuser: alice
+      command: /usr/bin/env HOME=/home/alice /usr/bin/true
+- name: a repeat sudo does not fire
+  expected: false
+  event:
+    source: wazuh
+    feed: alerts
+    id: '1794135635.33743'
+    timestamp: 2026-11-08T11:00:35.792+0000
+    event_time: '2026-11-08T11:00:35.792Z'
+    rule:
+      id: '5407'
+      level: 3
+      description: Successful sudo executed.
+      groups:
+      - syslog
+      - sudo
+      firedtimes: 1
+      mail: false
+    agent:
+      id: '001'
+      name: test-agent
+    manager:
+      name: wazuh-manager-worker-0-0
+    location: /hostfs/var/log/auth.log
+    full_log: 'base sudo: alice : TTY=pts/1 ; PWD=/home/alice ; USER=root ; COMMAND=/usr/bin/apt update'
+    search_text: 'base sudo: alice : TTY=pts/1 ; PWD=/home/alice ; USER=root ; COMMAND=/usr/bin/apt update'
+    data:
+      srcuser: alice
+      dstuser: root
+      command: /usr/bin/apt update

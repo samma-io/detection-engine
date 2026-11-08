@@ -1,0 +1,77 @@
+# Wazuh rule ids from the ruleset of the deployed 4.14.0 manager; events
+# modelled on real alerts from the v2 test agent, with names and hosts replaced.
+- name: wazuh rule 2832 fires
+  expected: true
+  event:
+    source: wazuh
+    feed: alerts
+    id: '1794135635.33743'
+    timestamp: 2026-11-08T11:00:35.792+0000
+    event_time: '2026-11-08T11:00:35.792Z'
+    rule:
+      id: '2832'
+      level: 5
+      description: Crontab entry changed.
+      groups:
+      - syslog
+      - cron
+      firedtimes: 1
+      mail: false
+    agent:
+      id: '001'
+      name: test-agent
+    manager:
+      name: wazuh-manager-worker-0-0
+    location: /hostfs/var/log/syslog
+    full_log: 'base crontab[1539]: (alice) REPLACE (alice)'
+    search_text: 'base crontab[1539]: (alice) REPLACE (alice)'
+- name: wazuh rule 2833 fires
+  expected: true
+  event:
+    source: wazuh
+    feed: alerts
+    id: '1794135635.33743'
+    timestamp: 2026-11-08T11:00:35.792+0000
+    event_time: '2026-11-08T11:00:35.792Z'
+    rule:
+      id: '2833'
+      level: 8
+      description: Root's crontab entry changed.
+      groups:
+      - syslog
+      - cron
+      firedtimes: 1
+      mail: false
+    agent:
+      id: '001'
+      name: test-agent
+    manager:
+      name: wazuh-manager-worker-0-0
+    location: /hostfs/var/log/syslog
+    full_log: 'base crontab[1540]: (root) REPLACE (root)'
+    search_text: 'base crontab[1540]: (root) REPLACE (root)'
+- name: opening the crontab without saving does not fire
+  expected: false
+  event:
+    source: wazuh
+    feed: alerts
+    id: '1794135635.33743'
+    timestamp: 2026-11-08T11:00:35.792+0000
+    event_time: '2026-11-08T11:00:35.792Z'
+    rule:
+      id: '2834'
+      level: 5
+      description: Crontab opened for editing.
+      groups:
+      - syslog
+      - cron
+      firedtimes: 1
+      mail: false
+    agent:
+      id: '001'
+      name: test-agent
+    manager:
+      name: wazuh-manager-worker-0-0
+    location: /hostfs/var/log/syslog
+    full_log: 'base crontab[1541]: (alice) BEGIN EDIT (alice)'
+    search_text: 'base crontab[1541]: (alice) BEGIN EDIT (alice)'

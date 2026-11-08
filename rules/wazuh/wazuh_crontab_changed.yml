@@ -1,0 +1,24 @@
+title: Crontab Changed On A Wazuh Agent
+id: 69129820-20a2-45f5-af31-15d4b625ba97
+status: experimental
+description: >
+  A monitored host reported that a user's crontab, or root's, was replaced
+  (Wazuh rules 2832 and 2833). A new cron job is a common way to keep access to
+  a host.
+author: samma-io
+level: medium
+tags:
+  - attack.persistence
+  - attack.t1053.003
+logsource:
+  product: wazuh
+  service: alerts
+detection:
+  selection:
+    feed: alerts
+    rule.id:
+      - '2832'
+      - '2833'
+  condition: selection
+falsepositives:
+  - Planned changes, or tools that rewrite a user's crontab on a schedule.
