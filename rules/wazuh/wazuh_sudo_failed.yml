@@ -1,0 +1,25 @@
+title: Failed Or Unauthorized Sudo On A Wazuh Agent
+id: 906297a9-b296-4f77-97b4-9332502f6807
+status: experimental
+description: >
+  A monitored host reported a failed sudo: a wrong password, three wrong
+  passwords in a row, or a user who is not in sudoers (Wazuh rules 5401, 5404
+  and 5405). An attacker on a user account tries sudo to get root.
+author: samma-io
+level: medium
+tags:
+  - attack.privilege-escalation
+  - attack.t1548.003
+logsource:
+  product: wazuh
+  service: alerts
+detection:
+  selection:
+    feed: alerts
+    rule.id:
+      - '5401'
+      - '5404'
+      - '5405'
+  condition: selection
+falsepositives:
+  - A user mistyping their password at the sudo prompt.

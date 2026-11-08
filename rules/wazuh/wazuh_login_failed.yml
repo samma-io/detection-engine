@@ -1,0 +1,30 @@
+title: Failed Login On A Wazuh Agent
+id: ab336644-2a31-4d06-8625-5d8e42bc29ab
+status: experimental
+description: >
+  A monitored host reported a failed local or SSH login: a wrong password
+  for PAM or unix_chkpwd, an unknown user, or an sshd authentication failure
+  (Wazuh rules 5503, 5504, 5557, 5710, 5716 and 5758). One failure is usually a
+  typo; repeated failures are caught at high level by the SSH brute force rule
+  (5712, 5720). Kept low so the trail exists without paging anyone.
+author: samma-io
+level: low
+tags:
+  - attack.credential-access
+  - attack.t1110.001
+logsource:
+  product: wazuh
+  service: alerts
+detection:
+  selection:
+    feed: alerts
+    rule.id:
+      - '5503'
+      - '5504'
+      - '5557'
+      - '5710'
+      - '5716'
+      - '5758'
+  condition: selection
+falsepositives:
+  - A mistyped password, a screen locker, or a script with a stale password.

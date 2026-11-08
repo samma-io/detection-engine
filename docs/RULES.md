@@ -1,6 +1,6 @@
 # Detection rules
 
-**100 rules across 12 log sources.**
+**105 rules across 12 log sources.**
 
 > Generated from the rules tree by `make docs`. Do not edit by hand —
 > `TestRules_CatalogIsUpToDate` fails if this file and the rules disagree.
@@ -60,9 +60,9 @@ Wildcards also do not work in a value: `*` is matched literally. See
 | [`onepassword`](#onepassword) | – | 2 | 1 | – | – | **3** |
 | [`scanner`](#scanner) | – | 3 | 1 | – | – | **4** |
 | [`slack`](#slack) | – | – | 2 | – | – | **2** |
-| [`wazuh`](#wazuh) | – | 2 | 1 | 1 | – | **4** |
+| [`wazuh`](#wazuh) | – | 2 | 4 | 3 | – | **9** |
 | [`workspace`](#workspace) | 2 | – | – | – | – | **2** |
-| **Total** | **13** | **45** | **25** | **17** | **0** | **100** |
+| **Total** | **13** | **45** | **28** | **19** | **0** | **105** |
 
 ---
 
@@ -1846,6 +1846,38 @@ Wazuh correlated repeated sshd authentication failures on a monitored host (Wazu
 
 **ATT&CK** attack.credential-access, attack.t1110
 
+### 🟡 medium — Crontab Changed On A Wazuh Agent
+
+`69129820-20a2-45f5-af31-15d4b625ba97` · [`rules/wazuh/wazuh_crontab_changed.yml`](../rules/wazuh/wazuh_crontab_changed.yml) · 3 tests (2 firing)
+
+> **Status: experimental.**
+
+A monitored host reported that a user's crontab, or root's, was replaced (Wazuh rules 2832 and 2833). A new cron job is a common way to keep access to a host.
+
+**Fires when** `feed` is `alerts` and `rule.id` is one of `2832`, `2833`
+
+**Likely false positives**
+
+- Planned changes, or tools that rewrite a user's crontab on a schedule.
+
+**ATT&CK** attack.persistence, attack.t1053.003
+
+### 🟡 medium — Failed Or Unauthorized Sudo On A Wazuh Agent
+
+`906297a9-b296-4f77-97b4-9332502f6807` · [`rules/wazuh/wazuh_sudo_failed.yml`](../rules/wazuh/wazuh_sudo_failed.yml) · 3 tests (2 firing)
+
+> **Status: experimental.**
+
+A monitored host reported a failed sudo: a wrong password, three wrong passwords in a row, or a user who is not in sudoers (Wazuh rules 5401, 5404 and 5405). An attacker on a user account tries sudo to get root.
+
+**Fires when** `feed` is `alerts` and `rule.id` is one of `5401`, `5404`, `5405`
+
+**Likely false positives**
+
+- A user mistyping their password at the sudo prompt.
+
+**ATT&CK** attack.privilege-escalation, attack.t1548.003
+
 ### 🟡 medium — User Account Added Or Changed On A Wazuh Agent
 
 `214dca2c-85aa-4056-9182-baa11cef3b4e` · [`rules/wazuh/wazuh_user_account_change.yml`](../rules/wazuh/wazuh_user_account_change.yml) · 3 tests (2 firing)
@@ -1861,6 +1893,54 @@ A monitored host reported a new local user or a change to an existing one (Wazuh
 - Planned administration or configuration management creating accounts.
 
 **ATT&CK** attack.persistence, attack.t1136
+
+### 🟡 medium — User Ran Sudo For The First Time On A Wazuh Agent
+
+`4dfeed67-9eff-4f99-a5a0-828958f7e441` · [`rules/wazuh/wazuh_sudo_first_use.yml`](../rules/wazuh/wazuh_sudo_first_use.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Wazuh saw a user run sudo for the first time on a monitored host (Wazuh rule 5403). A new sudo user can mean a new admin, or an account that was just given rights it should not have. Every later sudo by the same user is routine (5407) and does not alert.
+
+**Fires when** `feed` is `alerts` and `rule.id` is `5403`
+
+**Likely false positives**
+
+- A new administrator, or a service started through sudo for the first time after the agent was installed.
+
+**ATT&CK** attack.privilege-escalation, attack.t1548.003
+
+### 🔵 low — AppArmor Denied An Operation On A Wazuh Agent
+
+`a9d21b1b-00a6-40d3-a748-586c5bd77caa` · [`rules/wazuh/wazuh_apparmor_denied.yml`](../rules/wazuh/wazuh_apparmor_denied.yml) · 3 tests (2 firing)
+
+> **Status: experimental.**
+
+AppArmor blocked a confined program on a monitored host (Wazuh rules 52002 and 52003; 52003 is a denied exec). Usually a profile that is too tight, but also what a compromised confined process trying to break out looks like. Kept low: desktops with snaps produce these routinely.
+
+**Fires when** `feed` is `alerts` and `rule.id` is one of `52002`, `52003`
+
+**Likely false positives**
+
+- Snap and desktop application profiles that are stricter than the program needs.
+
+**ATT&CK** attack.defense-evasion, attack.t1562.001
+
+### 🔵 low — Failed Login On A Wazuh Agent
+
+`ab336644-2a31-4d06-8625-5d8e42bc29ab` · [`rules/wazuh/wazuh_login_failed.yml`](../rules/wazuh/wazuh_login_failed.yml) · 3 tests (2 firing)
+
+> **Status: experimental.**
+
+A monitored host reported a failed local or SSH login: a wrong password for PAM or unix_chkpwd, an unknown user, or an sshd authentication failure (Wazuh rules 5503, 5504, 5557, 5710, 5716 and 5758). One failure is usually a typo; repeated failures are caught at high level by the SSH brute force rule (5712, 5720). Kept low so the trail exists without paging anyone.
+
+**Fires when** `feed` is `alerts` and `rule.id` is one of `5503`, `5504`, `5557`, `5710`, `5716`, `5758`
+
+**Likely false positives**
+
+- A mistyped password, a screen locker, or a script with a stale password.
+
+**ATT&CK** attack.credential-access, attack.t1110.001
 
 ### 🔵 low — Wazuh Agent Connected For The First Time Or Removed
 

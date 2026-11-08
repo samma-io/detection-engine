@@ -1,0 +1,25 @@
+title: AppArmor Denied An Operation On A Wazuh Agent
+id: a9d21b1b-00a6-40d3-a748-586c5bd77caa
+status: experimental
+description: >
+  AppArmor blocked a confined program on a monitored host (Wazuh rules
+  52002 and 52003; 52003 is a denied exec). Usually a profile that is too tight,
+  but also what a compromised confined process trying to break out looks like.
+  Kept low: desktops with snaps produce these routinely.
+author: samma-io
+level: low
+tags:
+  - attack.defense-evasion
+  - attack.t1562.001
+logsource:
+  product: wazuh
+  service: alerts
+detection:
+  selection:
+    feed: alerts
+    rule.id:
+      - '52002'
+      - '52003'
+  condition: selection
+falsepositives:
+  - Snap and desktop application profiles that are stricter than the program needs.

@@ -1,0 +1,24 @@
+title: User Ran Sudo For The First Time On A Wazuh Agent
+id: 4dfeed67-9eff-4f99-a5a0-828958f7e441
+status: experimental
+description: >
+  Wazuh saw a user run sudo for the first time on a monitored host (Wazuh
+  rule 5403). A new sudo user can mean a new admin, or an account that was just
+  given rights it should not have. Every later sudo by the same user is routine
+  (5407) and does not alert.
+author: samma-io
+level: medium
+tags:
+  - attack.privilege-escalation
+  - attack.t1548.003
+logsource:
+  product: wazuh
+  service: alerts
+detection:
+  selection:
+    feed: alerts
+    rule.id:
+      - '5403'
+  condition: selection
+falsepositives:
+  - A new administrator, or a service started through sudo for the first time after the agent was installed.
