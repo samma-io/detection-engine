@@ -83,3 +83,30 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
       - name: build and push
         run: make image push IMAGE=ghcr.io/samma-io/detection-engine TAG="${GITHUB_SHA::7}"
+
+  # CD: after the image is pushed, open (or update) the PR in samma-io/deploy
+  # that moves siem/ to this tag (deploy hack/open-bump-pr.sh). Merging it does
+  # not deploy; siem/ is applied by hand. Needs the repo secret
+  # DEPLOY_PR_TOKEN (fine-grained PAT: samma-io/deploy only, Contents and Pull
+  # requests read/write); without it the job warns and passes.
+  deploy-pr:
+    needs: [publish]
+    runs-on: ubuntu-latest
+    permissions: {}
+    env:
+      DEPLOY_PR_TOKEN: ${{ secrets.DEPLOY_PR_TOKEN }}
+    steps:
+      - name: no token
+        if: env.DEPLOY_PR_TOKEN == ''
+        run: echo "::warning::DEPLOY_PR_TOKEN is not set; no deploy PR opened"
+      - uses: actions/checkout@v4
+        if: env.DEPLOY_PR_TOKEN != ''
+        with:
+          repository: samma-io/deploy
+          token: ${{ secrets.DEPLOY_PR_TOKEN }}
+          fetch-depth: 0
+      - name: open or update the deploy PR
+        if: env.DEPLOY_PR_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOY_PR_TOKEN }}
+        run: hack/open-bump-pr.sh detection-engine "${GITHUB_SHA::7}" "$GITHUB_REPOSITORY" "$GITHUB_SHA" detectionEngine
