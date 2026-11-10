@@ -1,0 +1,23 @@
+title: Crontab Entry Added
+id: 479a3fc3-6941-422c-8dfa-8e5b632d2891
+status: experimental
+description: A new entry appeared in a system or user crontab on the host (a changed entry shows as added).
+  The host's first report (counter 0) is the baseline and does not fire.
+author: samma-io
+level: medium
+tags:
+- attack.persistence
+- attack.execution
+- attack.t1053.003
+logsource:
+  product: osquery
+  service: results
+detection:
+  selection:
+    name: samma_crontab
+    action: added
+  filter_baseline:
+    counter: 0
+  condition: selection and not filter_baseline
+falsepositives:
+- Planned changes, or tools that write their own cron entries.

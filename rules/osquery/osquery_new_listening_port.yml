@@ -1,0 +1,22 @@
+title: New Listening Port
+id: 372e3d2f-8888-48ec-b5a8-b8830a92a49f
+status: experimental
+description: A process on the host started listening on a port it was not listening on before. The host's
+  first report (counter 0) is the baseline and does not fire.
+author: samma-io
+level: low
+tags:
+- attack.command_and_control
+- attack.t1571
+logsource:
+  product: osquery
+  service: results
+detection:
+  selection:
+    name: samma_listening_ports
+    action: added
+  filter_baseline:
+    counter: 0
+  condition: selection and not filter_baseline
+falsepositives:
+- Developer tools and services that pick a random port.

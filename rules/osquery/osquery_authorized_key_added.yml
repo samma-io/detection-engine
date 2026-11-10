@@ -1,0 +1,22 @@
+title: SSH Authorized Key Added
+id: f5156d52-1dd0-490f-8fe2-50b3f6553f52
+status: experimental
+description: A new public key appeared in a user's authorized_keys on the host, so whoever holds the private
+  key can now log in as that user. The host's first report (counter 0) is the baseline and does not fire.
+author: samma-io
+level: high
+tags:
+- attack.persistence
+- attack.t1098.004
+logsource:
+  product: osquery
+  service: results
+detection:
+  selection:
+    name: samma_authorized_keys
+    action: added
+  filter_baseline:
+    counter: 0
+  condition: selection and not filter_baseline
+falsepositives:
+- An administrator adding their own or a colleague's key.

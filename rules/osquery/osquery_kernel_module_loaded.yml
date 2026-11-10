@@ -1,0 +1,23 @@
+title: Kernel Module Loaded
+id: b1c17a8e-5cd5-49bd-8ebd-4b746ce294f3
+status: experimental
+description: A kernel module that was not loaded before is now loaded on the host. Rootkits load as kernel
+  modules. The host's first report (counter 0) is the baseline and does not fire.
+author: samma-io
+level: medium
+tags:
+- attack.persistence
+- attack.defense_evasion
+- attack.t1547.006
+logsource:
+  product: osquery
+  service: results
+detection:
+  selection:
+    name: samma_kernel_modules
+    action: added
+  filter_baseline:
+    counter: 0
+  condition: selection and not filter_baseline
+falsepositives:
+- Hardware being plugged in, VPNs, container networking and firewall changes that load modules on demand.

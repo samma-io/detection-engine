@@ -1,0 +1,22 @@
+title: Local User Account Added
+id: a315ac12-ae4e-4436-823d-b5e32c969c1a
+status: experimental
+description: A new account appeared in the host's /etc/passwd. The host's first report (counter 0) is
+  the baseline and does not fire.
+author: samma-io
+level: medium
+tags:
+- attack.persistence
+- attack.t1136.001
+logsource:
+  product: osquery
+  service: results
+detection:
+  selection:
+    name: samma_users
+    action: added
+  filter_baseline:
+    counter: 0
+  condition: selection and not filter_baseline
+falsepositives:
+- Package installs that create service accounts.

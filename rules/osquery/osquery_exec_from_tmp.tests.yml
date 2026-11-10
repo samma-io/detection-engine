@@ -1,0 +1,101 @@
+# Events modelled on real osquery-client rows (osquery 5.24.1), with hosts and users replaced.
+- name: a program run from /tmp fires
+  expected: true
+  event:
+    source: osquery
+    feed: result
+    name: samma_process_events
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 3
+    numerics: false
+    action: added
+    columns:
+      cwd: ''
+      exit_code: '0'
+      gid: '1000'
+      parent: '2399830'
+      path: /tmp/samma-test-exec
+      pid: '2399832'
+      syscall: exec
+      time: '1794343378'
+      uid: '1000'
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_process_events added
+    gateway_peer: 192.0.2.10
+- name: a program run from /dev/shm fires, also on the first run
+  expected: true
+  event:
+    source: osquery
+    feed: result
+    name: samma_process_events
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 0
+    numerics: false
+    action: added
+    columns:
+      cwd: ''
+      exit_code: '0'
+      gid: '1000'
+      parent: '2399830'
+      path: /dev/shm/.x
+      pid: '2399832'
+      syscall: exec
+      time: '1794343378'
+      uid: '1000'
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_process_events added
+    gateway_peer: 192.0.2.10
+- name: a go test binary does not fire
+  expected: false
+  event:
+    source: osquery
+    feed: result
+    name: samma_process_events
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 3
+    numerics: false
+    action: added
+    columns:
+      cwd: ''
+      exit_code: '0'
+      gid: '1000'
+      parent: '2399830'
+      path: /tmp/go-build123/b001/pkg.test
+      pid: '2399832'
+      syscall: exec
+      time: '1794343378'
+      uid: '1000'
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_process_events added
+    gateway_peer: 192.0.2.10
+- name: a program in /usr/bin does not fire
+  expected: false
+  event:
+    source: osquery
+    feed: result
+    name: samma_process_events
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 3
+    numerics: false
+    action: added
+    columns:
+      cwd: ''
+      exit_code: '0'
+      gid: '1000'
+      parent: '2399830'
+      path: /usr/bin/true
+      pid: '2399832'
+      syscall: exec
+      time: '1794343378'
+      uid: '1000'
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_process_events added
+    gateway_peer: 192.0.2.10

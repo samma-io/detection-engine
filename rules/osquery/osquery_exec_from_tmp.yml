@@ -1,0 +1,27 @@
+title: Program Started From A Temporary Directory
+id: 5cba468f-502e-4cae-8612-20fd3028460b
+status: experimental
+description: A host ran a program from /tmp, /var/tmp or /dev/shm (eBPF process event). Dropped payloads
+  are often run from these world-writable folders. Go test binaries (go-build) are left out.
+author: samma-io
+level: high
+tags:
+- attack.execution
+- attack.defense_evasion
+- attack.t1036
+logsource:
+  product: osquery
+  service: results
+detection:
+  selection:
+    name: samma_process_events
+    columns.syscall: exec
+    columns.path|startswith:
+    - /tmp/
+    - /var/tmp/
+    - /dev/shm/
+  filter_go_build:
+    columns.path|contains: /go-build
+  condition: selection and not filter_go_build
+falsepositives:
+- Installers and build tools that unpack and run helpers in /tmp.

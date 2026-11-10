@@ -1,0 +1,37 @@
+title: Account, Sudo Or SSH File Changed
+id: 32bcf951-4eb5-441c-b200-206b48708b86
+status: experimental
+description: The host's file watch saw a change to /etc/passwd, shadow, group, gshadow, sudoers, the SSH
+  configuration, or a .ssh folder (inotify file event). Reads are not reported.
+author: samma-io
+level: medium
+tags:
+- attack.persistence
+- attack.credential_access
+- attack.t1098
+logsource:
+  product: osquery
+  service: results
+detection:
+  selection:
+    name: samma_file_events
+    columns.action:
+    - CREATED
+    - UPDATED
+    - DELETED
+    - MOVED_FROM
+    - MOVED_TO
+    - ATTRIBUTES_MODIFIED
+  sensitive_etc:
+    columns.path|startswith:
+    - /etc/passwd
+    - /etc/shadow
+    - /etc/group
+    - /etc/gshadow
+    - /etc/sudoers
+    - /etc/ssh/
+  sensitive_ssh:
+    columns.path|contains: /.ssh/
+  condition: selection and (sensitive_etc or sensitive_ssh)
+falsepositives:
+- Password changes, user management and package upgrades that rewrite these files.
