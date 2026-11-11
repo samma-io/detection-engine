@@ -1,8 +1,10 @@
 title: New Listening Port
 id: 372e3d2f-8888-48ec-b5a8-b8830a92a49f
 status: experimental
-description: A process on the host started listening on a port it was not listening on before. The host's
-  first report (counter 0) is the baseline and does not fire.
+description: A process on the host started listening on a TCP port it was not listening on before. The host's
+  first report (counter 0) is the baseline and does not fire. UDP is left out (most UDP rows are client
+  sockets on random ports, such as DNS lookups), and so is 127.0.0.11, Docker's internal DNS inside a
+  container's network namespace.
 author: samma-io
 level: low
 tags:
@@ -15,8 +17,11 @@ detection:
   selection:
     name: samma_listening_ports
     action: added
+    columns.protocol: '6'
   filter_baseline:
     counter: 0
-  condition: selection and not filter_baseline
+  filter_docker_dns:
+    columns.address: 127.0.0.11
+  condition: selection and not filter_baseline and not filter_docker_dns
 falsepositives:
 - Developer tools and services that pick a random port.
