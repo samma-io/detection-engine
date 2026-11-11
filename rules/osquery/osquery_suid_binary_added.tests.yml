@@ -1,0 +1,74 @@
+# Events modelled on real osquery-client rows (osquery 5.24.1), with hosts and users replaced.
+- name: samma_suid_binaries added after the baseline fires
+  expected: true
+  event:
+    source: osquery
+    feed: result
+    name: samma_suid_binaries
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 3
+    numerics: false
+    action: added
+    columns: &id001
+      gid: '0'
+      mode: '4755'
+      path: /usr/local/bin/helper
+      uid: '0'
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_suid_binaries added
+    gateway_peer: 192.0.2.10
+- name: samma_suid_binaries removed does not fire
+  expected: false
+  event:
+    source: osquery
+    feed: result
+    name: samma_suid_binaries
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 3
+    numerics: false
+    action: removed
+    columns: *id001
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_suid_binaries removed
+    gateway_peer: 192.0.2.10
+- name: the first run (baseline) does not fire
+  expected: false
+  event:
+    source: osquery
+    feed: result
+    name: samma_suid_binaries
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 0
+    numerics: false
+    action: added
+    columns: *id001
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_suid_binaries added
+    gateway_peer: 192.0.2.10
+- name: another query does not fire
+  expected: false
+  event:
+    source: osquery
+    feed: result
+    name: samma_users
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 3
+    numerics: false
+    action: added
+    columns:
+      uid: '1000'
+      gid: '1000'
+      username: alice
+      shell: /bin/bash
+      directory: /home/alice
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_users added
+    gateway_peer: 192.0.2.10

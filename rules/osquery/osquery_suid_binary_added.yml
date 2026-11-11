@@ -1,0 +1,24 @@
+title: New Setuid Or Setgid Program
+id: d89d5a42-2876-4520-a9be-0a3caf4b9ad4
+status: experimental
+description: A setuid or setgid program appeared in the host's /usr/bin, /usr/sbin or /usr/local folders.
+  A planted setuid binary is a classic way to keep root. The host's first report (counter 0) is the baseline
+  and does not fire.
+author: samma-io
+level: high
+tags:
+- attack.privilege_escalation
+- attack.persistence
+- attack.t1548.001
+logsource:
+  product: osquery
+  service: results
+detection:
+  selection:
+    name: samma_suid_binaries
+    action: added
+  filter_baseline:
+    counter: 0
+  condition: selection and not filter_baseline
+falsepositives:
+- A package install or upgrade that ships a setuid helper.

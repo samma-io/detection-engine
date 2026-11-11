@@ -1,0 +1,74 @@
+# Events modelled on real osquery-client rows (osquery 5.24.1), with hosts and users replaced.
+- name: samma_users added after the baseline fires
+  expected: true
+  event:
+    source: osquery
+    feed: result
+    name: samma_users
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 3
+    numerics: false
+    action: added
+    columns: &id001
+      uid: '1001'
+      gid: '1001'
+      username: bob
+      shell: /bin/bash
+      directory: /home/bob
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_users added
+    gateway_peer: 192.0.2.10
+- name: samma_users removed does not fire
+  expected: false
+  event:
+    source: osquery
+    feed: result
+    name: samma_users
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 3
+    numerics: false
+    action: removed
+    columns: *id001
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_users removed
+    gateway_peer: 192.0.2.10
+- name: the first run (baseline) does not fire
+  expected: false
+  event:
+    source: osquery
+    feed: result
+    name: samma_users
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 0
+    numerics: false
+    action: added
+    columns: *id001
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_users added
+    gateway_peer: 192.0.2.10
+- name: another query does not fire
+  expected: false
+  event:
+    source: osquery
+    feed: result
+    name: samma_admin_group_members
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 3
+    numerics: false
+    action: added
+    columns:
+      username: bob
+      uid: '1001'
+      groupname: sudo
+      gid: '27'
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_admin_group_members added
+    gateway_peer: 192.0.2.10

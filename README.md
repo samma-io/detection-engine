@@ -55,9 +55,10 @@ and layout are specified in aws-siem:
 [`docs/contracts/filtered-object-layout.md`](https://github.com/samma-io/aws-siem/blob/main/docs/contracts/filtered-object-layout.md),
 [`docs/contracts/lane-names.md`](https://github.com/samma-io/aws-siem/blob/main/docs/contracts/lane-names.md).
 Current lanes: `alb`, `aws`, `cloudflare`, `dns`, `gcp`, `github`, `onepassword`, `slack`, `workspace`.
-Three more lanes, `k8s` (Kubernetes audit events), `scanner` (Samma scanner
-findings) and `wazuh` (Wazuh alerts), exist only on the NATS transport, on
-`samma.logs.k8s`, `samma.logs.scanner` and `samma.logs.wazuh`; see
+Four more lanes, `k8s` (Kubernetes audit events), `scanner` (Samma scanner
+findings), `wazuh` (Wazuh alerts) and `osquery` (osquery-client results), exist
+only on the NATS transport, on `samma.logs.k8s`, `samma.logs.scanner`,
+`samma.logs.wazuh` and `samma.logs.osquery`; see
 [`docs/contracts/nats-transport.md`](https://github.com/samma-io/aws-siem/blob/main/docs/contracts/nats-transport.md).
 
 ## Artifacts
@@ -146,7 +147,7 @@ Every problem is reported in one error at start.
 
 | Var | Required | Default | Purpose |
 |---|---|---|---|
-| `ENGINE_LOG_SOURCE` | yes | -- | lane: `alb`\|`aws`\|`cloudflare`\|`dns`\|`gcp`\|`github`\|`onepassword`\|`slack`\|`workspace`, or on NATS only `k8s`\|`scanner`\|`wazuh` |
+| `ENGINE_LOG_SOURCE` | yes | -- | lane: `alb`\|`aws`\|`cloudflare`\|`dns`\|`gcp`\|`github`\|`onepassword`\|`slack`\|`workspace`, or on NATS only `k8s`\|`scanner`\|`wazuh`\|`osquery` |
 | `ENGINE_TRANSPORT` | no | `sqs` | `sqs` (AWS: S3 notifications) or `nats` (Kubernetes: records on JetStream) |
 | `ENGINE_QUEUE_URL` | sqs | -- | the lane's `filtered-<lane>` queue |
 | `ENGINE_ALERT_QUEUE_URL` | sqs | -- | the shared `detections-alerts` queue |

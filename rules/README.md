@@ -80,6 +80,17 @@ which is the vendor-native shape plus a `source` field:
   or the legacy `type`, so lifecycle messages (`kind: run`,
   `event: scanner_start`, `scan: done`) never alert.
 
+- **osquery** — osquery-client results on `samma.logs.osquery` (NATS transport
+  only), one result row per message: `name` (the query, e.g.
+  `samma_process_events`, `samma_users`), `action` (`added` or `removed`),
+  `counter` (`0` on the query's first run on that host), `hostIdentifier`,
+  `unixTime`, and the row under `columns.*`, every value a string. Pin `name`.
+  Rules on state tables (users, keys, crontab, ...) exclude `counter: 0` so a
+  new host's baseline does not alert; rules on the event tables
+  (`samma_process_events`, `samma_socket_events`, `samma_file_events`) must
+  not, because those rows are real events even on the first run. The queries
+  are in samma-io/osquery-client `config/osquery.conf`.
+
 Dotted paths such as `userIdentity.type` work because the engine builds a
 flattened match view of every event; see `internal/decode/normalize.go`.
 Upstream SigmaHQ rules for these products can usually be dropped in unchanged,

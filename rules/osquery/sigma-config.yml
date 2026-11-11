@@ -1,0 +1,21 @@
+# sigma-go Config for the osquery lane.
+#
+# Records are osquery-client scheduled-query results, one result row per NATS
+# message on samma.logs.osquery, published by osquery-gateway with source,
+# feed, event_time, search_text and gateway_peer added. See aws-siem
+# docs/contracts/nats-transport.md and samma-io/osquery-client. There is no S3
+# producer for this lane: it exists only on the NATS transport.
+#
+# name is the osquery query (samma_process_events, samma_users, ...); the row's
+# values are under columns.* and are always strings, so quote numbers in rules
+# (columns.port: '22'). counter is 0 on a query's first run on a host: rules on
+# state tables exclude it so a new host's baseline does not fire, while rules
+# on event tables (process, socket, file events) do not.
+title: osquery
+logsources:
+  osquery_results:
+    product: osquery
+    service: results
+    index: osquery
+defaultindex: osquery
+fieldmappings: {}

@@ -1,0 +1,24 @@
+title: Sudo Rules Changed
+id: 0acd5eda-6e17-40eb-8f58-5b621432a43e
+status: experimental
+description: A rule was added to or removed from /etc/sudoers or /etc/sudoers.d on the host. The host's
+  first report (counter 0) is the baseline and does not fire.
+author: samma-io
+level: high
+tags:
+- attack.privilege_escalation
+- attack.t1548.003
+logsource:
+  product: osquery
+  service: results
+detection:
+  selection:
+    name: samma_sudoers
+    action:
+    - added
+    - removed
+  filter_baseline:
+    counter: 0
+  condition: selection and not filter_baseline
+falsepositives:
+- Configuration management changing sudo rules.

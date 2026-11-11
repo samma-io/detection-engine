@@ -1,6 +1,6 @@
 # Detection rules
 
-**105 rules across 12 log sources.**
+**116 rules across 13 log sources.**
 
 > Generated from the rules tree by `make docs`. Do not edit by hand —
 > `TestRules_CatalogIsUpToDate` fails if this file and the rules disagree.
@@ -58,11 +58,12 @@ Wildcards also do not work in a value: `*` is matched literally. See
 | [`github`](#github) | 1 | 2 | – | – | – | **3** |
 | [`k8s`](#k8s) | 8 | 11 | 5 | 3 | – | **27** |
 | [`onepassword`](#onepassword) | – | 2 | 1 | – | – | **3** |
+| [`osquery`](#osquery) | – | 5 | 5 | 1 | – | **11** |
 | [`scanner`](#scanner) | – | 3 | 1 | – | – | **4** |
 | [`slack`](#slack) | – | – | 2 | – | – | **2** |
 | [`wazuh`](#wazuh) | – | 2 | 4 | 3 | – | **9** |
 | [`workspace`](#workspace) | 2 | – | – | – | – | **2** |
-| **Total** | **13** | **45** | **28** | **19** | **0** | **105** |
+| **Total** | **13** | **50** | **33** | **20** | **0** | **116** |
 
 ---
 
@@ -1692,6 +1693,186 @@ A failed sign-in on the 1Password Events API. Credential failures against the pa
 **ATT&CK** attack.credential_access
 
 - <https://developer.1password.com/docs/events-api/>
+
+---
+
+## osquery
+
+### 🟠 high — New Setuid Or Setgid Program
+
+`d89d5a42-2876-4520-a9be-0a3caf4b9ad4` · [`rules/osquery/osquery_suid_binary_added.yml`](../rules/osquery/osquery_suid_binary_added.yml) · 4 tests (1 firing)
+
+> **Status: experimental.**
+
+A setuid or setgid program appeared in the host's /usr/bin, /usr/sbin or /usr/local folders. A planted setuid binary is a classic way to keep root. The host's first report (counter 0) is the baseline and does not fire.
+
+**Fires when** (`name` is `samma_suid_binaries` and `action` is `added`) **and not** `counter` is `0`
+
+**Likely false positives**
+
+- A package install or upgrade that ships a setuid helper.
+
+**ATT&CK** attack.privilege_escalation, attack.persistence, attack.t1548.001
+
+### 🟠 high — Program Started From A Temporary Directory
+
+`5cba468f-502e-4cae-8612-20fd3028460b` · [`rules/osquery/osquery_exec_from_tmp.yml`](../rules/osquery/osquery_exec_from_tmp.yml) · 4 tests (2 firing)
+
+> **Status: experimental.**
+
+A host ran a program from /tmp, /var/tmp or /dev/shm (eBPF process event). Dropped payloads are often run from these world-writable folders. Go test binaries (go-build) are left out.
+
+**Fires when** (`name` is `samma_process_events` and `columns.syscall` is `exec` and `columns.path` starts with any of `/tmp/`, `/var/tmp/`, `/dev/shm/`) **and not** `columns.path` contains `/go-build`
+
+**Likely false positives**
+
+- Installers and build tools that unpack and run helpers in /tmp.
+
+**ATT&CK** attack.execution, attack.defense_evasion, attack.t1036
+
+### 🟠 high — SSH Authorized Key Added
+
+`f5156d52-1dd0-490f-8fe2-50b3f6553f52` · [`rules/osquery/osquery_authorized_key_added.yml`](../rules/osquery/osquery_authorized_key_added.yml) · 4 tests (1 firing)
+
+> **Status: experimental.**
+
+A new public key appeared in a user's authorized_keys on the host, so whoever holds the private key can now log in as that user. The host's first report (counter 0) is the baseline and does not fire.
+
+**Fires when** (`name` is `samma_authorized_keys` and `action` is `added`) **and not** `counter` is `0`
+
+**Likely false positives**
+
+- An administrator adding their own or a colleague's key.
+
+**ATT&CK** attack.persistence, attack.t1098.004
+
+### 🟠 high — Shell Opened A Network Connection
+
+`5b5da29f-22bc-4f47-bc3e-f21b67b98f34` · [`rules/osquery/osquery_shell_outbound_connection.yml`](../rules/osquery/osquery_shell_outbound_connection.yml) · 4 tests (2 firing)
+
+> **Status: experimental.**
+
+A shell process (bash, sh, dash, zsh) itself connected to a remote address (eBPF socket event). Shells do not normally open sockets; this is the shape of a reverse shell such as bash -i >& /dev/tcp/host/port.
+
+**Fires when** `name` is `samma_socket_events` and `columns.syscall` is `connect` and `columns.path` ends with any of `/bash`, `/sh`, `/dash`, `/zsh`
+
+**Likely false positives**
+
+- Scripts that use bash's /dev/tcp for health checks.
+
+**ATT&CK** attack.execution, attack.command_and_control, attack.t1059.004
+
+### 🟠 high — Sudo Rules Changed
+
+`0acd5eda-6e17-40eb-8f58-5b621432a43e` · [`rules/osquery/osquery_sudoers_changed.yml`](../rules/osquery/osquery_sudoers_changed.yml) · 4 tests (2 firing)
+
+> **Status: experimental.**
+
+A rule was added to or removed from /etc/sudoers or /etc/sudoers.d on the host. The host's first report (counter 0) is the baseline and does not fire.
+
+**Fires when** (`name` is `samma_sudoers` and `action` is one of `added`, `removed`) **and not** `counter` is `0`
+
+**Likely false positives**
+
+- Configuration management changing sudo rules.
+
+**ATT&CK** attack.privilege_escalation, attack.t1548.003
+
+### 🟡 medium — Account, Sudo Or SSH File Changed
+
+`32bcf951-4eb5-441c-b200-206b48708b86` · [`rules/osquery/osquery_sensitive_file_changed.yml`](../rules/osquery/osquery_sensitive_file_changed.yml) · 4 tests (2 firing)
+
+> **Status: experimental.**
+
+The host's file watch saw a change to /etc/passwd, shadow, group, gshadow, sudoers, the SSH configuration, or a .ssh folder (inotify file event). Reads are not reported.
+
+**Fires when** (`name` is `samma_file_events` and `columns.action` is one of `CREATED`, `UPDATED`, `DELETED`, `MOVED_FROM`, `MOVED_TO`, `ATTRIBUTES_MODIFIED`) **and** (`columns.path` starts with any of `/etc/passwd`, `/etc/shadow`, `/etc/group`, `/etc/gshadow`, `/etc/sudoers`, `/etc/ssh/` **or** `columns.path` contains `/.ssh/`)
+
+**Likely false positives**
+
+- Password changes, user management and package upgrades that rewrite these files.
+
+**ATT&CK** attack.persistence, attack.credential_access, attack.t1098
+
+### 🟡 medium — Crontab Entry Added
+
+`479a3fc3-6941-422c-8dfa-8e5b632d2891` · [`rules/osquery/osquery_crontab_changed.yml`](../rules/osquery/osquery_crontab_changed.yml) · 4 tests (1 firing)
+
+> **Status: experimental.**
+
+A new entry appeared in a system or user crontab on the host (a changed entry shows as added). The host's first report (counter 0) is the baseline and does not fire.
+
+**Fires when** (`name` is `samma_crontab` and `action` is `added`) **and not** `counter` is `0`
+
+**Likely false positives**
+
+- Planned changes, or tools that write their own cron entries.
+
+**ATT&CK** attack.persistence, attack.execution, attack.t1053.003
+
+### 🟡 medium — Kernel Module Loaded
+
+`b1c17a8e-5cd5-49bd-8ebd-4b746ce294f3` · [`rules/osquery/osquery_kernel_module_loaded.yml`](../rules/osquery/osquery_kernel_module_loaded.yml) · 4 tests (1 firing)
+
+> **Status: experimental.**
+
+A kernel module that was not loaded before is now loaded on the host. Rootkits load as kernel modules. The host's first report (counter 0) is the baseline and does not fire.
+
+**Fires when** (`name` is `samma_kernel_modules` and `action` is `added`) **and not** `counter` is `0`
+
+**Likely false positives**
+
+- Hardware being plugged in, VPNs, container networking and firewall changes that load modules on demand.
+
+**ATT&CK** attack.persistence, attack.defense_evasion, attack.t1547.006
+
+### 🟡 medium — Local User Account Added
+
+`a315ac12-ae4e-4436-823d-b5e32c969c1a` · [`rules/osquery/osquery_user_added.yml`](../rules/osquery/osquery_user_added.yml) · 4 tests (1 firing)
+
+> **Status: experimental.**
+
+A new account appeared in the host's /etc/passwd. The host's first report (counter 0) is the baseline and does not fire.
+
+**Fires when** (`name` is `samma_users` and `action` is `added`) **and not** `counter` is `0`
+
+**Likely false positives**
+
+- Package installs that create service accounts.
+
+**ATT&CK** attack.persistence, attack.t1136.001
+
+### 🟡 medium — User Added To An Admin Group
+
+`677fdef2-01de-4745-bbb0-f3f64a08cc2f` · [`rules/osquery/osquery_admin_group_member_added.yml`](../rules/osquery/osquery_admin_group_member_added.yml) · 4 tests (1 firing)
+
+> **Status: experimental.**
+
+A user joined root, sudo, wheel, adm or docker on the host. Membership of docker is root-equivalent. The host's first report (counter 0) is the baseline and does not fire.
+
+**Fires when** (`name` is `samma_admin_group_members` and `action` is `added`) **and not** `counter` is `0`
+
+**Likely false positives**
+
+- Onboarding a new administrator.
+
+**ATT&CK** attack.persistence, attack.privilege_escalation, attack.t1098
+
+### 🔵 low — New Listening Port
+
+`372e3d2f-8888-48ec-b5a8-b8830a92a49f` · [`rules/osquery/osquery_new_listening_port.yml`](../rules/osquery/osquery_new_listening_port.yml) · 4 tests (1 firing)
+
+> **Status: experimental.**
+
+A process on the host started listening on a port it was not listening on before. The host's first report (counter 0) is the baseline and does not fire.
+
+**Fires when** (`name` is `samma_listening_ports` and `action` is `added`) **and not** `counter` is `0`
+
+**Likely false positives**
+
+- Developer tools and services that pick a random port.
+
+**ATT&CK** attack.command_and_control, attack.t1571
 
 ---
 

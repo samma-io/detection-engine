@@ -1,0 +1,97 @@
+# Events modelled on real osquery-client rows (osquery 5.24.1), with hosts and users replaced.
+- name: /etc/passwd updated fires
+  expected: true
+  event:
+    source: osquery
+    feed: result
+    name: samma_file_events
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 3
+    numerics: false
+    action: added
+    columns:
+      path: /etc/passwd
+      category: accounts
+      action: UPDATED
+      uid: '0'
+      gid: '0'
+      mode: '0644'
+      size: '3021'
+      time: '1794343378'
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_file_events added
+    gateway_peer: 192.0.2.10
+- name: a new file in a user's .ssh fires
+  expected: true
+  event:
+    source: osquery
+    feed: result
+    name: samma_file_events
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 0
+    numerics: false
+    action: added
+    columns:
+      path: /home/alice/.ssh/authorized_keys
+      category: ssh
+      action: CREATED
+      uid: '0'
+      gid: '0'
+      mode: '0644'
+      size: '3021'
+      time: '1794343378'
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_file_events added
+    gateway_peer: 192.0.2.10
+- name: a change in /usr/bin does not fire
+  expected: false
+  event:
+    source: osquery
+    feed: result
+    name: samma_file_events
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 3
+    numerics: false
+    action: added
+    columns:
+      path: /usr/bin/ls
+      category: binaries
+      action: UPDATED
+      uid: '0'
+      gid: '0'
+      mode: '0644'
+      size: '3021'
+      time: '1794343378'
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_file_events added
+    gateway_peer: 192.0.2.10
+- name: an attribute-less open does not fire
+  expected: false
+  event:
+    source: osquery
+    feed: result
+    name: samma_file_events
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 3
+    numerics: false
+    action: added
+    columns:
+      path: /etc/passwd
+      category: accounts
+      action: OPENED
+      uid: '0'
+      gid: '0'
+      mode: '0644'
+      size: '3021'
+      time: '1794343378'
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_file_events added
+    gateway_peer: 192.0.2.10
