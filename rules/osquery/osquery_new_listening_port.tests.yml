@@ -74,3 +74,47 @@
     event_time: '2026-11-10T20:42:58.000Z'
     search_text: samma_users added
     gateway_peer: 192.0.2.10
+- name: a UDP socket does not fire
+  expected: false
+  event:
+    source: osquery
+    feed: result
+    name: samma_listening_ports
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 3
+    numerics: false
+    action: added
+    columns:
+      address: 0.0.0.0
+      family: '2'
+      name: ''
+      pid: '-1'
+      port: '45123'
+      protocol: '17'
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_listening_ports added
+    gateway_peer: 192.0.2.10
+- name: Docker's internal DNS listener does not fire
+  expected: false
+  event:
+    source: osquery
+    feed: result
+    name: samma_listening_ports
+    hostIdentifier: test-host
+    unixTime: 1794343378
+    epoch: 0
+    counter: 3
+    numerics: false
+    action: added
+    columns:
+      address: 127.0.0.11
+      family: '2'
+      name: ''
+      pid: '-1'
+      port: '38553'
+      protocol: '6'
+    event_time: '2026-11-10T20:42:58.000Z'
+    search_text: samma_listening_ports added
+    gateway_peer: 192.0.2.10

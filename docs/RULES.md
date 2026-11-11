@@ -1860,13 +1860,13 @@ A user joined root, sudo, wheel, adm or docker on the host. Membership of docker
 
 ### 🔵 low — New Listening Port
 
-`372e3d2f-8888-48ec-b5a8-b8830a92a49f` · [`rules/osquery/osquery_new_listening_port.yml`](../rules/osquery/osquery_new_listening_port.yml) · 4 tests (1 firing)
+`372e3d2f-8888-48ec-b5a8-b8830a92a49f` · [`rules/osquery/osquery_new_listening_port.yml`](../rules/osquery/osquery_new_listening_port.yml) · 6 tests (1 firing)
 
 > **Status: experimental.**
 
-A process on the host started listening on a port it was not listening on before. The host's first report (counter 0) is the baseline and does not fire.
+A process on the host started listening on a TCP port it was not listening on before. The host's first report (counter 0) is the baseline and does not fire. UDP is left out (most UDP rows are client sockets on random ports, such as DNS lookups), and so is 127.0.0.11, Docker's internal DNS inside a container's network namespace.
 
-**Fires when** (`name` is `samma_listening_ports` and `action` is `added`) **and not** `counter` is `0`
+**Fires when** (`name` is `samma_listening_ports` and `action` is `added` and `columns.protocol` is `6`) **and not** `counter` is `0` **and not** `columns.address` is `127.0.0.11`
 
 **Likely false positives**
 
