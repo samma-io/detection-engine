@@ -1,0 +1,38 @@
+title: SQL Injection Pattern In Request
+id: 2fe2a4a0-b2c1-4462-bf1e-5872b9746f8a
+status: experimental
+description: 'The request URI holds a classic SQL injection payload: UNION SELECT, tautologies such as '' OR 1=1,
+  time-based probes (SLEEP(, WAITFOR DELAY, pg_sleep) or information_schema lookups, plain or URL-encoded. A 200
+  or 500 answer is worth a look at the backend logs.'
+author: samma-io
+level: medium
+tags:
+- attack.initial_access
+- attack.t1190
+logsource:
+  product: traefik
+  service: access
+detection:
+  selection:
+    RequestPath|contains:
+    - union select
+    - union%20select
+    - union+select
+    - UNION%20SELECT
+    - UNION+SELECT
+    - UNION SELECT
+    - '%27%20or%201%3d1'
+    - ''' or 1=1'
+    - '%27+or+1%3d1'
+    - '%27%20OR%201%3D1'
+    - sleep(
+    - SLEEP(
+    - sleep%28
+    - SLEEP%28
+    - pg_sleep
+    - waitfor%20delay
+    - WAITFOR%20DELAY
+    - information_schema
+  condition: selection
+falsepositives:
+- Search pages or APIs that legitimately take SQL-like text (database admin tools, documentation search).

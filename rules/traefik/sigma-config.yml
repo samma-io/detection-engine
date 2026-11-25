@@ -1,0 +1,26 @@
+# sigma-go Config for the traefik lane.
+#
+# Records are Traefik access-log lines (accesslog.format=json), one request per
+# NATS message on samma.logs.svc.traefik in stream SIEM_SERVICES. They come from
+# pods labelled samma.io/detection: traefik, through a node log shipper and
+# samma-io/deploy siem/61-k8s-log-router.yaml, which parses the JSON line and
+# adds source, feed (k8s), event_time, k8s.{namespace,pod,container,node} and
+# search_text. There is no S3 producer for this lane: it exists only on the
+# NATS transport.
+#
+# Traefik's own field names are kept: ClientHost, RequestMethod, RequestHost,
+# RequestPath (the request URI, query string included, as the client sent it),
+# DownstreamStatus (a number), RouterName, ServiceName, entryPointName.
+# Request headers appear only when the access log keeps them
+# (accesslog.fields.headers.names.User-Agent=keep), as request_User-Agent.
+#
+# Traefik also writes its own non-access log lines to the same stream; they
+# have no RequestPath, so every rule pins a RequestPath or header selection.
+title: traefik
+logsources:
+  traefik_access:
+    product: traefik
+    service: access
+    index: traefik
+defaultindex: traefik
+fieldmappings: {}

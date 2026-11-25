@@ -85,10 +85,14 @@ var registry = map[string]Source{
 	// Wazuh alerts from alerts.json, one per message on samma.logs.wazuh.
 	// osquery is osquery-client scheduled-query results, one result row per
 	// message on samma.logs.osquery (published by osquery-gateway).
+	// traefik is Traefik JSON access logs from labelled pods, one request per
+	// message on samma.logs.svc.traefik in stream SIEM_SERVICES (published by
+	// k8s-log-router); set ENGINE_NATS_STREAM and ENGINE_NATS_SUBJECT for it.
 	"k8s":     {Name: "k8s", ConfigFile: "sigma-config.yml"},
 	"scanner": {Name: "scanner", ConfigFile: "sigma-config.yml"},
 	"wazuh":   {Name: "wazuh", ConfigFile: "sigma-config.yml"},
 	"osquery": {Name: "osquery", ConfigFile: "sigma-config.yml"},
+	"traefik": {Name: "traefik", ConfigFile: "sigma-config.yml"},
 }
 
 // Lookup resolves a source name, naming every valid one when it fails.

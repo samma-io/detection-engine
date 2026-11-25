@@ -1,0 +1,121 @@
+# Events modelled on Traefik v3 JSON access-log lines after k8s-log-router, with hosts and addresses replaced.
+- name: .env answered 200 fires
+  expected: true
+  event:
+    source: traefik
+    feed: k8s
+    ClientHost: 198.51.100.7
+    ClientPort: '51544'
+    RequestHost: app.example.com
+    RequestMethod: GET
+    RequestPath: /.env
+    RequestProtocol: HTTP/1.1
+    RequestScheme: https
+    DownstreamStatus: 200
+    DownstreamContentSize: 311
+    Duration: 1834212
+    RouterName: websecure-app@kubernetes
+    ServiceName: app-80@kubernetes
+    entryPointName: websecure
+    request_User-Agent: Mozilla/5.0 (X11; Linux x86_64) Firefox/133.0
+    StartUTC: '2026-11-25T16:20:01.123456789Z'
+    level: info
+    msg: ''
+    time: '2026-11-25T16:20:01Z'
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: traefik
+      pod: traefik-784c464589-abcde
+      container: traefik
+      node: node1
+    search_text: GET /.env 200
+- name: actuator heapdump answered 200 fires
+  expected: true
+  event:
+    source: traefik
+    feed: k8s
+    ClientHost: 198.51.100.7
+    ClientPort: '51544'
+    RequestHost: app.example.com
+    RequestMethod: GET
+    RequestPath: /actuator/heapdump
+    RequestProtocol: HTTP/1.1
+    RequestScheme: https
+    DownstreamStatus: 200
+    DownstreamContentSize: 512
+    Duration: 1834212
+    RouterName: websecure-app@kubernetes
+    ServiceName: app-80@kubernetes
+    entryPointName: websecure
+    request_User-Agent: Mozilla/5.0 (X11; Linux x86_64) Firefox/133.0
+    StartUTC: '2026-11-25T16:20:01.123456789Z'
+    level: info
+    msg: ''
+    time: '2026-11-25T16:20:01Z'
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: traefik
+      pod: traefik-784c464589-abcde
+      container: traefik
+      node: node1
+    search_text: GET /actuator/heapdump 200
+- name: .env answered 404 does not fire
+  expected: false
+  event:
+    source: traefik
+    feed: k8s
+    ClientHost: 198.51.100.7
+    ClientPort: '51544'
+    RequestHost: app.example.com
+    RequestMethod: GET
+    RequestPath: /.env
+    RequestProtocol: HTTP/1.1
+    RequestScheme: https
+    DownstreamStatus: 404
+    DownstreamContentSize: 512
+    Duration: 1834212
+    RouterName: websecure-app@kubernetes
+    ServiceName: app-80@kubernetes
+    entryPointName: websecure
+    request_User-Agent: Mozilla/5.0 (X11; Linux x86_64) Firefox/133.0
+    StartUTC: '2026-11-25T16:20:01.123456789Z'
+    level: info
+    msg: ''
+    time: '2026-11-25T16:20:01Z'
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: traefik
+      pod: traefik-784c464589-abcde
+      container: traefik
+      node: node1
+    search_text: GET /.env 404
+- name: a normal page answered 200 does not fire
+  expected: false
+  event:
+    source: traefik
+    feed: k8s
+    ClientHost: 198.51.100.7
+    ClientPort: '51544'
+    RequestHost: app.example.com
+    RequestMethod: GET
+    RequestPath: /about
+    RequestProtocol: HTTP/1.1
+    RequestScheme: https
+    DownstreamStatus: 200
+    DownstreamContentSize: 512
+    Duration: 1834212
+    RouterName: websecure-app@kubernetes
+    ServiceName: app-80@kubernetes
+    entryPointName: websecure
+    request_User-Agent: Mozilla/5.0 (X11; Linux x86_64) Firefox/133.0
+    StartUTC: '2026-11-25T16:20:01.123456789Z'
+    level: info
+    msg: ''
+    time: '2026-11-25T16:20:01Z'
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: traefik
+      pod: traefik-784c464589-abcde
+      container: traefik
+      node: node1
+    search_text: GET /about 200

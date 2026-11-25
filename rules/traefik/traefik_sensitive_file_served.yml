@@ -1,0 +1,38 @@
+title: Sensitive File Served With HTTP 200
+id: d702f7b4-770f-4eaf-8399-a5bd832a8566
+status: experimental
+description: A request for a secrets-bearing path (.env, .git, credentials, wp-config.php, actuator env or heapdump)
+  was answered 200. Unlike the probe rule, this means a backend may really have handed out the file. Check the response
+  size and the backend behind RouterName.
+author: samma-io
+level: high
+tags:
+- attack.credential_access
+- attack.t1552.001
+- attack.collection
+logsource:
+  product: traefik
+  service: access
+detection:
+  selection:
+    RequestPath|contains:
+    - /.env
+    - /.git/
+    - /.git/config
+    - /.aws/credentials
+    - /.ssh/id_rsa
+    - /.htpasswd
+    - /wp-config.php
+    - /.svn/
+    - /config.json
+    - /.npmrc
+    - /.docker/config.json
+    - /server-status
+    - /phpinfo.php
+    - /actuator/env
+    - /actuator/heapdump
+    DownstreamStatus: 200
+  condition: selection
+falsepositives:
+- Single-page apps that answer every path with index.html and 200; check DownstreamContentSize against the normal
+  page size.

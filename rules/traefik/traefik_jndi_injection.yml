@@ -1,0 +1,31 @@
+title: JNDI Lookup Injection (Log4Shell) In Request
+id: af8fa178-5824-4cf6-b1a2-59309dd84763
+status: experimental
+description: 'A ${jndi: lookup, plain or URL-encoded, in the request URI or User-Agent. This is the Log4Shell (CVE-2021-44228)
+  exploit string; any Java backend that logs it with a vulnerable Log4j 2 will reach out to the attacker''s LDAP
+  or RMI server.'
+author: samma-io
+level: high
+tags:
+- attack.initial_access
+- attack.t1190
+- cve.2021-44228
+logsource:
+  product: traefik
+  service: access
+detection:
+  uri:
+    RequestPath|contains:
+    - '${jndi:'
+    - '%24%7Bjndi:'
+    - '%24%7Bjndi%3A'
+    - '%24%7bjndi%3a'
+    - ${${
+    - '%24%7B%24%7B'
+  ua:
+    request_User-Agent|contains:
+    - '${jndi:'
+    - ${${
+  condition: uri or ua
+falsepositives:
+- None expected outside security testing.
