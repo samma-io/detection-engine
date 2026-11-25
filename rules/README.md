@@ -91,6 +91,16 @@ which is the vendor-native shape plus a `source` field:
   not, because those rows are real events even on the first run. The queries
   are in samma-io/osquery-client `config/osquery.conf`.
 
+- **traefik** — Traefik JSON access logs on `samma.logs.svc.traefik` (stream
+  `SIEM_SERVICES`, NATS transport only; set `ENGINE_NATS_STREAM` and
+  `ENGINE_NATS_SUBJECT`), from pods labelled `samma.io/detection: traefik` via
+  samma-io/deploy `siem/61-k8s-log-router.yaml`. Traefik's own field names:
+  `ClientHost`, `RequestMethod`, `RequestHost`, `RequestPath` (the URI with its
+  query string, not decoded), `DownstreamStatus` (a number), `RouterName`,
+  `ServiceName`, `entryPointName`, plus `request_User-Agent` when the access log
+  keeps that header. Traefik's own log lines share the subject and have no
+  `RequestPath`, so pin a request field.
+
 Dotted paths such as `userIdentity.type` work because the engine builds a
 flattened match view of every event; see `internal/decode/normalize.go`.
 Upstream SigmaHQ rules for these products can usually be dropped in unchanged,

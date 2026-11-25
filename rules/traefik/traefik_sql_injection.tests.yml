@@ -1,0 +1,91 @@
+# Events modelled on Traefik v3 JSON access-log lines after k8s-log-router, with hosts and addresses replaced.
+- name: union select in the query string fires
+  expected: true
+  event:
+    source: traefik
+    feed: k8s
+    ClientHost: 198.51.100.7
+    ClientPort: '51544'
+    RequestHost: app.example.com
+    RequestMethod: GET
+    RequestPath: /products?id=1%20UNION%20SELECT%20username,password%20FROM%20users--
+    RequestProtocol: HTTP/1.1
+    RequestScheme: https
+    DownstreamStatus: 500
+    DownstreamContentSize: 512
+    Duration: 1834212
+    RouterName: websecure-app@kubernetes
+    ServiceName: app-80@kubernetes
+    entryPointName: websecure
+    request_User-Agent: Mozilla/5.0 (X11; Linux x86_64) Firefox/133.0
+    StartUTC: '2026-11-25T16:20:01.123456789Z'
+    level: info
+    msg: ''
+    time: '2026-11-25T16:20:01Z'
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: traefik
+      pod: traefik-784c464589-abcde
+      container: traefik
+      node: node1
+    search_text: GET /products?id=1%20UNION%20SELECT%20username,password%20FROM%20users-- 500
+- name: a time-based probe fires
+  expected: true
+  event:
+    source: traefik
+    feed: k8s
+    ClientHost: 198.51.100.7
+    ClientPort: '51544'
+    RequestHost: app.example.com
+    RequestMethod: GET
+    RequestPath: /item?id=1;SELECT%20pg_sleep(5)--
+    RequestProtocol: HTTP/1.1
+    RequestScheme: https
+    DownstreamStatus: 200
+    DownstreamContentSize: 512
+    Duration: 1834212
+    RouterName: websecure-app@kubernetes
+    ServiceName: app-80@kubernetes
+    entryPointName: websecure
+    request_User-Agent: Mozilla/5.0 (X11; Linux x86_64) Firefox/133.0
+    StartUTC: '2026-11-25T16:20:01.123456789Z'
+    level: info
+    msg: ''
+    time: '2026-11-25T16:20:01Z'
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: traefik
+      pod: traefik-784c464589-abcde
+      container: traefik
+      node: node1
+    search_text: GET /item?id=1;SELECT%20pg_sleep(5)-- 200
+- name: an ordinary query string does not fire
+  expected: false
+  event:
+    source: traefik
+    feed: k8s
+    ClientHost: 198.51.100.7
+    ClientPort: '51544'
+    RequestHost: app.example.com
+    RequestMethod: GET
+    RequestPath: /search?q=selection+of+unions
+    RequestProtocol: HTTP/1.1
+    RequestScheme: https
+    DownstreamStatus: 200
+    DownstreamContentSize: 512
+    Duration: 1834212
+    RouterName: websecure-app@kubernetes
+    ServiceName: app-80@kubernetes
+    entryPointName: websecure
+    request_User-Agent: Mozilla/5.0 (X11; Linux x86_64) Firefox/133.0
+    StartUTC: '2026-11-25T16:20:01.123456789Z'
+    level: info
+    msg: ''
+    time: '2026-11-25T16:20:01Z'
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: traefik
+      pod: traefik-784c464589-abcde
+      container: traefik
+      node: node1
+    search_text: GET /search?q=selection+of+unions 200

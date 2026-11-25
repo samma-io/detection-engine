@@ -1,0 +1,39 @@
+title: Known Attack Tool User Agent
+id: 26636da1-a6e1-4eb7-9dab-0867e60d5b53
+status: experimental
+description: The request carries the User-Agent of a vulnerability scanner or brute-force tool (sqlmap, nikto, nuclei,
+  wpscan, gobuster, ffuf, ...). Needs the access log to keep the User-Agent header. Low because these tools rarely
+  hide and the traffic is mostly noise; it is useful for seeing who is mapping you.
+author: samma-io
+level: low
+tags:
+- attack.reconnaissance
+- attack.t1595.002
+logsource:
+  product: traefik
+  service: access
+detection:
+  selection:
+    request_User-Agent|contains:
+    - sqlmap
+    - nikto
+    - nuclei
+    - wpscan
+    - gobuster
+    - dirbuster
+    - feroxbuster
+    - ffuf
+    - masscan
+    - zgrab
+    - Nmap Scripting Engine
+    - acunetix
+    - netsparker
+    - Hydra
+    - WhatWeb
+    - jaeles
+    - commix
+  condition: selection
+falsepositives:
+- Samma's own scanner jobs (nikto, nmap) against your own targets; filter on their source address if they reach
+  this entry point.
+- Authorised penetration tests.

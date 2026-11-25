@@ -1,0 +1,32 @@
+title: Path Traversal Attempt In Request
+id: 7f8e0d55-a1f7-46d9-bf8a-6939538f075f
+status: experimental
+description: The request URI carries a directory traversal sequence (../, or its URL-encoded forms) or names a well-known
+  system file such as /etc/passwd. Traefik passes the raw URI to the backend, so a vulnerable backend may resolve
+  it outside its web root.
+author: samma-io
+level: medium
+tags:
+- attack.initial_access
+- attack.t1190
+logsource:
+  product: traefik
+  service: access
+detection:
+  selection:
+    RequestPath|contains:
+    - ../
+    - ..%2f
+    - ..%2F
+    - '%2e%2e'
+    - '%2E%2E'
+    - ..\
+    - ..%5c
+    - ..%5C
+    - /etc/passwd
+    - /etc/shadow
+    - /proc/self/environ
+    - win.ini
+  condition: selection
+falsepositives:
+- Clients that send unnormalised relative links (rare).

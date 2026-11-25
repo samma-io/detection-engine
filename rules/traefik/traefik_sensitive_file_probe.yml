@@ -1,0 +1,38 @@
+title: Request For A Sensitive File Path
+id: 04310b37-d7db-4b1e-9c00-129cd6b49484
+status: experimental
+description: 'A client asked for a file that should never be served: .env, .git, cloud or SSH credentials, wp-config.php,
+  Spring actuator dumps and similar. Internet-facing proxies see these probes constantly from scanners, so this
+  is low on its own; an answer of 200 is left to the companion rule Sensitive File Served With HTTP 200, which is
+  high.'
+author: samma-io
+level: low
+tags:
+- attack.reconnaissance
+- attack.t1595.003
+logsource:
+  product: traefik
+  service: access
+detection:
+  selection:
+    RequestPath|contains:
+    - /.env
+    - /.git/
+    - /.git/config
+    - /.aws/credentials
+    - /.ssh/id_rsa
+    - /.htpasswd
+    - /wp-config.php
+    - /.svn/
+    - /config.json
+    - /.npmrc
+    - /.docker/config.json
+    - /server-status
+    - /phpinfo.php
+    - /actuator/env
+    - /actuator/heapdump
+  filter_served:
+    DownstreamStatus: 200
+  condition: selection and not filter_served
+falsepositives:
+- Mass internet scanners; expect a steady background rate on public entry points.

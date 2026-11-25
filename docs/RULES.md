@@ -1,6 +1,6 @@
 # Detection rules
 
-**116 rules across 13 log sources.**
+**122 rules across 14 log sources.**
 
 > Generated from the rules tree by `make docs`. Do not edit by hand —
 > `TestRules_CatalogIsUpToDate` fails if this file and the rules disagree.
@@ -61,9 +61,10 @@ Wildcards also do not work in a value: `*` is matched literally. See
 | [`osquery`](#osquery) | – | 5 | 5 | 1 | – | **11** |
 | [`scanner`](#scanner) | – | 3 | 1 | – | – | **4** |
 | [`slack`](#slack) | – | – | 2 | – | – | **2** |
+| [`traefik`](#traefik) | – | 2 | 2 | 2 | – | **6** |
 | [`wazuh`](#wazuh) | – | 2 | 4 | 3 | – | **9** |
 | [`workspace`](#workspace) | 2 | – | – | – | – | **2** |
-| **Total** | **13** | **50** | **33** | **20** | **0** | **116** |
+| **Total** | **13** | **52** | **35** | **22** | **0** | **122** |
 
 ---
 
@@ -1992,6 +1993,107 @@ A Slack sign-in came from an address belonging to a hosting provider or commerci
 **ATT&CK** attack.initial_access, attack.t1078.004
 
 - <https://api.slack.com/methods/team.accessLogs>
+
+---
+
+## traefik
+
+### 🟠 high — JNDI Lookup Injection (Log4Shell) In Request
+
+`af8fa178-5824-4cf6-b1a2-59309dd84763` · [`rules/traefik/traefik_jndi_injection.yml`](../rules/traefik/traefik_jndi_injection.yml) · 3 tests (2 firing)
+
+> **Status: experimental.**
+
+A ${jndi: lookup, plain or URL-encoded, in the request URI or User-Agent. This is the Log4Shell (CVE-2021-44228) exploit string; any Java backend that logs it with a vulnerable Log4j 2 will reach out to the attacker's LDAP or RMI server.
+
+**Fires when** `RequestPath` contains any of `${jndi:`, `%24%7Bjndi:`, `%24%7Bjndi%3A`, `%24%7bjndi%3a`, `${${`, `%24%7B%24%7B` **or** `request_User-Agent` contains any of `${jndi:`, `${${`
+
+**Likely false positives**
+
+- None expected outside security testing.
+
+**ATT&CK** attack.initial_access, attack.t1190, cve.2021-44228
+
+### 🟠 high — Sensitive File Served With HTTP 200
+
+`d702f7b4-770f-4eaf-8399-a5bd832a8566` · [`rules/traefik/traefik_sensitive_file_served.yml`](../rules/traefik/traefik_sensitive_file_served.yml) · 4 tests (2 firing)
+
+> **Status: experimental.**
+
+A request for a secrets-bearing path (.env, .git, credentials, wp-config.php, actuator env or heapdump) was answered 200. Unlike the probe rule, this means a backend may really have handed out the file. Check the response size and the backend behind RouterName.
+
+**Fires when** `RequestPath` contains any of `/.env`, `/.git/`, `/.git/config`, `/.aws/credentials`, `/.ssh/id_rsa`, `/.htpasswd`, `/wp-config.php`, `/.svn/`, `/config.json`, `/.npmrc`, `/.docker/config.json`, `/server-status`, `/phpinfo.php`, `/actuator/env`, `/actuator/heapdump` and `DownstreamStatus` is `200`
+
+**Likely false positives**
+
+- Single-page apps that answer every path with index.html and 200; check DownstreamContentSize against the normal page size.
+
+**ATT&CK** attack.credential_access, attack.t1552.001, attack.collection
+
+### 🟡 medium — Path Traversal Attempt In Request
+
+`7f8e0d55-a1f7-46d9-bf8a-6939538f075f` · [`rules/traefik/traefik_path_traversal.yml`](../rules/traefik/traefik_path_traversal.yml) · 4 tests (3 firing)
+
+> **Status: experimental.**
+
+The request URI carries a directory traversal sequence (../, or its URL-encoded forms) or names a well-known system file such as /etc/passwd. Traefik passes the raw URI to the backend, so a vulnerable backend may resolve it outside its web root.
+
+**Fires when** `RequestPath` contains any of `../`, `..%2f`, `..%2F`, `%2e%2e`, `%2E%2E`, `..\`, `..%5c`, `..%5C`, `/etc/passwd`, `/etc/shadow`, `/proc/self/environ`, `win.ini`
+
+**Likely false positives**
+
+- Clients that send unnormalised relative links (rare).
+
+**ATT&CK** attack.initial_access, attack.t1190
+
+### 🟡 medium — SQL Injection Pattern In Request
+
+`2fe2a4a0-b2c1-4462-bf1e-5872b9746f8a` · [`rules/traefik/traefik_sql_injection.yml`](../rules/traefik/traefik_sql_injection.yml) · 3 tests (2 firing)
+
+> **Status: experimental.**
+
+The request URI holds a classic SQL injection payload: UNION SELECT, tautologies such as ' OR 1=1, time-based probes (SLEEP(, WAITFOR DELAY, pg_sleep) or information_schema lookups, plain or URL-encoded. A 200 or 500 answer is worth a look at the backend logs.
+
+**Fires when** `RequestPath` contains any of `union select`, `union%20select`, `union+select`, `UNION%20SELECT`, `UNION+SELECT`, `UNION SELECT`, `%27%20or%201%3d1`, `' or 1=1`, `%27+or+1%3d1`, `%27%20OR%201%3D1`, `sleep(`, `SLEEP(`, `sleep%28`, `SLEEP%28`, `pg_sleep`, `waitfor%20delay`, `WAITFOR%20DELAY`, `information_schema`
+
+**Likely false positives**
+
+- Search pages or APIs that legitimately take SQL-like text (database admin tools, documentation search).
+
+**ATT&CK** attack.initial_access, attack.t1190
+
+### 🔵 low — Known Attack Tool User Agent
+
+`26636da1-a6e1-4eb7-9dab-0867e60d5b53` · [`rules/traefik/traefik_scanner_user_agent.yml`](../rules/traefik/traefik_scanner_user_agent.yml) · 4 tests (2 firing)
+
+> **Status: experimental.**
+
+The request carries the User-Agent of a vulnerability scanner or brute-force tool (sqlmap, nikto, nuclei, wpscan, gobuster, ffuf, ...). Needs the access log to keep the User-Agent header. Low because these tools rarely hide and the traffic is mostly noise; it is useful for seeing who is mapping you.
+
+**Fires when** `request_User-Agent` contains any of `sqlmap`, `nikto`, `nuclei`, `wpscan`, `gobuster`, `dirbuster`, `feroxbuster`, `ffuf`, `masscan`, `zgrab`, `Nmap Scripting Engine`, `acunetix`, `netsparker`, `Hydra`, `WhatWeb`, `jaeles`, `commix`
+
+**Likely false positives**
+
+- Samma's own scanner jobs (nikto, nmap) against your own targets; filter on their source address if they reach this entry point.
+- Authorised penetration tests.
+
+**ATT&CK** attack.reconnaissance, attack.t1595.002
+
+### 🔵 low — Request For A Sensitive File Path
+
+`04310b37-d7db-4b1e-9c00-129cd6b49484` · [`rules/traefik/traefik_sensitive_file_probe.yml`](../rules/traefik/traefik_sensitive_file_probe.yml) · 5 tests (2 firing)
+
+> **Status: experimental.**
+
+A client asked for a file that should never be served: .env, .git, cloud or SSH credentials, wp-config.php, Spring actuator dumps and similar. Internet-facing proxies see these probes constantly from scanners, so this is low on its own; an answer of 200 is left to the companion rule Sensitive File Served With HTTP 200, which is high.
+
+**Fires when** `RequestPath` contains any of `/.env`, `/.git/`, `/.git/config`, `/.aws/credentials`, `/.ssh/id_rsa`, `/.htpasswd`, `/wp-config.php`, `/.svn/`, `/config.json`, `/.npmrc`, `/.docker/config.json`, `/server-status`, `/phpinfo.php`, `/actuator/env`, `/actuator/heapdump` **and not** `DownstreamStatus` is `200`
+
+**Likely false positives**
+
+- Mass internet scanners; expect a steady background rate on public entry points.
+
+**ATT&CK** attack.reconnaissance, attack.t1595.003
 
 ---
 
