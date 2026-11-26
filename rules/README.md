@@ -101,6 +101,17 @@ which is the vendor-native shape plus a `source` field:
   keeps that header. Traefik's own log lines share the subject and have no
   `RequestPath`, so pin a request field.
 
+- **keycloak** — Keycloak user events (`org.keycloak.events`) on
+  `samma.logs.svc.keycloak` (stream `SIEM_SERVICES`, NATS transport only),
+  from pods labelled `samma.io/detection: keycloak` via samma-io/k8s-log-router
+  with `parse: keycloak`, which drops every other Keycloak log line. Keycloak's
+  own event fields: `type` (`LOGIN`, `LOGIN_ERROR`, `CLIENT_LOGIN_ERROR`,
+  `UPDATE_PASSWORD`, `REMOVE_TOTP`, `IMPERSONATE`, ...), `realmName`,
+  `clientId`, `userId`, `username`, `ipAddress`, `error`, `credential_type`,
+  `identity_provider`, plus `level`. Fields whose value is `null` are absent.
+  Successful events are logged only with
+  `KC_SPI_EVENTS_LISTENER_JBOSS_LOGGING_SUCCESS_LEVEL=info`.
+
 Dotted paths such as `userIdentity.type` work because the engine builds a
 flattened match view of every event; see `internal/decode/normalize.go`.
 Upstream SigmaHQ rules for these products can usually be dropped in unchanged,

@@ -1,6 +1,6 @@
 # Detection rules
 
-**122 rules across 14 log sources.**
+**130 rules across 15 log sources.**
 
 > Generated from the rules tree by `make docs`. Do not edit by hand —
 > `TestRules_CatalogIsUpToDate` fails if this file and the rules disagree.
@@ -57,6 +57,7 @@ Wildcards also do not work in a value: `*` is matched literally. See
 | [`gcp`](#gcp) | 1 | 1 | – | 1 | – | **3** |
 | [`github`](#github) | 1 | 2 | – | – | – | **3** |
 | [`k8s`](#k8s) | 8 | 11 | 5 | 3 | – | **27** |
+| [`keycloak`](#keycloak) | – | 1 | 5 | 2 | – | **8** |
 | [`onepassword`](#onepassword) | – | 2 | 1 | – | – | **3** |
 | [`osquery`](#osquery) | – | 5 | 5 | 1 | – | **11** |
 | [`scanner`](#scanner) | – | 3 | 1 | – | – | **4** |
@@ -64,7 +65,7 @@ Wildcards also do not work in a value: `*` is matched literally. See
 | [`traefik`](#traefik) | – | 2 | 2 | 2 | – | **6** |
 | [`wazuh`](#wazuh) | – | 2 | 4 | 3 | – | **9** |
 | [`workspace`](#workspace) | 2 | – | – | – | – | **2** |
-| **Total** | **13** | **52** | **35** | **22** | **0** | **122** |
+| **Total** | **13** | **53** | **40** | **24** | **0** | **130** |
 
 ---
 
@@ -1636,6 +1637,138 @@ Detects access to pod logs via API - may indicate reconnaissance to extract sens
 **ATT&CK** attack.t1613
 
 - <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_pod_log_access.yaml>
+
+---
+
+## keycloak
+
+### 🟠 high — Keycloak User Impersonation
+
+`a3b0f7c3-8998-4344-9ecc-cc3f4fa7763f` · [`rules/keycloak/keycloak_impersonation.yml`](../rules/keycloak/keycloak_impersonation.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+An administrator impersonated a user and now holds a session as that user without knowing their password. Legitimate for support, but every use should be expected and recorded.
+
+**Fires when** `type` is `IMPERSONATE`
+
+**Likely false positives**
+
+- Support staff impersonating a user to reproduce a problem.
+
+**ATT&CK** attack.privilege_escalation, attack.t1134
+
+### 🟡 medium — Keycloak Admin Login
+
+`300ce7bd-e100-4215-a748-95af7b176d3d` · [`rules/keycloak/keycloak_admin_login.yml`](../rules/keycloak/keycloak_admin_login.yml) · 4 tests (2 firing)
+
+> **Status: experimental.**
+
+A user logged in to the Keycloak admin console, or got a token through admin-cli. Expected only from administrators at known addresses; an admin-cli login from a new ipAddress is how a stolen admin password is used. Needs successful events logged (KC_SPI_EVENTS_LISTENER_JBOSS_LOGGING_SUCCESS_LEVEL=info).
+
+**Fires when** `type` is `LOGIN` and `clientId` is one of `security-admin-console`, `admin-cli`
+
+**Likely false positives**
+
+- Routine administration; tune by username and ipAddress if logins are frequent.
+
+**ATT&CK** attack.privilege_escalation, attack.t1078
+
+### 🟡 medium — Keycloak Admin Login Failure
+
+`de29537c-a03e-46a4-b5f4-e94dd0bd23ae` · [`rules/keycloak/keycloak_admin_login_failure.yml`](../rules/keycloak/keycloak_admin_login_failure.yml) · 4 tests (2 firing)
+
+> **Status: experimental.**
+
+A login to the Keycloak admin console or with admin-cli (the direct password grant used by scripts and attackers alike) failed. Admin credentials control every realm; check whether ipAddress is expected and whether the username exists.
+
+**Fires when** `type` is `LOGIN_ERROR` and `clientId` is one of `security-admin-console`, `admin-cli`
+
+**Likely false positives**
+
+- An administrator mistyping a password.
+
+**ATT&CK** attack.credential_access, attack.t1110, attack.t1078
+
+### 🟡 medium — Keycloak Client Credentials Failure
+
+`a6b62eda-fccc-4643-8bb6-d52cbc8b11ae` · [`rules/keycloak/keycloak_client_credentials_failure.yml`](../rules/keycloak/keycloak_client_credentials_failure.yml) · 3 tests (2 firing)
+
+> **Status: experimental.**
+
+A service client failed to authenticate with its client secret or signed JWT. Either a deployment carries a stale secret, or someone is trying secrets against a confidential client.
+
+**Fires when** `type` is `CLIENT_LOGIN_ERROR` and `error` is one of `invalid_client_credentials`, `unauthorized_client`, `invalid_client`
+
+**Likely false positives**
+
+- A service deployed with an old secret after rotation; it fails on every token request until fixed.
+
+**ATT&CK** attack.credential_access, attack.t1110, attack.t1528
+
+### 🟡 medium — Keycloak Identity Provider Linked
+
+`83cddc95-d7ad-495b-b059-3710f187f639` · [`rules/keycloak/keycloak_identity_provider_linked.yml`](../rules/keycloak/keycloak_identity_provider_linked.yml) · 3 tests (2 firing)
+
+> **Status: experimental.**
+
+An external identity provider account (Google, GitHub, another OIDC or SAML IdP) was linked to a Keycloak user. Whoever controls the linked account can now log in as this user, so an unexpected link is persistence.
+
+**Fires when** `type` is one of `IDENTITY_PROVIDER_LINK_ACCOUNT`, `FEDERATED_IDENTITY_LINK`
+
+**Likely false positives**
+
+- Users linking their own social login.
+
+**ATT&CK** attack.persistence, attack.t1098
+
+### 🟡 medium — Keycloak MFA Removed
+
+`e763458d-63bf-46a2-9899-a978183548ef` · [`rules/keycloak/keycloak_mfa_removed.yml`](../rules/keycloak/keycloak_mfa_removed.yml) · 4 tests (2 firing)
+
+> **Status: experimental.**
+
+A user removed an OTP or WebAuthn credential. After an account takeover, removing the second factor is how an attacker keeps access and locks the owner out. Confirm with the user.
+
+**Fires when** (`type` is `REMOVE_CREDENTIAL` and `credential_type` is one of `otp`, `webauthn`, `webauthn-passwordless`) **or** `type` is `REMOVE_TOTP`
+
+**Likely false positives**
+
+- A user replacing a lost phone or security key.
+
+**ATT&CK** attack.persistence, attack.defense_evasion, attack.t1556.006
+
+### 🔵 low — Keycloak Login Failure
+
+`8209679c-c141-4378-8c09-361980899b15` · [`rules/keycloak/keycloak_login_failure.yml`](../rules/keycloak/keycloak_login_failure.yml) · 5 tests (2 firing)
+
+> **Status: experimental.**
+
+A user login to Keycloak failed on a bad password, an unknown username or a temporarily locked account. One failure is noise; many for the same username or from the same ipAddress is password guessing or credential stuffing. Admin-console and admin-cli failures are a separate, higher rule.
+
+**Fires when** (`type` is `LOGIN_ERROR` and `error` is one of `invalid_user_credentials`, `user_not_found`, `user_temporarily_disabled`, `invalid_authentication`) **and not** `clientId` is one of `security-admin-console`, `admin-cli`
+
+**Likely false positives**
+
+- A user mistyping a password.
+
+**ATT&CK** attack.credential_access, attack.t1110
+
+### 🔵 low — Keycloak Password Changed or Reset
+
+`839e1dc4-6f5b-4ac3-8362-845e844292fc` · [`rules/keycloak/keycloak_password_changed.yml`](../rules/keycloak/keycloak_password_changed.yml) · 5 tests (3 firing)
+
+> **Status: experimental.**
+
+A user changed or reset their password. Expected now and then; after a run of login failures for the same user, or from an unusual ipAddress, it can be an account takeover being made permanent.
+
+**Fires when** (`type` is `UPDATE_CREDENTIAL` and `credential_type` is `password`) **or** `type` is one of `UPDATE_PASSWORD`, `RESET_PASSWORD`
+
+**Likely false positives**
+
+- Routine password changes.
+
+**ATT&CK** attack.persistence, attack.t1098
 
 ---
 

@@ -1,0 +1,23 @@
+title: Keycloak Admin Login Failure
+id: de29537c-a03e-46a4-b5f4-e94dd0bd23ae
+status: experimental
+description: A login to the Keycloak admin console or with admin-cli (the direct password grant used by scripts and attackers
+  alike) failed. Admin credentials control every realm; check whether ipAddress is expected and whether the username exists.
+author: samma-io
+level: medium
+tags:
+- attack.credential_access
+- attack.t1110
+- attack.t1078
+logsource:
+  product: keycloak
+  service: events
+detection:
+  selection:
+    type: LOGIN_ERROR
+    clientId:
+    - security-admin-console
+    - admin-cli
+  condition: selection
+falsepositives:
+- An administrator mistyping a password.

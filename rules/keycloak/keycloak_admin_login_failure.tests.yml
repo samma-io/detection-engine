@@ -1,0 +1,87 @@
+# Events modelled on Keycloak 26 org.keycloak.events lines after k8s-log-router (parse: keycloak), with names and addresses replaced.
+- name: admin console bad password fires
+  expected: true
+  event:
+    source: keycloak
+    feed: k8s
+    realmId: example-realm-id
+    realmName: master
+    clientId: security-admin-console
+    userId: 5f3c2b1a-0000-4000-8000-000000000001
+    username: alice
+    ipAddress: 198.51.100.7
+    auth_method: openid-connect
+    level: WARN
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: keycloak
+      pod: keycloak-0
+      container: keycloak
+      node: node1
+    type: LOGIN_ERROR
+    error: invalid_user_credentials
+    search_text: type="LOGIN_ERROR", realmName="master", clientId="security-admin-console", error="invalid_user_credentials"
+- name: admin-cli unknown user fires
+  expected: true
+  event:
+    source: keycloak
+    feed: k8s
+    realmId: example-realm-id
+    realmName: master
+    clientId: admin-cli
+    username: alice
+    ipAddress: 198.51.100.7
+    auth_method: openid-connect
+    level: WARN
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: keycloak
+      pod: keycloak-0
+      container: keycloak
+      node: node1
+    type: LOGIN_ERROR
+    error: user_not_found
+    search_text: type="LOGIN_ERROR", realmName="master", clientId="admin-cli", error="user_not_found"
+- name: app client failure does not fire
+  expected: false
+  event:
+    source: keycloak
+    feed: k8s
+    realmId: example-realm-id
+    realmName: example
+    clientId: web-app
+    userId: 5f3c2b1a-0000-4000-8000-000000000001
+    username: alice
+    ipAddress: 198.51.100.7
+    auth_method: openid-connect
+    level: WARN
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: keycloak
+      pod: keycloak-0
+      container: keycloak
+      node: node1
+    type: LOGIN_ERROR
+    error: invalid_user_credentials
+    search_text: type="LOGIN_ERROR", realmName="example", clientId="web-app", error="invalid_user_credentials"
+- name: admin console success does not fire
+  expected: false
+  event:
+    source: keycloak
+    feed: k8s
+    realmId: example-realm-id
+    realmName: master
+    clientId: security-admin-console
+    userId: 5f3c2b1a-0000-4000-8000-000000000001
+    username: alice
+    ipAddress: 198.51.100.7
+    auth_method: openid-connect
+    level: INFO
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: keycloak
+      pod: keycloak-0
+      container: keycloak
+      node: node1
+    type: LOGIN
+    search_text: type="LOGIN", realmName="master", clientId="security-admin-console"

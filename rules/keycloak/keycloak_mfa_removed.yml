@@ -1,0 +1,26 @@
+title: Keycloak MFA Removed
+id: e763458d-63bf-46a2-9899-a978183548ef
+status: experimental
+description: A user removed an OTP or WebAuthn credential. After an account takeover, removing the second factor is how an
+  attacker keeps access and locks the owner out. Confirm with the user.
+author: samma-io
+level: medium
+tags:
+- attack.persistence
+- attack.defense_evasion
+- attack.t1556.006
+logsource:
+  product: keycloak
+  service: events
+detection:
+  selection_totp:
+    type: REMOVE_TOTP
+  selection_credential:
+    type: REMOVE_CREDENTIAL
+    credential_type:
+    - otp
+    - webauthn
+    - webauthn-passwordless
+  condition: 1 of selection_*
+falsepositives:
+- A user replacing a lost phone or security key.

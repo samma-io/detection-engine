@@ -1,0 +1,67 @@
+# Events modelled on Keycloak 26 org.keycloak.events lines after k8s-log-router (parse: keycloak), with names and addresses replaced.
+- name: idp link fires
+  expected: true
+  event:
+    source: keycloak
+    feed: k8s
+    realmId: example-realm-id
+    realmName: example
+    clientId: web-app
+    userId: 5f3c2b1a-0000-4000-8000-000000000001
+    username: alice
+    ipAddress: 198.51.100.7
+    auth_method: openid-connect
+    level: INFO
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: keycloak
+      pod: keycloak-0
+      container: keycloak
+      node: node1
+    type: IDENTITY_PROVIDER_LINK_ACCOUNT
+    identity_provider: github
+    search_text: type="IDENTITY_PROVIDER_LINK_ACCOUNT", realmName="example", clientId="web-app"
+- name: federated identity link fires
+  expected: true
+  event:
+    source: keycloak
+    feed: k8s
+    realmId: example-realm-id
+    realmName: example
+    clientId: account-console
+    userId: 5f3c2b1a-0000-4000-8000-000000000001
+    username: alice
+    ipAddress: 198.51.100.7
+    auth_method: openid-connect
+    level: INFO
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: keycloak
+      pod: keycloak-0
+      container: keycloak
+      node: node1
+    type: FEDERATED_IDENTITY_LINK
+    identity_provider: google
+    search_text: type="FEDERATED_IDENTITY_LINK", realmName="example", clientId="account-console"
+- name: idp login does not fire
+  expected: false
+  event:
+    source: keycloak
+    feed: k8s
+    realmId: example-realm-id
+    realmName: example
+    clientId: web-app
+    userId: 5f3c2b1a-0000-4000-8000-000000000001
+    username: alice
+    ipAddress: 198.51.100.7
+    auth_method: openid-connect
+    level: INFO
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: keycloak
+      pod: keycloak-0
+      container: keycloak
+      node: node1
+    type: IDENTITY_PROVIDER_LOGIN
+    identity_provider: github
+    search_text: type="IDENTITY_PROVIDER_LOGIN", realmName="example", clientId="web-app"

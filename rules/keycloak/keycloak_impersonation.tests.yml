@@ -1,0 +1,46 @@
+# Events modelled on Keycloak 26 org.keycloak.events lines after k8s-log-router (parse: keycloak), with names and addresses replaced.
+- name: impersonate fires
+  expected: true
+  event:
+    source: keycloak
+    feed: k8s
+    realmId: example-realm-id
+    realmName: example
+    clientId: security-admin-console
+    userId: 5f3c2b1a-0000-4000-8000-000000000001
+    username: alice
+    ipAddress: 198.51.100.7
+    auth_method: openid-connect
+    level: INFO
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: keycloak
+      pod: keycloak-0
+      container: keycloak
+      node: node1
+    type: IMPERSONATE
+    impersonator: admin
+    impersonator_realm: master
+    search_text: type="IMPERSONATE", realmName="example", clientId="security-admin-console"
+- name: impersonate error does not fire
+  expected: false
+  event:
+    source: keycloak
+    feed: k8s
+    realmId: example-realm-id
+    realmName: example
+    clientId: web-app
+    userId: 5f3c2b1a-0000-4000-8000-000000000001
+    username: alice
+    ipAddress: 198.51.100.7
+    auth_method: openid-connect
+    level: WARN
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: keycloak
+      pod: keycloak-0
+      container: keycloak
+      node: node1
+    type: IMPERSONATE_ERROR
+    error: not_allowed
+    search_text: type="IMPERSONATE_ERROR", realmName="example", clientId="web-app", error="not_allowed"

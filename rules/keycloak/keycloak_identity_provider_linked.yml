@@ -1,0 +1,21 @@
+title: Keycloak Identity Provider Linked
+id: 83cddc95-d7ad-495b-b059-3710f187f639
+status: experimental
+description: An external identity provider account (Google, GitHub, another OIDC or SAML IdP) was linked to a Keycloak user.
+  Whoever controls the linked account can now log in as this user, so an unexpected link is persistence.
+author: samma-io
+level: medium
+tags:
+- attack.persistence
+- attack.t1098
+logsource:
+  product: keycloak
+  service: events
+detection:
+  selection:
+    type:
+    - IDENTITY_PROVIDER_LINK_ACCOUNT
+    - FEDERATED_IDENTITY_LINK
+  condition: selection
+falsepositives:
+- Users linking their own social login.
