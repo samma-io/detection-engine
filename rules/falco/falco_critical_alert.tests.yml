@@ -1,0 +1,81 @@
+# Events follow Falco 0.39 JSON output (json_output, output and tags included) after k8s-log-router, with names and addresses replaced.
+- name: critical alert fires
+  expected: true
+  event:
+    source: falco
+    feed: k8s
+    hostname: node1
+    priority: Critical
+    rule: Drop and execute new binary in container
+    tags:
+    - container
+    - process
+    - mitre_persistence
+    - TA0003
+    time: '2026-11-25T10:00:00.123456789Z'
+    output: '10:00:00.123456789: Critical Executing binary not part of base image (proc_exe=/tmp/x user=root container_name=web
+      k8s_ns=shop k8s_pod_name=web-0)'
+    output_fields:
+      proc.exepath: /tmp/x
+      user.name: root
+      container.name: web
+      k8s.ns.name: shop
+      k8s.pod.name: web-0
+    event_time: '2026-11-25T10:00:00.123Z'
+    k8s:
+      namespace: falco
+      pod: falco-abcde
+      container: falco
+      node: node1
+    search_text: '10:00:00.123456789: Critical Executing binary not part of base image (proc_exe=/tmp/x user=root container_name=web
+      k8s_ns=shop k8s_pod_name=web-0)'
+- name: error alert does not fire
+  expected: false
+  event:
+    source: falco
+    feed: k8s
+    hostname: node1
+    priority: Error
+    rule: Write below etc
+    tags:
+    - filesystem
+    - host
+    - mitre_persistence
+    - T1098
+    time: '2026-11-25T10:00:00.123456789Z'
+    output: '10:00:00.123456789: Error File below /etc opened for writing (file=/etc/passwd pcmdline=sh -c echo user=root
+      process=sh container_name=web k8s_ns=shop k8s_pod_name=web-0)'
+    output_fields:
+      fd.name: /etc/passwd
+      proc.name: sh
+      user.name: root
+      container.name: web
+      k8s.ns.name: shop
+      k8s.pod.name: web-0
+    event_time: '2026-11-25T10:00:00.123Z'
+    k8s:
+      namespace: falco
+      pod: falco-abcde
+      container: falco
+      node: node1
+    search_text: '10:00:00.123456789: Error File below /etc opened for writing (file=/etc/passwd pcmdline=sh -c echo user=root
+      process=sh container_name=web k8s_ns=shop k8s_pod_name=web-0)'
+- name: informational does not fire
+  expected: false
+  event:
+    source: falco
+    feed: k8s
+    hostname: node1
+    priority: Informational
+    rule: 'Falco internal: syscall event drop'
+    tags: []
+    time: '2026-11-25T10:00:00.123456789Z'
+    output: 'Falco internal: syscall event drop'
+    output_fields: {}
+    event_time: '2026-11-25T10:00:00.123Z'
+    k8s:
+      namespace: falco
+      pod: falco-abcde
+      container: falco
+      node: node1
+    search_text: 'Falco internal: syscall event drop'

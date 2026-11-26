@@ -1,0 +1,19 @@
+title: Gatekeeper Denied an Admission Request
+id: 57b0cc9c-957c-41b2-840e-4c94401b3ff3
+status: experimental
+description: OPA Gatekeeper refused to create or change an object because it broke a constraint. Usually a deployment that
+  needs fixing; repeated denials from one request_username for privileged or host-access constraints are someone probing policy.
+author: samma-io
+level: low
+tags:
+- attack.defense_evasion
+logsource:
+  product: opa_gatekeeper
+  service: policy
+detection:
+  selection:
+    event_type: violation
+    constraint_action: deny
+  condition: selection
+falsepositives:
+- A CI pipeline deploying a manifest that does not meet policy yet.

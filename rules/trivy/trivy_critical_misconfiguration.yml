@@ -1,0 +1,23 @@
+title: Trivy Critical Workload Misconfiguration
+id: 329e790e-08ff-47bc-aae0-1843004ee7a5
+status: experimental
+description: 'trivy-operator found a CRITICAL misconfiguration in a workload or node: for example a privileged container,
+  a host path mount or host networking. findings lists the failed checks (KSV ids).'
+author: samma-io
+level: medium
+tags:
+- attack.privilege_escalation
+- attack.t1611
+logsource:
+  product: trivy
+  service: reports
+detection:
+  selection:
+    kind:
+    - ConfigAuditReport
+    - ClusterConfigAuditReport
+    - InfraAssessmentReport
+    critical: true
+  condition: selection
+falsepositives:
+- System workloads (CNI, storage, monitoring agents) that need privileges by design.

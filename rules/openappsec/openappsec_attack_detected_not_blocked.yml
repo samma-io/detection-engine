@@ -1,0 +1,23 @@
+title: open-appsec Attack Detected but Not Blocked
+id: 494fd9fa-7fac-4c8f-bed7-bfed0045df73
+status: experimental
+description: open-appsec saw a critical or high severity web attack (eventData.waapIncidentType) and let it through because
+  the practice is in detect mode. The request reached the application; check its response and logs, and consider prevent mode
+  for this asset.
+author: samma-io
+level: high
+tags:
+- attack.initial_access
+- attack.t1190
+logsource:
+  product: open_appsec
+  service: security
+detection:
+  selection:
+    eventSeverity:
+    - Critical
+    - High
+    eventData.securityAction: Detect
+  condition: selection
+falsepositives:
+- A new practice in learning or detect mode flagging normal traffic.

@@ -1,0 +1,29 @@
+# sigma-go Config for the trivy lane.
+#
+# Records are trivy-operator reports pushed to samma-io/k8s-log-router
+# (operator.webhookBroadcastURL = http://<router>:8080/v1/trivy, with a bearer
+# token) and reduced by its trivy parser, one report per NATS message on
+# samma.logs.svc.trivy in stream SIEM_SERVICES (feed: push). There is no S3
+# producer for this lane.
+#
+# Fields: kind (VulnerabilityReport, ExposedSecretReport, ConfigAuditReport,
+# ClusterConfigAuditReport, RbacAssessmentReport, ClusterRbacAssessmentReport,
+# InfraAssessmentReport), report_name, resource.{kind,name,namespace,container},
+# image, summary.{criticalCount,highCount,mediumCount,lowCount}, critical and
+# high (booleans: the count is above 0), secrets (the number of exposed
+# secrets), findings[] (at most 20 critical or high: id, severity, title, ...).
+#
+# trivy-operator re-sends a report whenever it rescans (by default every
+# 24h per workload), so the same finding alerts again on each rescan.
+#
+# Status: experimental. trivy-operator is not yet installed on a test
+# cluster; the test events are the router's output for reports shaped as in
+# trivy-operator 0.24's CRDs. Verify after install.
+title: trivy
+logsources:
+  trivy_reports:
+    product: trivy
+    service: reports
+    index: trivy
+defaultindex: trivy
+fieldmappings: {}

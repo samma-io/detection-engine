@@ -1,6 +1,6 @@
 # Detection rules
 
-**122 rules across 14 log sources.**
+**134 rules across 18 log sources.**
 
 > Generated from the rules tree by `make docs`. Do not edit by hand —
 > `TestRules_CatalogIsUpToDate` fails if this file and the rules disagree.
@@ -54,17 +54,21 @@ Wildcards also do not work in a value: `*` is matched literally. See
 | [`aws`](#aws) | 1 | 22 | 12 | 12 | – | **47** |
 | [`cloudflare`](#cloudflare) | – | 1 | 1 | – | – | **2** |
 | [`dns`](#dns) | – | – | 2 | – | – | **2** |
+| [`falco`](#falco) | – | 1 | 2 | 1 | – | **4** |
+| [`gatekeeper`](#gatekeeper) | – | – | 1 | 1 | – | **2** |
 | [`gcp`](#gcp) | 1 | 1 | – | 1 | – | **3** |
 | [`github`](#github) | 1 | 2 | – | – | – | **3** |
 | [`k8s`](#k8s) | 8 | 11 | 5 | 3 | – | **27** |
 | [`onepassword`](#onepassword) | – | 2 | 1 | – | – | **3** |
+| [`openappsec`](#openappsec) | – | 1 | 1 | – | – | **2** |
 | [`osquery`](#osquery) | – | 5 | 5 | 1 | – | **11** |
 | [`scanner`](#scanner) | – | 3 | 1 | – | – | **4** |
 | [`slack`](#slack) | – | – | 2 | – | – | **2** |
 | [`traefik`](#traefik) | – | 2 | 2 | 2 | – | **6** |
+| [`trivy`](#trivy) | – | 2 | 2 | – | – | **4** |
 | [`wazuh`](#wazuh) | – | 2 | 4 | 3 | – | **9** |
 | [`workspace`](#workspace) | 2 | – | – | – | – | **2** |
-| **Total** | **13** | **52** | **35** | **22** | **0** | **122** |
+| **Total** | **13** | **56** | **41** | **24** | **0** | **134** |
 
 ---
 
@@ -1040,6 +1044,110 @@ Something inside the VPC asked internal DNS for the address of a public resolver
 
 ---
 
+## falco
+
+### 🟠 high — Falco Critical Alert
+
+`74d06b65-2656-4d81-87e8-88d1cfa11d65` · [`rules/falco/falco_critical_alert.yml`](../rules/falco/falco_critical_alert.yml) · 3 tests (1 firing)
+
+> **Status: experimental.**
+
+A Falco rule at priority Critical, Alert or Emergency fired: the runtime sensor saw something it treats as a likely compromise, such as a binary dropped and executed in a container. Read output for the process, container and pod.
+
+**Fires when** `priority` is one of `Emergency`, `Alert`, `Critical`
+
+**Likely false positives**
+
+- A Falco rule that is too broad for this cluster; tune it in Falco, not here.
+
+**ATT&CK** attack.execution
+
+### 🟡 medium — Falco Error or Warning Alert
+
+`3d4a59bc-d666-4a7c-9d1b-0b87760254ba` · [`rules/falco/falco_error_or_warning_alert.yml`](../rules/falco/falco_error_or_warning_alert.yml) · 4 tests (2 firing)
+
+> **Status: experimental.**
+
+A Falco rule at priority Error or Warning fired, for example a write below /etc or a sensitive file such as /etc/shadow read by an untrusted program. Read output for the file, process and pod.
+
+**Fires when** `priority` is one of `Error`, `Warning`
+
+**Likely false positives**
+
+- Package managers and configuration tools in containers that legitimately touch /etc.
+
+**ATT&CK** attack.persistence, attack.credential_access
+
+### 🟡 medium — Falco Terminal Shell in Container
+
+`122da2d1-8f2a-4d77-b3d7-766c75a4e54a` · [`rules/falco/falco_terminal_shell.yml`](../rules/falco/falco_terminal_shell.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+Someone opened an interactive shell with a terminal inside a container (kubectl exec -it, docker exec -it). Production containers rarely need one; match it with a k8s_pod_exec alert from the API audit log for who did it.
+
+**Fires when** `rule` is `Terminal shell in container`
+
+**Likely false positives**
+
+- An administrator debugging a pod.
+
+**ATT&CK** attack.execution, attack.t1059
+
+### 🔵 low — Falco Notice Alert
+
+`127e58b9-edfa-43ba-9a3d-0379a2c3ec9b` · [`rules/falco/falco_notice_alert.yml`](../rules/falco/falco_notice_alert.yml) · 3 tests (1 firing)
+
+> **Status: experimental.**
+
+A Falco rule at priority Notice fired, such as an unexpected connection to the Kubernetes API server from a container. Low on its own; useful next to other alerts for the same pod.
+
+**Fires when** `priority` is `Notice` **and not** `rule` is `Terminal shell in container`
+
+**Likely false positives**
+
+- Operators and controllers that talk to the API server from a container.
+
+**ATT&CK** attack.discovery
+
+---
+
+## gatekeeper
+
+### 🟡 medium — Gatekeeper Audit Found a Privileged Workload
+
+`39c7501b-1e0d-47d0-87ba-31222eecaed5` · [`rules/gatekeeper/gatekeeper_audit_privileged_workload.yml`](../rules/gatekeeper/gatekeeper_audit_privileged_workload.yml) · 4 tests (2 firing)
+
+> **Status: experimental.**
+
+The Gatekeeper audit found an existing object that breaks a privilege constraint: a privileged container, host namespaces, host paths, host ports, added capabilities or privilege escalation. It is already running, so admission did not stop it (created before the constraint, or the constraint is in dryrun).
+
+**Fires when** `event_type` is `violation_audited` and `constraint_kind` is one of `K8sPSPPrivilegedContainer`, `K8sPSPHostNamespace`, `K8sPSPHostFilesystem`, `K8sPSPHostNetworkingPorts`, `K8sPSPCapabilities`, `K8sPSPAllowPrivilegeEscalationContainer`
+
+**Likely false positives**
+
+- System DaemonSets (CNI, storage, log shippers) that need host access by design; exempt them in the constraint.
+
+**ATT&CK** attack.privilege_escalation, attack.t1611
+
+### 🔵 low — Gatekeeper Denied an Admission Request
+
+`57b0cc9c-957c-41b2-840e-4c94401b3ff3` · [`rules/gatekeeper/gatekeeper_admission_denied.yml`](../rules/gatekeeper/gatekeeper_admission_denied.yml) · 4 tests (2 firing)
+
+> **Status: experimental.**
+
+OPA Gatekeeper refused to create or change an object because it broke a constraint. Usually a deployment that needs fixing; repeated denials from one request_username for privileged or host-access constraints are someone probing policy.
+
+**Fires when** `event_type` is `violation` and `constraint_action` is `deny`
+
+**Likely false positives**
+
+- A CI pipeline deploying a manifest that does not meet policy yet.
+
+**ATT&CK** attack.defense_evasion
+
+---
+
 ## gcp
 
 ### 🔴 critical — GCP IAM Policy Granted To allUsers
@@ -1697,6 +1805,42 @@ A failed sign-in on the 1Password Events API. Credential failures against the pa
 
 ---
 
+## openappsec
+
+### 🟠 high — open-appsec Attack Detected but Not Blocked
+
+`494fd9fa-7fac-4c8f-bed7-bfed0045df73` · [`rules/openappsec/openappsec_attack_detected_not_blocked.yml`](../rules/openappsec/openappsec_attack_detected_not_blocked.yml) · 4 tests (2 firing)
+
+> **Status: experimental.**
+
+open-appsec saw a critical or high severity web attack (eventData.waapIncidentType) and let it through because the practice is in detect mode. The request reached the application; check its response and logs, and consider prevent mode for this asset.
+
+**Fires when** `eventSeverity` is one of `Critical`, `High` and `eventData.securityAction` is `Detect`
+
+**Likely false positives**
+
+- A new practice in learning or detect mode flagging normal traffic.
+
+**ATT&CK** attack.initial_access, attack.t1190
+
+### 🟡 medium — open-appsec Blocked an Attack
+
+`720aae8c-adc3-4529-af06-178543aba63b` · [`rules/openappsec/openappsec_attack_prevented.yml`](../rules/openappsec/openappsec_attack_prevented.yml) · 3 tests (1 firing)
+
+> **Status: experimental.**
+
+open-appsec blocked a critical or high severity web attack. Nothing reached the application; repeated blocks from one eventData.sourceIP are an attacker or scanner working through the site.
+
+**Fires when** `eventSeverity` is one of `Critical`, `High` and `eventData.securityAction` is `Prevent`
+
+**Likely false positives**
+
+- A false positive blocking a real user; check eventData.httpUriPath.
+
+**ATT&CK** attack.initial_access, attack.t1190
+
+---
+
 ## osquery
 
 ### 🟠 high — New Setuid Or Setgid Program
@@ -2094,6 +2238,74 @@ A client asked for a file that should never be served: .env, .git, cloud or SSH 
 - Mass internet scanners; expect a steady background rate on public entry points.
 
 **ATT&CK** attack.reconnaissance, attack.t1595.003
+
+---
+
+## trivy
+
+### 🟠 high — Trivy Critical Vulnerability in Running Image
+
+`c371eeb3-117f-440b-83a2-e5d3d8c8fe5d` · [`rules/trivy/trivy_critical_vulnerability.yml`](../rules/trivy/trivy_critical_vulnerability.yml) · 3 tests (1 firing)
+
+> **Status: experimental.**
+
+trivy-operator found at least one CRITICAL vulnerability in an image that runs in the cluster. findings lists up to 20 critical or high CVEs with the fixed version; resource names the workload. Rebuild or upgrade the image.
+
+**Fires when** `kind` is `VulnerabilityReport` and `critical` is `true`
+
+**Likely false positives**
+
+- A CVE in a package the application never loads; accept it in trivy-operator, not here.
+
+**ATT&CK** attack.initial_access, attack.t1190
+
+### 🟠 high — Trivy Exposed Secret in Image
+
+`cbe43397-073f-42e0-9d53-a104a285d52c` · [`rules/trivy/trivy_exposed_secret.yml`](../rules/trivy/trivy_exposed_secret.yml) · 3 tests (1 firing)
+
+> **Status: experimental.**
+
+trivy-operator found a secret (a cloud key, token or private key) baked into an image that runs in the cluster. findings names the rule and the file; the secret itself is not forwarded. Rotate the secret, then rebuild the image without it.
+
+**Fires when** `kind` is `ExposedSecretReport` **and not** `secrets` is `0`
+
+**Likely false positives**
+
+- Test fixtures or example keys shipped in an image.
+
+**ATT&CK** attack.credential_access, attack.t1552.001
+
+### 🟡 medium — Trivy Critical RBAC Permission
+
+`5f48da95-c7ef-44cf-8c58-6043656a4e43` · [`rules/trivy/trivy_critical_rbac.yml`](../rules/trivy/trivy_critical_rbac.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+trivy-operator found a Role or ClusterRole granting a CRITICAL permission, such as managing secrets cluster-wide, escalating or impersonating. Whoever is bound to it can take over namespaces or the cluster.
+
+**Fires when** `kind` is one of `RbacAssessmentReport`, `ClusterRbacAssessmentReport` and `critical` is `true`
+
+**Likely false positives**
+
+- Controllers and operators that need broad permissions by design.
+
+**ATT&CK** attack.privilege_escalation, attack.t1078.004
+
+### 🟡 medium — Trivy Critical Workload Misconfiguration
+
+`329e790e-08ff-47bc-aae0-1843004ee7a5` · [`rules/trivy/trivy_critical_misconfiguration.yml`](../rules/trivy/trivy_critical_misconfiguration.yml) · 3 tests (1 firing)
+
+> **Status: experimental.**
+
+trivy-operator found a CRITICAL misconfiguration in a workload or node: for example a privileged container, a host path mount or host networking. findings lists the failed checks (KSV ids).
+
+**Fires when** `kind` is one of `ConfigAuditReport`, `ClusterConfigAuditReport`, `InfraAssessmentReport` and `critical` is `true`
+
+**Likely false positives**
+
+- System workloads (CNI, storage, monitoring agents) that need privileges by design.
+
+**ATT&CK** attack.privilege_escalation, attack.t1611
 
 ---
 

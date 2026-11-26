@@ -1,0 +1,19 @@
+title: Falco Terminal Shell in Container
+id: 122da2d1-8f2a-4d77-b3d7-766c75a4e54a
+status: experimental
+description: Someone opened an interactive shell with a terminal inside a container (kubectl exec -it, docker exec -it). Production
+  containers rarely need one; match it with a k8s_pod_exec alert from the API audit log for who did it.
+author: samma-io
+level: medium
+tags:
+- attack.execution
+- attack.t1059
+logsource:
+  product: falco
+  service: alerts
+detection:
+  selection:
+    rule: Terminal shell in container
+  condition: selection
+falsepositives:
+- An administrator debugging a pod.

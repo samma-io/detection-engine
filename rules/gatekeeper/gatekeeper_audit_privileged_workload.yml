@@ -1,0 +1,27 @@
+title: Gatekeeper Audit Found a Privileged Workload
+id: 39c7501b-1e0d-47d0-87ba-31222eecaed5
+status: experimental
+description: 'The Gatekeeper audit found an existing object that breaks a privilege constraint: a privileged container, host
+  namespaces, host paths, host ports, added capabilities or privilege escalation. It is already running, so admission did
+  not stop it (created before the constraint, or the constraint is in dryrun).'
+author: samma-io
+level: medium
+tags:
+- attack.privilege_escalation
+- attack.t1611
+logsource:
+  product: opa_gatekeeper
+  service: policy
+detection:
+  selection:
+    event_type: violation_audited
+    constraint_kind:
+    - K8sPSPPrivilegedContainer
+    - K8sPSPHostNamespace
+    - K8sPSPHostFilesystem
+    - K8sPSPHostNetworkingPorts
+    - K8sPSPCapabilities
+    - K8sPSPAllowPrivilegeEscalationContainer
+  condition: selection
+falsepositives:
+- System DaemonSets (CNI, storage, log shippers) that need host access by design; exempt them in the constraint.

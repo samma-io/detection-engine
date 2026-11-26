@@ -1,0 +1,145 @@
+# Events follow the open-appsec security-log fields after k8s-log-router, with names and addresses replaced.
+- name: detected SQL injection fires
+  expected: true
+  event:
+    source: openappsec
+    feed: k8s
+    eventTime: '2026-11-25T10:00:00.123'
+    eventName: Web Request
+    eventSeverity: Critical
+    eventPriority: High
+    eventType: Event Driven
+    eventLevel: Log
+    eventAudience: Security
+    eventTags:
+    - Threat Prevention
+    eventSource:
+      agentId: example-agent-id
+      eventTraceId: example-trace
+      serviceName: Web Application
+    eventData:
+      eventConfidence: Very High
+      securityAction: Detect
+      waapIncidentType: SQL Injection
+      assetName: shop
+      practiceName: Web Application Best Practice
+      sourceIP: 198.51.100.7
+      httpHostName: shop.example.com
+      httpMethod: GET
+      httpUriPath: /search?q=1%27%20OR%201%3D1--
+      httpResponseCode: 200
+    event_time: '2026-11-25T10:00:00.123Z'
+    k8s:
+      namespace: open-appsec
+      pod: open-appsec-agent-0
+      container: open-appsec-agent
+      node: node1
+    search_text: '{"eventName":"Web Request","eventSeverity":"Critical"}'
+- name: high severity XSS detected fires
+  expected: true
+  event:
+    source: openappsec
+    feed: k8s
+    eventTime: '2026-11-25T10:00:00.123'
+    eventName: Web Request
+    eventSeverity: High
+    eventPriority: High
+    eventType: Event Driven
+    eventLevel: Log
+    eventAudience: Security
+    eventTags:
+    - Threat Prevention
+    eventSource:
+      agentId: example-agent-id
+      eventTraceId: example-trace
+      serviceName: Web Application
+    eventData:
+      eventConfidence: Very High
+      securityAction: Detect
+      waapIncidentType: Cross Site Scripting
+      assetName: shop
+      practiceName: Web Application Best Practice
+      sourceIP: 198.51.100.7
+      httpHostName: shop.example.com
+      httpMethod: GET
+      httpUriPath: /q?x=%3Cscript%3E
+      httpResponseCode: 200
+    event_time: '2026-11-25T10:00:00.123Z'
+    k8s:
+      namespace: open-appsec
+      pod: open-appsec-agent-0
+      container: open-appsec-agent
+      node: node1
+    search_text: '{"eventName":"Web Request","eventSeverity":"High"}'
+- name: prevented attack does not fire
+  expected: false
+  event:
+    source: openappsec
+    feed: k8s
+    eventTime: '2026-11-25T10:00:00.123'
+    eventName: Web Request
+    eventSeverity: Critical
+    eventPriority: High
+    eventType: Event Driven
+    eventLevel: Log
+    eventAudience: Security
+    eventTags:
+    - Threat Prevention
+    eventSource:
+      agentId: example-agent-id
+      eventTraceId: example-trace
+      serviceName: Web Application
+    eventData:
+      eventConfidence: Very High
+      securityAction: Prevent
+      waapIncidentType: SQL Injection
+      assetName: shop
+      practiceName: Web Application Best Practice
+      sourceIP: 198.51.100.7
+      httpHostName: shop.example.com
+      httpMethod: GET
+      httpUriPath: /search?q=1%27%20OR%201%3D1--
+      httpResponseCode: 403
+    event_time: '2026-11-25T10:00:00.123Z'
+    k8s:
+      namespace: open-appsec
+      pod: open-appsec-agent-0
+      container: open-appsec-agent
+      node: node1
+    search_text: '{"eventName":"Web Request","eventSeverity":"Critical"}'
+- name: medium detected does not fire
+  expected: false
+  event:
+    source: openappsec
+    feed: k8s
+    eventTime: '2026-11-25T10:00:00.123'
+    eventName: Web Request
+    eventSeverity: Medium
+    eventPriority: High
+    eventType: Event Driven
+    eventLevel: Log
+    eventAudience: Security
+    eventTags:
+    - Threat Prevention
+    eventSource:
+      agentId: example-agent-id
+      eventTraceId: example-trace
+      serviceName: Web Application
+    eventData:
+      eventConfidence: Very High
+      securityAction: Detect
+      waapIncidentType: Path Traversal
+      assetName: shop
+      practiceName: Web Application Best Practice
+      sourceIP: 198.51.100.7
+      httpHostName: shop.example.com
+      httpMethod: GET
+      httpUriPath: /..%2f..%2fetc
+      httpResponseCode: 200
+    event_time: '2026-11-25T10:00:00.123Z'
+    k8s:
+      namespace: open-appsec
+      pod: open-appsec-agent-0
+      container: open-appsec-agent
+      node: node1
+    search_text: '{"eventName":"Web Request","eventSeverity":"Medium"}'
