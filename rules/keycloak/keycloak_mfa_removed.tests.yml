@@ -1,0 +1,87 @@
+# Events modelled on Keycloak 26 org.keycloak.events lines after k8s-log-router (parse: keycloak), with names and addresses replaced.
+- name: remove totp fires
+  expected: true
+  event:
+    source: keycloak
+    feed: k8s
+    realmId: example-realm-id
+    realmName: example
+    clientId: account-console
+    userId: example-user-id-alice
+    username: alice
+    ipAddress: 198.51.100.7
+    auth_method: openid-connect
+    level: INFO
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: keycloak
+      pod: keycloak-0
+      container: keycloak
+      node: node1
+    type: REMOVE_TOTP
+    search_text: type="REMOVE_TOTP", realmName="example", clientId="account-console"
+- name: remove webauthn credential fires
+  expected: true
+  event:
+    source: keycloak
+    feed: k8s
+    realmId: example-realm-id
+    realmName: example
+    clientId: account-console
+    userId: example-user-id-alice
+    username: alice
+    ipAddress: 198.51.100.7
+    auth_method: openid-connect
+    level: INFO
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: keycloak
+      pod: keycloak-0
+      container: keycloak
+      node: node1
+    type: REMOVE_CREDENTIAL
+    credential_type: webauthn
+    search_text: type="REMOVE_CREDENTIAL", realmName="example", clientId="account-console"
+- name: remove password credential does not fire
+  expected: false
+  event:
+    source: keycloak
+    feed: k8s
+    realmId: example-realm-id
+    realmName: example
+    clientId: account-console
+    userId: example-user-id-alice
+    username: alice
+    ipAddress: 198.51.100.7
+    auth_method: openid-connect
+    level: INFO
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: keycloak
+      pod: keycloak-0
+      container: keycloak
+      node: node1
+    type: REMOVE_CREDENTIAL
+    credential_type: password
+    search_text: type="REMOVE_CREDENTIAL", realmName="example", clientId="account-console"
+- name: update totp does not fire
+  expected: false
+  event:
+    source: keycloak
+    feed: k8s
+    realmId: example-realm-id
+    realmName: example
+    clientId: account-console
+    userId: example-user-id-alice
+    username: alice
+    ipAddress: 198.51.100.7
+    auth_method: openid-connect
+    level: INFO
+    event_time: '2026-11-25T16:20:01.123Z'
+    k8s:
+      namespace: keycloak
+      pod: keycloak-0
+      container: keycloak
+      node: node1
+    type: UPDATE_TOTP
+    search_text: type="UPDATE_TOTP", realmName="example", clientId="account-console"

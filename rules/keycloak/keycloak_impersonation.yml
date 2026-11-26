@@ -1,0 +1,19 @@
+title: Keycloak User Impersonation
+id: a3b0f7c3-8998-4344-9ecc-cc3f4fa7763f
+status: experimental
+description: An administrator impersonated a user and now holds a session as that user without knowing their password. Legitimate
+  for support, but every use should be expected and recorded.
+author: samma-io
+level: high
+tags:
+- attack.privilege_escalation
+- attack.t1134
+logsource:
+  product: keycloak
+  service: events
+detection:
+  selection:
+    type: IMPERSONATE
+  condition: selection
+falsepositives:
+- Support staff impersonating a user to reproduce a problem.
