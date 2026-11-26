@@ -1296,13 +1296,13 @@ Detects an API request made while impersonating another identity (kubectl --as /
 
 ### 🟠 high — Kubernetes Attach To Running Container
 
-`0868fa4d-a6b5-53f1-b5dd-de1149f810b0` · [`rules/k8s/k8s_pod_attach.yml`](../rules/k8s/k8s_pod_attach.yml) · 2 tests (1 firing)
+`0868fa4d-a6b5-53f1-b5dd-de1149f810b0` · [`rules/k8s/k8s_pod_attach.yml`](../rules/k8s/k8s_pod_attach.yml) · 3 tests (2 firing)
 
 > **Status: experimental.**
 
 Detects attaching to a running container - indicates interactive access for lateral movement. Ported from samma-io/siem-rules rule k8s-pod-attach.
 
-**Fires when** `kind` is `Event` and `objectRef.resource` is `pods` and `objectRef.subresource` is `attach` and `verb` is `create`
+**Fires when** `kind` is `Event` and `objectRef.resource` is `pods` and `objectRef.subresource` is `attach` and `verb` is one of `create`, `get`
 
 **Likely false positives**
 
@@ -1314,13 +1314,13 @@ Detects attaching to a running container - indicates interactive access for late
 
 ### 🟠 high — Kubernetes Exec Into Pod
 
-`247af81a-dd65-5cce-b412-6d7a5f98f861` · [`rules/k8s/k8s_pod_exec.yml`](../rules/k8s/k8s_pod_exec.yml) · 2 tests (1 firing)
+`247af81a-dd65-5cce-b412-6d7a5f98f861` · [`rules/k8s/k8s_pod_exec.yml`](../rules/k8s/k8s_pod_exec.yml) · 3 tests (2 firing)
 
 > **Status: experimental.**
 
 Detects command execution inside a running pod via kubectl exec - indicates lateral movement or container administration. Ported from samma-io/siem-rules rule k8s-pod-exec.
 
-**Fires when** `kind` is `Event` and `objectRef.resource` is `pods` and `objectRef.subresource` is `exec` and `verb` is `create`
+**Fires when** `kind` is `Event` and `objectRef.resource` is `pods` and `objectRef.subresource` is `exec` and `verb` is one of `create`, `get`
 
 **Likely false positives**
 
@@ -1386,13 +1386,13 @@ Detects pod creation in kube-system namespace - may indicate masquerading as sys
 
 ### 🟠 high — Kubernetes Port Forward To Pod
 
-`d76549f4-6bd1-5232-9147-52c368fb03a0` · [`rules/k8s/k8s_port_forward.yml`](../rules/k8s/k8s_port_forward.yml) · 2 tests (1 firing)
+`d76549f4-6bd1-5232-9147-52c368fb03a0` · [`rules/k8s/k8s_port_forward.yml`](../rules/k8s/k8s_port_forward.yml) · 3 tests (2 firing)
 
 > **Status: experimental.**
 
 Detects port forwarding to pods - may indicate protocol tunneling or unauthorized access to internal services. Ported from samma-io/siem-rules rule k8s-port-forward.
 
-**Fires when** `kind` is `Event` and `objectRef.resource` is `pods` and `objectRef.subresource` is `portforward` and `verb` is `create`
+**Fires when** `kind` is `Event` and `objectRef.resource` is `pods` and `objectRef.subresource` is `portforward` and `verb` is one of `create`, `get`
 
 **Likely false positives**
 
@@ -1440,17 +1440,18 @@ Detects creation, update, or deletion of secrets - may indicate credential tampe
 
 ### 🟠 high — Kubernetes Secret Read
 
-`a44d32ae-e879-57ea-9cba-f513d69b3076` · [`rules/k8s/k8s_secret_accessed.yml`](../rules/k8s/k8s_secret_accessed.yml) · 2 tests (1 firing)
+`a44d32ae-e879-57ea-9cba-f513d69b3076` · [`rules/k8s/k8s_secret_accessed.yml`](../rules/k8s/k8s_secret_accessed.yml) · 5 tests (3 firing)
 
 > **Status: experimental.**
 
 Detects access to Kubernetes secrets (get/list) which may indicate credential harvesting. Ported from samma-io/siem-rules rule k8s-secret-accessed.
 
-**Fires when** `kind` is `Event` and `objectRef.resource` is `secrets` and `verb` is one of `get`, `list`, `watch`
+**Fires when** (`kind` is `Event` and `objectRef.resource` is `secrets` and `verb` is one of `get`, `list`, `watch`) **and not** (`verb` is `get` and `user.username` starts with `system:serviceaccount:`)
 
 **Likely false positives**
 
-- Controllers and workloads that read their own secrets.
+- Controllers that list or watch secrets.
+- People reading a secret while debugging.
 
 **ATT&CK** attack.t1552.007
 
