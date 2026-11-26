@@ -29,6 +29,34 @@
       code: 101
     requestReceivedTimestamp: '2026-02-10T15:30:00.000000Z'
     stageTimestamp: '2026-02-10T15:30:00.200000Z'
+- name: a websocket exec (verb get, kubectl 1.30+) fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: RequestResponse
+    auditID: 66a08b49-e4c5-54fc-8220-c60816905658
+    stage: ResponseComplete
+    requestURI: /api/v1/namespaces/default/pods/my-app-7b9f5c6d4-xk2lm/exec?command=sh&stdin=true&stdout=true&tty=true
+    verb: get
+    user:
+      username: developer@example.com
+      groups:
+      - system:authenticated
+    sourceIPs:
+    - 10.0.1.50
+    objectRef:
+      resource: pods
+      subresource: exec
+      namespace: default
+      name: my-app-7b9f5c6d4-xk2lm
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 101
+    requestReceivedTimestamp: '2026-02-10T15:30:00.000000Z'
+    stageTimestamp: '2026-02-10T15:30:00.200000Z'
 - name: reading pod logs does not fire
   expected: false
   event:
