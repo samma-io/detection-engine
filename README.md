@@ -55,10 +55,13 @@ and layout are specified in aws-siem:
 [`docs/contracts/filtered-object-layout.md`](https://github.com/samma-io/aws-siem/blob/main/docs/contracts/filtered-object-layout.md),
 [`docs/contracts/lane-names.md`](https://github.com/samma-io/aws-siem/blob/main/docs/contracts/lane-names.md).
 Current lanes: `alb`, `aws`, `cloudflare`, `dns`, `gcp`, `github`, `onepassword`, `slack`, `workspace`.
-Four more lanes, `k8s` (Kubernetes audit events), `scanner` (Samma scanner
-findings), `wazuh` (Wazuh alerts) and `osquery` (osquery-client results), exist
-only on the NATS transport, on `samma.logs.k8s`, `samma.logs.scanner`,
-`samma.logs.wazuh` and `samma.logs.osquery`; see
+Five more lanes exist only on the NATS transport: `k8s` (Kubernetes audit
+events), `scanner` (Samma scanner findings), `wazuh` (Wazuh alerts) and `osquery`
+(osquery-client results) on `samma.logs.<lane>` in `SIEM_LOGS`, and `traefik`
+(Traefik access logs from labelled pods, through samma-io/k8s-log-router) on
+`samma.logs.svc.traefik` in `SIEM_SERVICES`, which needs `ENGINE_NATS_STREAM` and
+`ENGINE_NATS_SUBJECT` set. The `samma-siem` chart deploys any of them with
+`detections.<lane>.enabled`; see
 [`docs/contracts/nats-transport.md`](https://github.com/samma-io/aws-siem/blob/main/docs/contracts/nats-transport.md).
 
 ## Artifacts
