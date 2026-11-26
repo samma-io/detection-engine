@@ -7,7 +7,7 @@
     realmId: example-realm-id
     realmName: master
     clientId: security-admin-console
-    userId: 5f3c2b1a-0000-4000-8000-000000000001
+    userId: example-user-id-alice
     username: admin
     ipAddress: 198.51.100.7
     auth_method: openid-connect
@@ -28,7 +28,7 @@
     realmId: example-realm-id
     realmName: master
     clientId: admin-cli
-    userId: 5f3c2b1a-0000-4000-8000-000000000001
+    userId: example-user-id-alice
     username: admin
     ipAddress: 198.51.100.7
     level: INFO
@@ -49,7 +49,7 @@
     realmId: example-realm-id
     realmName: example
     clientId: web-app
-    userId: 5f3c2b1a-0000-4000-8000-000000000001
+    userId: example-user-id-alice
     username: alice
     ipAddress: 198.51.100.7
     auth_method: openid-connect
@@ -70,7 +70,7 @@
     realmId: example-realm-id
     realmName: example
     clientId: security-admin-console
-    userId: 5f3c2b1a-0000-4000-8000-000000000001
+    userId: example-user-id-alice
     username: alice
     ipAddress: 198.51.100.7
     auth_method: openid-connect
