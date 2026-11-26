@@ -93,6 +93,10 @@ var registry = map[string]Source{
 	"wazuh":   {Name: "wazuh", ConfigFile: "sigma-config.yml"},
 	"osquery": {Name: "osquery", ConfigFile: "sigma-config.yml"},
 	"traefik": {Name: "traefik", ConfigFile: "sigma-config.yml"},
+	// keycloak is Keycloak user events (org.keycloak.events) from labelled
+	// pods, one event per message on samma.logs.svc.keycloak in stream
+	// SIEM_SERVICES (k8s-log-router, parse: keycloak).
+	"keycloak": {Name: "keycloak", ConfigFile: "sigma-config.yml"},
 
 	// Security tools, all on SIEM_SERVICES through k8s-log-router (see each
 	// lane's sigma-config.yml). falco, gatekeeper and openappsec are pod logs

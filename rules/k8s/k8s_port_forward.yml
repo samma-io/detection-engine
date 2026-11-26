@@ -19,7 +19,11 @@ detection:
     kind: Event
     objectRef.resource: pods
     objectRef.subresource: portforward
-    verb: create
+    # kubectl 1.30+ opens the stream with a websocket GET; older clients
+    # (SPDY) POST it, audited as create.
+    verb:
+    - create
+    - get
   condition: selection
 falsepositives:
   - Developers reaching a service through kubectl port-forward.

@@ -1,6 +1,6 @@
 # Detection rules
 
-**134 rules across 18 log sources.**
+**142 rules across 19 log sources.**
 
 > Generated from the rules tree by `make docs`. Do not edit by hand —
 > `TestRules_CatalogIsUpToDate` fails if this file and the rules disagree.
@@ -59,6 +59,7 @@ Wildcards also do not work in a value: `*` is matched literally. See
 | [`gcp`](#gcp) | 1 | 1 | – | 1 | – | **3** |
 | [`github`](#github) | 1 | 2 | – | – | – | **3** |
 | [`k8s`](#k8s) | 8 | 11 | 5 | 3 | – | **27** |
+| [`keycloak`](#keycloak) | – | 1 | 5 | 2 | – | **8** |
 | [`onepassword`](#onepassword) | – | 2 | 1 | – | – | **3** |
 | [`openappsec`](#openappsec) | – | 1 | 1 | – | – | **2** |
 | [`osquery`](#osquery) | – | 5 | 5 | 1 | – | **11** |
@@ -68,7 +69,7 @@ Wildcards also do not work in a value: `*` is matched literally. See
 | [`trivy`](#trivy) | – | 2 | 2 | – | – | **4** |
 | [`wazuh`](#wazuh) | – | 2 | 4 | 3 | – | **9** |
 | [`workspace`](#workspace) | 2 | – | – | – | – | **2** |
-| **Total** | **13** | **56** | **41** | **24** | **0** | **134** |
+| **Total** | **13** | **57** | **46** | **26** | **0** | **142** |
 
 ---
 
@@ -1404,13 +1405,13 @@ Detects an API request made while impersonating another identity (kubectl --as /
 
 ### 🟠 high — Kubernetes Attach To Running Container
 
-`0868fa4d-a6b5-53f1-b5dd-de1149f810b0` · [`rules/k8s/k8s_pod_attach.yml`](../rules/k8s/k8s_pod_attach.yml) · 2 tests (1 firing)
+`0868fa4d-a6b5-53f1-b5dd-de1149f810b0` · [`rules/k8s/k8s_pod_attach.yml`](../rules/k8s/k8s_pod_attach.yml) · 3 tests (2 firing)
 
 > **Status: experimental.**
 
 Detects attaching to a running container - indicates interactive access for lateral movement. Ported from samma-io/siem-rules rule k8s-pod-attach.
 
-**Fires when** `kind` is `Event` and `objectRef.resource` is `pods` and `objectRef.subresource` is `attach` and `verb` is `create`
+**Fires when** `kind` is `Event` and `objectRef.resource` is `pods` and `objectRef.subresource` is `attach` and `verb` is one of `create`, `get`
 
 **Likely false positives**
 
@@ -1422,13 +1423,13 @@ Detects attaching to a running container - indicates interactive access for late
 
 ### 🟠 high — Kubernetes Exec Into Pod
 
-`247af81a-dd65-5cce-b412-6d7a5f98f861` · [`rules/k8s/k8s_pod_exec.yml`](../rules/k8s/k8s_pod_exec.yml) · 2 tests (1 firing)
+`247af81a-dd65-5cce-b412-6d7a5f98f861` · [`rules/k8s/k8s_pod_exec.yml`](../rules/k8s/k8s_pod_exec.yml) · 3 tests (2 firing)
 
 > **Status: experimental.**
 
 Detects command execution inside a running pod via kubectl exec - indicates lateral movement or container administration. Ported from samma-io/siem-rules rule k8s-pod-exec.
 
-**Fires when** `kind` is `Event` and `objectRef.resource` is `pods` and `objectRef.subresource` is `exec` and `verb` is `create`
+**Fires when** `kind` is `Event` and `objectRef.resource` is `pods` and `objectRef.subresource` is `exec` and `verb` is one of `create`, `get`
 
 **Likely false positives**
 
@@ -1494,13 +1495,13 @@ Detects pod creation in kube-system namespace - may indicate masquerading as sys
 
 ### 🟠 high — Kubernetes Port Forward To Pod
 
-`d76549f4-6bd1-5232-9147-52c368fb03a0` · [`rules/k8s/k8s_port_forward.yml`](../rules/k8s/k8s_port_forward.yml) · 2 tests (1 firing)
+`d76549f4-6bd1-5232-9147-52c368fb03a0` · [`rules/k8s/k8s_port_forward.yml`](../rules/k8s/k8s_port_forward.yml) · 3 tests (2 firing)
 
 > **Status: experimental.**
 
 Detects port forwarding to pods - may indicate protocol tunneling or unauthorized access to internal services. Ported from samma-io/siem-rules rule k8s-port-forward.
 
-**Fires when** `kind` is `Event` and `objectRef.resource` is `pods` and `objectRef.subresource` is `portforward` and `verb` is `create`
+**Fires when** `kind` is `Event` and `objectRef.resource` is `pods` and `objectRef.subresource` is `portforward` and `verb` is one of `create`, `get`
 
 **Likely false positives**
 
@@ -1548,17 +1549,18 @@ Detects creation, update, or deletion of secrets - may indicate credential tampe
 
 ### 🟠 high — Kubernetes Secret Read
 
-`a44d32ae-e879-57ea-9cba-f513d69b3076` · [`rules/k8s/k8s_secret_accessed.yml`](../rules/k8s/k8s_secret_accessed.yml) · 2 tests (1 firing)
+`a44d32ae-e879-57ea-9cba-f513d69b3076` · [`rules/k8s/k8s_secret_accessed.yml`](../rules/k8s/k8s_secret_accessed.yml) · 5 tests (3 firing)
 
 > **Status: experimental.**
 
 Detects access to Kubernetes secrets (get/list) which may indicate credential harvesting. Ported from samma-io/siem-rules rule k8s-secret-accessed.
 
-**Fires when** `kind` is `Event` and `objectRef.resource` is `secrets` and `verb` is one of `get`, `list`, `watch`
+**Fires when** (`kind` is `Event` and `objectRef.resource` is `secrets` and `verb` is one of `get`, `list`, `watch`) **and not** (`verb` is `get` and `user.username` starts with `system:serviceaccount:`)
 
 **Likely false positives**
 
-- Controllers and workloads that read their own secrets.
+- Controllers that list or watch secrets.
+- People reading a secret while debugging.
 
 **ATT&CK** attack.t1552.007
 
@@ -1744,6 +1746,138 @@ Detects access to pod logs via API - may indicate reconnaissance to extract sens
 **ATT&CK** attack.t1613
 
 - <https://github.com/samma-io/siem-rules/blob/main/rules/k8s/k8s_pod_log_access.yaml>
+
+---
+
+## keycloak
+
+### 🟠 high — Keycloak User Impersonation
+
+`a3b0f7c3-8998-4344-9ecc-cc3f4fa7763f` · [`rules/keycloak/keycloak_impersonation.yml`](../rules/keycloak/keycloak_impersonation.yml) · 2 tests (1 firing)
+
+> **Status: experimental.**
+
+An administrator impersonated a user and now holds a session as that user without knowing their password. Legitimate for support, but every use should be expected and recorded.
+
+**Fires when** `type` is `IMPERSONATE`
+
+**Likely false positives**
+
+- Support staff impersonating a user to reproduce a problem.
+
+**ATT&CK** attack.privilege_escalation, attack.t1134
+
+### 🟡 medium — Keycloak Admin Login
+
+`300ce7bd-e100-4215-a748-95af7b176d3d` · [`rules/keycloak/keycloak_admin_login.yml`](../rules/keycloak/keycloak_admin_login.yml) · 4 tests (2 firing)
+
+> **Status: experimental.**
+
+A user logged in to the Keycloak admin console, or got a token through admin-cli. Expected only from administrators at known addresses; an admin-cli login from a new ipAddress is how a stolen admin password is used. Needs successful events logged (KC_SPI_EVENTS_LISTENER_JBOSS_LOGGING_SUCCESS_LEVEL=info).
+
+**Fires when** `type` is `LOGIN` and `clientId` is one of `security-admin-console`, `admin-cli`
+
+**Likely false positives**
+
+- Routine administration; tune by username and ipAddress if logins are frequent.
+
+**ATT&CK** attack.privilege_escalation, attack.t1078
+
+### 🟡 medium — Keycloak Admin Login Failure
+
+`de29537c-a03e-46a4-b5f4-e94dd0bd23ae` · [`rules/keycloak/keycloak_admin_login_failure.yml`](../rules/keycloak/keycloak_admin_login_failure.yml) · 4 tests (2 firing)
+
+> **Status: experimental.**
+
+A login to the Keycloak admin console or with admin-cli (the direct password grant used by scripts and attackers alike) failed. Admin credentials control every realm; check whether ipAddress is expected and whether the username exists.
+
+**Fires when** `type` is `LOGIN_ERROR` and `clientId` is one of `security-admin-console`, `admin-cli`
+
+**Likely false positives**
+
+- An administrator mistyping a password.
+
+**ATT&CK** attack.credential_access, attack.t1110, attack.t1078
+
+### 🟡 medium — Keycloak Client Credentials Failure
+
+`a6b62eda-fccc-4643-8bb6-d52cbc8b11ae` · [`rules/keycloak/keycloak_client_credentials_failure.yml`](../rules/keycloak/keycloak_client_credentials_failure.yml) · 3 tests (2 firing)
+
+> **Status: experimental.**
+
+A service client failed to authenticate with its client secret or signed JWT. Either a deployment carries a stale secret, or someone is trying secrets against a confidential client.
+
+**Fires when** `type` is `CLIENT_LOGIN_ERROR` and `error` is one of `invalid_client_credentials`, `unauthorized_client`, `invalid_client`
+
+**Likely false positives**
+
+- A service deployed with an old secret after rotation; it fails on every token request until fixed.
+
+**ATT&CK** attack.credential_access, attack.t1110, attack.t1528
+
+### 🟡 medium — Keycloak Identity Provider Linked
+
+`83cddc95-d7ad-495b-b059-3710f187f639` · [`rules/keycloak/keycloak_identity_provider_linked.yml`](../rules/keycloak/keycloak_identity_provider_linked.yml) · 3 tests (2 firing)
+
+> **Status: experimental.**
+
+An external identity provider account (Google, GitHub, another OIDC or SAML IdP) was linked to a Keycloak user. Whoever controls the linked account can now log in as this user, so an unexpected link is persistence.
+
+**Fires when** `type` is one of `IDENTITY_PROVIDER_LINK_ACCOUNT`, `FEDERATED_IDENTITY_LINK`
+
+**Likely false positives**
+
+- Users linking their own social login.
+
+**ATT&CK** attack.persistence, attack.t1098
+
+### 🟡 medium — Keycloak MFA Removed
+
+`e763458d-63bf-46a2-9899-a978183548ef` · [`rules/keycloak/keycloak_mfa_removed.yml`](../rules/keycloak/keycloak_mfa_removed.yml) · 4 tests (2 firing)
+
+> **Status: experimental.**
+
+A user removed an OTP or WebAuthn credential. After an account takeover, removing the second factor is how an attacker keeps access and locks the owner out. Confirm with the user.
+
+**Fires when** (`type` is `REMOVE_CREDENTIAL` and `credential_type` is one of `otp`, `webauthn`, `webauthn-passwordless`) **or** `type` is `REMOVE_TOTP`
+
+**Likely false positives**
+
+- A user replacing a lost phone or security key.
+
+**ATT&CK** attack.persistence, attack.defense_evasion, attack.t1556.006
+
+### 🔵 low — Keycloak Login Failure
+
+`8209679c-c141-4378-8c09-361980899b15` · [`rules/keycloak/keycloak_login_failure.yml`](../rules/keycloak/keycloak_login_failure.yml) · 5 tests (2 firing)
+
+> **Status: experimental.**
+
+A user login to Keycloak failed on a bad password, an unknown username or a temporarily locked account. One failure is noise; many for the same username or from the same ipAddress is password guessing or credential stuffing. Admin-console and admin-cli failures are a separate, higher rule.
+
+**Fires when** (`type` is `LOGIN_ERROR` and `error` is one of `invalid_user_credentials`, `user_not_found`, `user_temporarily_disabled`, `invalid_authentication`) **and not** `clientId` is one of `security-admin-console`, `admin-cli`
+
+**Likely false positives**
+
+- A user mistyping a password.
+
+**ATT&CK** attack.credential_access, attack.t1110
+
+### 🔵 low — Keycloak Password Changed or Reset
+
+`839e1dc4-6f5b-4ac3-8362-845e844292fc` · [`rules/keycloak/keycloak_password_changed.yml`](../rules/keycloak/keycloak_password_changed.yml) · 5 tests (3 firing)
+
+> **Status: experimental.**
+
+A user changed or reset their password. Expected now and then; after a run of login failures for the same user, or from an unusual ipAddress, it can be an account takeover being made permanent.
+
+**Fires when** (`type` is `UPDATE_CREDENTIAL` and `credential_type` is `password`) **or** `type` is one of `UPDATE_PASSWORD`, `RESET_PASSWORD`
+
+**Likely false positives**
+
+- Routine password changes.
+
+**ATT&CK** attack.persistence, attack.t1098
 
 ---
 

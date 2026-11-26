@@ -1,0 +1,29 @@
+# sigma-go Config for the keycloak lane.
+#
+# Records are Keycloak user events, one per NATS message on
+# samma.logs.svc.keycloak in stream SIEM_SERVICES. They come from pods labelled
+# samma.io/detection: keycloak, through a node log shipper and
+# samma-io/k8s-log-router with parse: keycloak, which keeps only
+# org.keycloak.events lines and lifts their key="value" pairs to top-level
+# fields, then adds source, feed (k8s), event_time,
+# k8s.{namespace,pod,container,node} and search_text. There is no S3 producer
+# for this lane: it exists only on the NATS transport.
+#
+# Fields are Keycloak's own: type (LOGIN, LOGIN_ERROR, CLIENT_LOGIN_ERROR,
+# UPDATE_PASSWORD, REMOVE_TOTP, IMPERSONATE, ...), realmName (Keycloak 24+),
+# realmId, clientId, userId, username, ipAddress, error, auth_method,
+# credential_type, identity_provider, plus level (WARN for errors, DEBUG or
+# INFO for successes). A field whose value is "null" is dropped by the router.
+#
+# Keycloak logs failed events only by default. Rules on successful events
+# (LOGIN, UPDATE_PASSWORD, IMPERSONATE, ...) need
+# KC_SPI_EVENTS_LISTENER_JBOSS_LOGGING_SUCCESS_LEVEL=info on the container,
+# and the realm must have user events enabled for event types beyond errors.
+title: keycloak
+logsources:
+  keycloak_events:
+    product: keycloak
+    service: events
+    index: keycloak
+defaultindex: keycloak
+fieldmappings: {}

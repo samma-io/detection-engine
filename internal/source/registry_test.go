@@ -20,7 +20,7 @@ var detectionSources = []string{"aws", "gcp", "github", "workspace", "slack", "o
 // natsOnlySources are lanes that exist only on the NATS transport, so the
 // Terraform lane list (which creates SQS queues) does not carry them. They
 // mirror the "Lanes on NATS" table in aws-siem docs/contracts/nats-transport.md.
-var natsOnlySources = []string{"k8s", "scanner", "wazuh", "osquery", "traefik", "falco", "trivy", "gatekeeper", "openappsec"}
+var natsOnlySources = []string{"k8s", "scanner", "wazuh", "osquery", "traefik", "keycloak", "falco", "trivy", "gatekeeper", "openappsec"}
 
 func allSources() []string {
 	return append(append([]string{}, detectionSources...), natsOnlySources...)

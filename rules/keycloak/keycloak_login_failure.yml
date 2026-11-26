@@ -1,0 +1,29 @@
+title: Keycloak Login Failure
+id: 8209679c-c141-4378-8c09-361980899b15
+status: experimental
+description: A user login to Keycloak failed on a bad password, an unknown username or a temporarily locked account. One failure
+  is noise; many for the same username or from the same ipAddress is password guessing or credential stuffing. Admin-console
+  and admin-cli failures are a separate, higher rule.
+author: samma-io
+level: low
+tags:
+- attack.credential_access
+- attack.t1110
+logsource:
+  product: keycloak
+  service: events
+detection:
+  selection:
+    type: LOGIN_ERROR
+    error:
+    - invalid_user_credentials
+    - user_not_found
+    - user_temporarily_disabled
+    - invalid_authentication
+  filter_admin:
+    clientId:
+    - security-admin-console
+    - admin-cli
+  condition: selection and not filter_admin
+falsepositives:
+- A user mistyping a password.

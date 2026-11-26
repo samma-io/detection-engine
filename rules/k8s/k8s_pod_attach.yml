@@ -18,7 +18,11 @@ detection:
     kind: Event
     objectRef.resource: pods
     objectRef.subresource: attach
-    verb: create
+    # kubectl 1.30+ opens the stream with a websocket GET; older clients
+    # (SPDY) POST it, audited as create.
+    verb:
+    - create
+    - get
   condition: selection
 falsepositives:
   - An operator debugging a container interactively.
