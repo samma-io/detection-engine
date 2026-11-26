@@ -1,0 +1,21 @@
+title: Falco Error or Warning Alert
+id: 3d4a59bc-d666-4a7c-9d1b-0b87760254ba
+status: experimental
+description: A Falco rule at priority Error or Warning fired, for example a write below /etc or a sensitive file such as /etc/shadow
+  read by an untrusted program. Read output for the file, process and pod.
+author: samma-io
+level: medium
+tags:
+- attack.persistence
+- attack.credential_access
+logsource:
+  product: falco
+  service: alerts
+detection:
+  selection:
+    priority:
+    - Error
+    - Warning
+  condition: selection
+falsepositives:
+- Package managers and configuration tools in containers that legitimately touch /etc.

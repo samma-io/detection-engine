@@ -1,0 +1,63 @@
+# Events follow Falco 0.39 JSON output (json_output, output and tags included) after k8s-log-router, with names and addresses replaced.
+- name: terminal shell fires
+  expected: true
+  event:
+    source: falco
+    feed: k8s
+    hostname: node1
+    priority: Notice
+    rule: Terminal shell in container
+    tags:
+    - container
+    - shell
+    - mitre_execution
+    - T1059
+    time: '2026-11-25T10:00:00.123456789Z'
+    output: '10:00:00.123456789: Notice A shell was spawned in a container with an attached terminal (evt_type=execve user=root
+      process=sh proc_exepath=/bin/sh parent=runc command=sh terminal=34816 container_name=web k8s_ns=shop k8s_pod_name=web-0)'
+    output_fields:
+      container.name: web
+      k8s.ns.name: shop
+      k8s.pod.name: web-0
+      proc.cmdline: sh
+      proc.name: sh
+      user.name: root
+      evt.type: execve
+    event_time: '2026-11-25T10:00:00.123Z'
+    k8s:
+      namespace: falco
+      pod: falco-abcde
+      container: falco
+      node: node1
+    search_text: '10:00:00.123456789: Notice A shell was spawned in a container with an attached terminal (evt_type=execve
+      user=root process=sh proc_exepath=/bin/sh parent=runc command=sh terminal=34816 container_name=web k8s_ns=shop k8s_pod_name=web-0)'
+- name: another notice does not fire
+  expected: false
+  event:
+    source: falco
+    feed: k8s
+    hostname: node1
+    priority: Notice
+    rule: Contact K8S API Server From Container
+    tags:
+    - container
+    - network
+    - k8s
+    - mitre_discovery
+    - T1565
+    time: '2026-11-25T10:00:00.123456789Z'
+    output: '10:00:00.123456789: Notice Unexpected connection to K8s API Server from container (connection=10.0.0.5:51544->10.96.0.1:443
+      container_name=web)'
+    output_fields:
+      fd.name: 10.0.0.5:51544->10.96.0.1:443
+      container.name: web
+      k8s.ns.name: shop
+      k8s.pod.name: web-0
+    event_time: '2026-11-25T10:00:00.123Z'
+    k8s:
+      namespace: falco
+      pod: falco-abcde
+      container: falco
+      node: node1
+    search_text: '10:00:00.123456789: Notice Unexpected connection to K8s API Server from container (connection=10.0.0.5:51544->10.96.0.1:443
+      container_name=web)'

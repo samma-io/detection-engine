@@ -1,0 +1,20 @@
+title: Falco Notice Alert
+id: 127e58b9-edfa-43ba-9a3d-0379a2c3ec9b
+status: experimental
+description: A Falco rule at priority Notice fired, such as an unexpected connection to the Kubernetes API server from a container.
+  Low on its own; useful next to other alerts for the same pod.
+author: samma-io
+level: low
+tags:
+- attack.discovery
+logsource:
+  product: falco
+  service: alerts
+detection:
+  selection:
+    priority: Notice
+  filter_shell:
+    rule: Terminal shell in container
+  condition: selection and not filter_shell
+falsepositives:
+- Operators and controllers that talk to the API server from a container.

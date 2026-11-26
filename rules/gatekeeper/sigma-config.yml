@@ -1,0 +1,26 @@
+# sigma-go Config for the gatekeeper lane.
+#
+# Records are OPA Gatekeeper log lines (JSON, zap) from the controller-manager
+# and audit pods labelled samma.io/detection: gatekeeper, through a node log
+# shipper and samma-io/k8s-log-router (parse: json), one per NATS message on
+# samma.logs.svc.gatekeeper in stream SIEM_SERVICES. There is no S3 producer.
+#
+# Admission decisions are logged only with --log-denies (Helm:
+# logDenies: true): event_type violation, process admission, with
+# constraint_kind, constraint_name, constraint_action (deny, dryrun, warn),
+# resource_kind/namespace/name and request_username. The audit pod logs a
+# violation it finds in existing objects as event_type violation_audited;
+# confirm your version does before relying on the audit rule.
+# Every other Gatekeeper line has no event_type, so every rule pins it.
+#
+# Status: experimental. Gatekeeper is not yet installed on a test cluster;
+# the test events follow Gatekeeper 3.17's documented log fields. Verify after
+# install.
+title: gatekeeper
+logsources:
+  gatekeeper_logs:
+    product: opa_gatekeeper
+    service: policy
+    index: gatekeeper
+defaultindex: gatekeeper
+fieldmappings: {}

@@ -1,0 +1,57 @@
+# Events are k8s-log-router push.vrl (parse: trivy) output for trivy-operator reports, with names replaced.
+- name: critical rbac fires
+  expected: true
+  event:
+    source: trivy
+    feed: push
+    kind: ClusterRbacAssessmentReport
+    report_name: replicaset-api-7f9d-api
+    resource:
+      kind: ReplicaSet
+      name: api-7f9d
+      namespace: shop
+      container: api
+    image: ''
+    summary:
+      criticalCount: 1
+      highCount: 0
+      mediumCount: 2
+      lowCount: 4
+      unknownCount: 0
+    critical: true
+    high: false
+    secrets: 0
+    findings:
+    - id: KSV041
+      severity: CRITICAL
+      title: Manage secrets
+    event_time: '2026-11-25T10:00:00.123Z'
+    search_text: '{"kind":"ClusterRbacAssessmentReport","image":""}'
+- name: high only does not fire
+  expected: false
+  event:
+    source: trivy
+    feed: push
+    kind: RbacAssessmentReport
+    report_name: replicaset-api-7f9d-api
+    resource:
+      kind: ReplicaSet
+      name: api-7f9d
+      namespace: shop
+      container: api
+    image: ''
+    summary:
+      criticalCount: 0
+      highCount: 1
+      mediumCount: 2
+      lowCount: 4
+      unknownCount: 0
+    critical: false
+    high: true
+    secrets: 0
+    findings:
+    - id: KSV041
+      severity: HIGH
+      title: Manage secrets
+    event_time: '2026-11-25T10:00:00.123Z'
+    search_text: '{"kind":"RbacAssessmentReport","image":""}'

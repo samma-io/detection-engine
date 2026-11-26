@@ -1,0 +1,114 @@
+# Events follow Gatekeeper 3.17 JSON log fields after k8s-log-router, with names replaced.
+- name: audited privileged container fires
+  expected: true
+  event:
+    source: gatekeeper
+    feed: k8s
+    level: info
+    ts: 1764064800.123
+    logger: controller
+    msg: 'Privileged container is not allowed: web'
+    process: audit
+    event_type: violation_audited
+    constraint_name: psp-privileged-container
+    constraint_group: constraints.gatekeeper.sh
+    constraint_api_version: v1beta1
+    constraint_kind: K8sPSPPrivilegedContainer
+    constraint_action: deny
+    resource_group: ''
+    resource_api_version: v1
+    resource_kind: Pod
+    resource_namespace: shop
+    resource_name: web-0
+    event_time: '2026-11-25T10:00:00.123Z'
+    k8s:
+      namespace: gatekeeper-system
+      pod: gatekeeper-controller-manager-6d5c7-abcde
+      container: manager
+      node: node1
+    search_text: '{"msg":"Privileged container is not allowed: web","constraint_kind":"K8sPSPPrivilegedContainer"}'
+- name: audited hostpath fires
+  expected: true
+  event:
+    source: gatekeeper
+    feed: k8s
+    level: info
+    ts: 1764064800.123
+    logger: controller
+    msg: HostPath volume is not allowed
+    process: audit
+    event_type: violation_audited
+    constraint_name: psp-host-filesystem
+    constraint_group: constraints.gatekeeper.sh
+    constraint_api_version: v1beta1
+    constraint_kind: K8sPSPHostFilesystem
+    constraint_action: deny
+    resource_group: ''
+    resource_api_version: v1
+    resource_kind: Pod
+    resource_namespace: shop
+    resource_name: web-0
+    event_time: '2026-11-25T10:00:00.123Z'
+    k8s:
+      namespace: gatekeeper-system
+      pod: gatekeeper-controller-manager-6d5c7-abcde
+      container: manager
+      node: node1
+    search_text: '{"msg":"HostPath volume is not allowed","constraint_kind":"K8sPSPHostFilesystem"}'
+- name: audited missing label does not fire
+  expected: false
+  event:
+    source: gatekeeper
+    feed: k8s
+    level: info
+    ts: 1764064800.123
+    logger: controller
+    msg: 'Privileged container is not allowed: web'
+    process: audit
+    event_type: violation_audited
+    constraint_name: ns-must-have-owner
+    constraint_group: constraints.gatekeeper.sh
+    constraint_api_version: v1beta1
+    constraint_kind: K8sRequiredLabels
+    constraint_action: deny
+    resource_group: ''
+    resource_api_version: v1
+    resource_kind: Namespace
+    resource_namespace: ''
+    resource_name: test
+    event_time: '2026-11-25T10:00:00.123Z'
+    k8s:
+      namespace: gatekeeper-system
+      pod: gatekeeper-controller-manager-6d5c7-abcde
+      container: manager
+      node: node1
+    search_text: '{"msg":"Privileged container is not allowed: web","constraint_kind":"K8sRequiredLabels"}'
+- name: admission denial does not fire here
+  expected: false
+  event:
+    source: gatekeeper
+    feed: k8s
+    level: info
+    ts: 1764064800.123
+    logger: webhook
+    msg: denied admission
+    process: admission
+    event_type: violation
+    constraint_name: psp-privileged-container
+    constraint_group: constraints.gatekeeper.sh
+    constraint_api_version: v1beta1
+    constraint_kind: K8sPSPPrivilegedContainer
+    constraint_action: deny
+    resource_group: ''
+    resource_api_version: v1
+    resource_kind: Pod
+    resource_namespace: shop
+    resource_name: web-0
+    event_time: '2026-11-25T10:00:00.123Z'
+    k8s:
+      namespace: gatekeeper-system
+      pod: gatekeeper-controller-manager-6d5c7-abcde
+      container: manager
+      node: node1
+    request_username: developer@example.com
+    search_text: '{"msg":"denied admission","constraint_kind":"K8sPSPPrivilegedContainer"}'

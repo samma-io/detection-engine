@@ -1,0 +1,22 @@
+title: Trivy Critical RBAC Permission
+id: 5f48da95-c7ef-44cf-8c58-6043656a4e43
+status: experimental
+description: trivy-operator found a Role or ClusterRole granting a CRITICAL permission, such as managing secrets cluster-wide,
+  escalating or impersonating. Whoever is bound to it can take over namespaces or the cluster.
+author: samma-io
+level: medium
+tags:
+- attack.privilege_escalation
+- attack.t1078.004
+logsource:
+  product: trivy
+  service: reports
+detection:
+  selection:
+    kind:
+    - RbacAssessmentReport
+    - ClusterRbacAssessmentReport
+    critical: true
+  condition: selection
+falsepositives:
+- Controllers and operators that need broad permissions by design.

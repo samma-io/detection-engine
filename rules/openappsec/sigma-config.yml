@@ -1,0 +1,26 @@
+# sigma-go Config for the openappsec lane.
+#
+# Records are open-appsec security logs, written as JSON to stdout by the
+# open-appsec agent pods labelled samma.io/detection: openappsec, through a
+# node log shipper and samma-io/k8s-log-router (parse: json), one per NATS
+# message on samma.logs.svc.openappsec in stream SIEM_SERVICES. There is no S3
+# producer for this lane.
+#
+# Fields: eventName ("Web Request", ...), eventSeverity (Critical, High,
+# Medium, Low, Info), eventPriority, eventTags, eventSource.*, and the
+# request under eventData.*: securityAction (Prevent = blocked, Detect = logged
+# and let through), eventConfidence, waapIncidentType (SQL Injection, Cross
+# Site Scripting, Path Traversal, ...), sourceIP, httpHostName, httpMethod,
+# httpUriPath, httpResponseCode, assetName, practiceName.
+#
+# Status: experimental. open-appsec is not yet installed on a test cluster;
+# the test events follow the documented security-log fields. Verify field
+# names against real agent output after install.
+title: openappsec
+logsources:
+  openappsec_security:
+    product: open_appsec
+    service: security
+    index: openappsec
+defaultindex: openappsec
+fieldmappings: {}

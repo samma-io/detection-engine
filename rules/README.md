@@ -111,6 +111,20 @@ which is the vendor-native shape plus a `source` field:
   `identity_provider`, plus `level`. Fields whose value is `null` are absent.
   Successful events are logged only with
   `KC_SPI_EVENTS_LISTENER_JBOSS_LOGGING_SUCCESS_LEVEL=info`.
+- **falco**, **gatekeeper**, **openappsec** — security tools' JSON log lines on
+  `samma.logs.svc.<lane>` (stream `SIEM_SERVICES`, NATS only), from their pods
+  labelled `samma.io/detection: <lane>` via samma-io/k8s-log-router. Each
+  tool's own field names; see the lane's `sigma-config.yml`. Falco's own
+  `source` is replaced by the lane name. Every rule pins `rule`/`priority`
+  (Falco), `event_type` (Gatekeeper) or `eventSeverity` (open-appsec), because
+  the tools' other log lines share the subject.
+- **trivy** — trivy-operator reports pushed to the router
+  (`/v1/trivy`, feed `push`) and reduced by its `trivy` parser: `kind`,
+  `resource.*`, `image`, `summary.*`, `critical`/`high` booleans, `secrets`
+  and up to 20 `findings`. Rules match the booleans, not the counts.
+
+These four are experimental: the tools are not yet installed on a test
+cluster, and the test events follow each tool's documented output.
 
 Dotted paths such as `userIdentity.type` work because the engine builds a
 flattened match view of every event; see `internal/decode/normalize.go`.

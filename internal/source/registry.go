@@ -97,6 +97,15 @@ var registry = map[string]Source{
 	// pods, one event per message on samma.logs.svc.keycloak in stream
 	// SIEM_SERVICES (k8s-log-router, parse: keycloak).
 	"keycloak": {Name: "keycloak", ConfigFile: "sigma-config.yml"},
+
+	// Security tools, all on SIEM_SERVICES through k8s-log-router (see each
+	// lane's sigma-config.yml). falco, gatekeeper and openappsec are pod logs
+	// from labelled pods (samma.logs.svc.<lane>, feed k8s); trivy is
+	// trivy-operator reports pushed to the router over HTTP (feed push).
+	"falco":      {Name: "falco", ConfigFile: "sigma-config.yml"},
+	"trivy":      {Name: "trivy", ConfigFile: "sigma-config.yml"},
+	"gatekeeper": {Name: "gatekeeper", ConfigFile: "sigma-config.yml"},
+	"openappsec": {Name: "openappsec", ConfigFile: "sigma-config.yml"},
 }
 
 // Lookup resolves a source name, naming every valid one when it fails.

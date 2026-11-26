@@ -1,0 +1,22 @@
+title: open-appsec Blocked an Attack
+id: 720aae8c-adc3-4529-af06-178543aba63b
+status: experimental
+description: open-appsec blocked a critical or high severity web attack. Nothing reached the application; repeated blocks
+  from one eventData.sourceIP are an attacker or scanner working through the site.
+author: samma-io
+level: medium
+tags:
+- attack.initial_access
+- attack.t1190
+logsource:
+  product: open_appsec
+  service: security
+detection:
+  selection:
+    eventSeverity:
+    - Critical
+    - High
+    eventData.securityAction: Prevent
+  condition: selection
+falsepositives:
+- A false positive blocking a real user; check eventData.httpUriPath.

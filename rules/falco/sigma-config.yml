@@ -1,0 +1,30 @@
+# sigma-go Config for the falco lane.
+#
+# Records are Falco alerts written as JSON lines (json_output: true,
+# json_include_output_property: true, json_include_tags_property: true), one
+# per NATS message on samma.logs.svc.falco in stream SIEM_SERVICES. They come
+# from the Falco DaemonSet pods labelled samma.io/detection: falco, through a
+# node log shipper and samma-io/k8s-log-router (parse: json). There is no S3
+# producer for this lane.
+#
+# Falco's own fields: rule, priority (Emergency, Alert, Critical, Error,
+# Warning, Notice, Informational, Debug), output, output_fields.* (with dots in
+# the key, e.g. output_fields.proc.cmdline), tags, time, hostname. Falco's own
+# `source` (syscall, k8s_audit, ...) is replaced by the lane name; k8s is the
+# Falco pod, not the workload: the workload is output_fields.k8s.ns.name and
+# output_fields.k8s.pod.name.
+#
+# Falco's startup and status lines are not alerts and have no rule; every
+# rule here pins rule or priority.
+#
+# Status: experimental. Falco is not yet installed on a test cluster; the
+# test events follow Falco 0.39's documented JSON output. Verify against real
+# alerts after install.
+title: falco
+logsources:
+  falco_alerts:
+    product: falco
+    service: alerts
+    index: falco
+defaultindex: falco
+fieldmappings: {}

@@ -1,0 +1,21 @@
+title: Falco Critical Alert
+id: 74d06b65-2656-4d81-87e8-88d1cfa11d65
+status: experimental
+description: 'A Falco rule at priority Critical, Alert or Emergency fired: the runtime sensor saw something it treats as a
+  likely compromise, such as a binary dropped and executed in a container. Read output for the process, container and pod.'
+author: samma-io
+level: high
+tags:
+- attack.execution
+logsource:
+  product: falco
+  service: alerts
+detection:
+  selection:
+    priority:
+    - Emergency
+    - Alert
+    - Critical
+  condition: selection
+falsepositives:
+- A Falco rule that is too broad for this cluster; tune it in Falco, not here.
