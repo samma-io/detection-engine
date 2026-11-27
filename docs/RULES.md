@@ -1604,17 +1604,18 @@ Detects deletion of deployments, statefulsets, or daemonsets - potential data de
 
 ### 🟡 medium — Kubernetes API Request Forbidden
 
-`6663d741-20f1-52a5-bc1d-f98345dd327b` · [`rules/k8s/k8s_forbidden_access.yml`](../rules/k8s/k8s_forbidden_access.yml) · 2 tests (1 firing)
+`6663d741-20f1-52a5-bc1d-f98345dd327b` · [`rules/k8s/k8s_forbidden_access.yml`](../rules/k8s/k8s_forbidden_access.yml) · 5 tests (3 firing)
 
 > **Status: experimental.**
 
 Detects 403 Forbidden responses from the API server - indicates RBAC probing or unauthorized access attempts. Ported from samma-io/siem-rules rule k8s-forbidden-access.
 
-**Fires when** `kind` is `Event` and `responseStatus.code` is `403`
+**Fires when** (`kind` is `Event` and `responseStatus.code` is `403`) **and not** (`user.username` starts with `system:node:` and `objectRef.resource` is `endpointslices` and `verb` is one of `list`, `watch`)
 
 **Likely false positives**
 
 - Controllers starting before their RBAC is applied; users running a command they lack rights for.
+- Node agents other than the kubelet using the node credential.
 
 **ATT&CK** attack.t1613
 
