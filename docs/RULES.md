@@ -1549,13 +1549,13 @@ Detects creation, update, or deletion of secrets - may indicate credential tampe
 
 ### 🟠 high — Kubernetes Secret Read
 
-`a44d32ae-e879-57ea-9cba-f513d69b3076` · [`rules/k8s/k8s_secret_accessed.yml`](../rules/k8s/k8s_secret_accessed.yml) · 5 tests (3 firing)
+`a44d32ae-e879-57ea-9cba-f513d69b3076` · [`rules/k8s/k8s_secret_accessed.yml`](../rules/k8s/k8s_secret_accessed.yml) · 9 tests (5 firing)
 
 > **Status: experimental.**
 
 Detects access to Kubernetes secrets (get/list) which may indicate credential harvesting. Ported from samma-io/siem-rules rule k8s-secret-accessed.
 
-**Fires when** (`kind` is `Event` and `objectRef.resource` is `secrets` and `verb` is one of `get`, `list`, `watch`) **and not** (`verb` is `get` and `user.username` starts with `system:serviceaccount:`)
+**Fires when** (`kind` is `Event` and `objectRef.resource` is `secrets` and `verb` is one of `get`, `list`, `watch`) **and not** (`verb` is `get` and `user.username` starts with `system:serviceaccount:`) **and not** (`verb` is `list` and `user.username` is one of `system:serviceaccount:argocd:argocd-application-controller`, `system:serviceaccount:ankra:ankra-agent-sa`)
 
 **Likely false positives**
 
