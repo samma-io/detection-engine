@@ -18,6 +18,17 @@ detection:
   selection:
     kind: Event
     responseStatus.code: 403
-  condition: selection
+  # A node's own agents listing or watching endpointslices with the node
+  # credential. The node authorizer refuses it, and on Talos the node's init
+  # retries every ~40s, which would be ~2000 alerts a day. A node refused
+  # anything else (secrets, pods in another namespace) still fires.
+  filter_node_endpointslices:
+    user.username|startswith: 'system:node:'
+    objectRef.resource: endpointslices
+    verb:
+      - list
+      - watch
+  condition: selection and not filter_node_endpointslices
 falsepositives:
   - Controllers starting before their RBAC is applied; users running a command they lack rights for.
+  - Node agents other than the kubelet using the node credential.

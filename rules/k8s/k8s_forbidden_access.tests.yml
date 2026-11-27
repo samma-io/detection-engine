@@ -54,3 +54,87 @@
       code: 200
     requestReceivedTimestamp: '2026-02-11T02:00:00.000000Z'
     stageTimestamp: '2026-02-11T02:00:00.100000Z'
+- name: a node listing endpointslices (Talos init) does not fire
+  expected: false
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: 2c9e0a71-4b1d-4f3e-9a55-0d6f1e2b7c10
+    stage: ResponseComplete
+    requestURI: /apis/discovery.k8s.io/v1/endpointslices
+    verb: list
+    user:
+      username: system:node:worker-3
+      groups:
+      - system:nodes
+      - system:authenticated
+    sourceIPs:
+    - 192.0.2.30
+    userAgent: init/v0.0.0 (linux/arm64) kubernetes/$Format
+    objectRef:
+      resource: endpointslices
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 403
+      reason: Forbidden
+    requestReceivedTimestamp: '2026-11-27T15:24:12.000000Z'
+    stageTimestamp: '2026-11-27T15:24:12.100000Z'
+- name: a node refused on secrets still fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: 2c9e0a71-4b1d-4f3e-9a55-0d6f1e2b7c10
+    stage: ResponseComplete
+    requestURI: /apis/discovery.k8s.io/v1/secrets
+    verb: list
+    user:
+      username: system:node:worker-3
+      groups:
+      - system:nodes
+      - system:authenticated
+    sourceIPs:
+    - 192.0.2.30
+    userAgent: init/v0.0.0 (linux/arm64) kubernetes/$Format
+    objectRef:
+      resource: secrets
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 403
+      reason: Forbidden
+    requestReceivedTimestamp: '2026-11-27T15:24:12.000000Z'
+    stageTimestamp: '2026-11-27T15:24:12.100000Z'
+- name: a user refused on endpointslices still fires
+  expected: true
+  event:
+    source: k8s
+    kind: Event
+    apiVersion: audit.k8s.io/v1
+    level: Metadata
+    auditID: 2c9e0a71-4b1d-4f3e-9a55-0d6f1e2b7c10
+    stage: ResponseComplete
+    requestURI: /apis/discovery.k8s.io/v1/endpointslices
+    verb: list
+    user:
+      username: alice@example.com
+      groups:
+      - system:nodes
+      - system:authenticated
+    sourceIPs:
+    - 192.0.2.30
+    userAgent: init/v0.0.0 (linux/arm64) kubernetes/$Format
+    objectRef:
+      resource: endpointslices
+      apiVersion: v1
+    responseStatus:
+      metadata: {}
+      code: 403
+      reason: Forbidden
+    requestReceivedTimestamp: '2026-11-27T15:24:12.000000Z'
+    stageTimestamp: '2026-11-27T15:24:12.100000Z'
